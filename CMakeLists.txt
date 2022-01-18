@@ -122,7 +122,7 @@ if(NOT ${RENDERER_ONLY_RESOURCES})
     find_package(Torch REQUIRED)
     # get libraries (hard coded), copied from torch.utils.cpp_extension.CUDAExtension
     set(TORCH_LIBRARY_NAMES
-        c10 c10_cuda torch torch_cpu torch_cuda torch_cuda_cpp torch_cuda_cu torch_python)
+        c10 c10_cuda torch torch_cpu torch_cuda torch_python)
     set(TORCH_LIBRARIES ${TORCH_LIBRARY})
     FOREACH(LIB_NAME ${TORCH_LIBRARY_NAMES})
       set(LIB_VAR "TORCH_LIB_${LIB_NAME}") # Name of the variable which stores result of the search
