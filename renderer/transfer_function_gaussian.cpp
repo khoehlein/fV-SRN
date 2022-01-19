@@ -375,8 +375,8 @@ void renderer::TransferFunctionGaussian::computeTensor()
 	}
 
 	textureTensor_.value = t.to(c10::kCUDA);
-	textureTensor_.forwardIndex = {};
-	textureTensor_.grad = {};
+	textureTensor_.forwardIndex = torch::Tensor();
+	textureTensor_.grad = torch::Tensor();
 }
 
 ImVec2 renderer::TransferFunctionGaussian::screenToEditor(const ImVec2& screenPosition, const ImRect& rect)
