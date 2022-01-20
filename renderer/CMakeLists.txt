@@ -259,10 +259,11 @@ if(NOT ${RENDERER_ONLY_RESOURCES})
             NVCC_INCLUDE_DIR=${CUDA_INCLUDE_DIRS})
     else()
         # there are some errors that RENDERER_SHADER_DIRS is not properly passed to the compiler
-        # therefore, it is required on Unix to provide a custom source lodaer
+        # therefore, it is required on Unix to provide a custom source loader
         target_compile_definitions(${LIBRARY_NAME} PUBLIC 
             RENDERER_RUNTIME_COMPILATION=1
-            NVCC_ARGS="${RENDERER_NVCC_FLAGS}")
+            NVCC_ARGS="${RENDERER_NVCC_FLAGS}"
+            NVCC_INCLUDE_DIR=${CUDA_INCLUDE_DIRS})
     endif()
     
     # Shared or static

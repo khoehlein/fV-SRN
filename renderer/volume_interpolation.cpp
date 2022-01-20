@@ -135,7 +135,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> renderer::IVolumeInterpo
 	TORCH_CHECK(dtype == c10::kFloat || dtype == c10::kDouble, "dtype must be float or double");
     double maxValue = tf == nullptr ? 1 : tf->getMaxAbsorption();
 
-	GlobalSettings s{};
+    GlobalSettings s{};
 	s.scalarType = dtype;
 	s.volumeShouldProvideNormals = false;
 	s.interpolationInObjectSpace = false;
@@ -183,7 +183,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> renderer::IVolumeInterpo
 
 	//compile and fill constants
 	extraSource << "#include \"renderer_volume_kernels2.cuh\"\n";
-	const auto& fun = KernelLoader::Instance().getKernelFunction(
+	const auto fun = KernelLoader::Instance().getKernelFunction(
 		kernelName, extraSource.str(), constantNames, false, false).value();
 	if (auto c = getConstantDeclarationName(s); !c.empty())
 	{
@@ -206,8 +206,10 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> renderer::IVolumeInterpo
 		at::TensorOptions().dtype(s.scalarType).device(c10::kCUDA));
 	torch::Tensor colors;
 	if (tf)
-		colors = torch::empty({ numSamples, 4 },
-			at::TensorOptions().dtype(s.scalarType).device(c10::kCUDA));
+    {
+        colors = torch::empty({ numSamples, 4 },
+                              at::TensorOptions().dtype(s.scalarType).device(c10::kCUDA));
+    }
 	cuMat::DevicePointer<unsigned int> counter(1);
 	CUMAT_SAFE_CALL(cudaMemset(counter.pointer(), 0, sizeof(unsigned int)));
 	unsigned int* counterPtr = counter.pointer();
@@ -230,12 +232,12 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> renderer::IVolumeInterpo
 			    &numSamples_u, &accPosition, &accDensities, &accColors,
 			    &maxValue_r, &minProb_r, &counterPtr,
 			    &seed, &time, &densityMin_r, &densityMax_r};
-			auto result = cuLaunchKernel(
+            auto result = cuLaunchKernel(
 				fun.fun(), minGridSize, 1, 1, fun.bestBlockSize(), 1, 1,
 				0, stream, const_cast<void**>(args), NULL);
 			if (result != CUDA_SUCCESS)
 				return printError(result, kernelName);
-			return true;
+            return true;
 		});
 
 	setBoxMin(oldBoxMin);
@@ -308,7 +310,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> renderer::IVolumeInterpo
 
 	//compile and fill constants
 	extraSource << "#include \"renderer_volume_kernels3.cuh\"\n";
-	const auto& fun = KernelLoader::Instance().getKernelFunction(
+	const auto fun = KernelLoader::Instance().getKernelFunction(
 		kernelName, extraSource.str(), constantNames, false, false).value();
 	if (auto c = getConstantDeclarationName(s); !c.empty())
 	{

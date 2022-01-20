@@ -956,7 +956,7 @@ void renderer::VolumeInterpolationGrid::fillConstantMemory(
 			p.normalScale = kernel::cast3<scalar_t>(1.0 / voxelSize);
 			double3 normalStep = make_double3(1);//make_double3(1.0) / make_double3(objectResolution());
 			p.normalStep = kernel::cast3<scalar_t>(normalStep);
-			CU_SAFE_CALL(cuMemcpyHtoDAsync(ptr, &p, sizeof(Parameters), stream));
+			CU_SAFE_CALL(cuMemcpyHtoD(ptr, &p, sizeof(Parameters)));
 		});
 	}break;
 	}
