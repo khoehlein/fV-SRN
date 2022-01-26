@@ -1,11 +1,14 @@
 # C++
 bin/
 build/
+cmake-build-debug/
 
 # Python
+.idea/
 /applications/.idea
 /applications/env
 /applications/kernel_cache
+
 *.pyc
 .ipynb_checkpoints/
 /applications/experiments/**/*.sh

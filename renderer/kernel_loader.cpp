@@ -78,7 +78,6 @@ void renderer::KernelLoader::reloadCudaKernels()
 {
 	includeFiles.clear();
 	kernelStorage.clear();
-}
 
 void renderer::KernelLoader::cleanup()
 {
@@ -141,7 +140,7 @@ bool renderer::KernelLoader::loadCUDASources(bool no_log)
 //#ifdef RENDERER_SHADER_DIRS
 		int index = 0;
 //		for (const char* rootStr : RENDERER_SHADER_DIRS) {
-        for (const char* rootStr : {"/home/hoehlein/PycharmProjects/local/fvsrn/renderer", "/home/hoehlein/PycharmProjects/local/fvsrn/third-party/cudad/include/cudAD"}) {
+        for (const char* rootStr : {"/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/renderer", "/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/third-party/cudad/include/cudAD"}) {
 			fs::path root(rootStr);
 			bool allowHfiles = index > 0;
 			for (const auto& p : fs::directory_iterator(root))
