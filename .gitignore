@@ -3,9 +3,12 @@ bin/
 build/
 
 # Python
+/.idea
 /applications/.idea
 /applications/env
 /applications/kernel_cache
+#/applications/config-files
+
 *.pyc
 .ipynb_checkpoints/
 /applications/experiments/**/*.sh

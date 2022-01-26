@@ -83,6 +83,7 @@ def convert(in_file_density: str, in_file_velocity:str, out_file: str):
     vol.add_feature_from_tensor("vel+density", torch.from_numpy(full_data))
     vol.save(out_file, compression=0)
 
+
 def convert_all_densities(folder: str):
     i = 1
     while True:
@@ -93,6 +94,7 @@ def convert_all_densities(folder: str):
         out_file = os.path.join(folder, "volume_%06d.cvol"%i)
         convert(in_file_density, in_file_velocity, out_file)
         i += 1
+
 
 if __name__ == '__main__':
     #convert_all_densities("sim_000000")
