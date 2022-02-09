@@ -23,6 +23,7 @@ from volnet.input_data import TrainingInputData
 from volnet.raytracing import Raytracing
 from volnet.inference import LoadedModel
 
+
 class RenderEngine(enum.Enum):
     PyTorch = enum.auto()
     TensorCores = enum.auto()
@@ -100,7 +101,6 @@ class UIVolnet(common.vis_gui.UI):
         self._ensemble_slider.setMaximum(input_data.num_ensembles()-1)
         self._tf_slider.setMinimum(0)
         self._tf_slider.setMaximum(input_data.num_tfs() - 1)
-
 
     def render_reference(self, current_entry):
         inference = current_entry.value.inference

@@ -28,3 +28,6 @@
 	path = third-party/pybind11
 	url = https://github.com/pybind/pybind11.git
 	branch = v2.6.2-125-g787d2c8
+[submodule "applications/common/helpers"]
+	path = applications/common/helpers
+	url = https://gitlab.lrz.de/ga84quh/pythonutils.git

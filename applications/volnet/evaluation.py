@@ -14,6 +14,7 @@ from volnet.raytracing import Raytracing
 import common.utils as utils
 import pyrenderer
 
+
 class EvaluateScreen:
     def __init__(self, network:SceneRepresentationNetwork, evaluator:pyrenderer.IImageEvaluator,
                  loss: Optional[LossNetScreen],
@@ -56,6 +57,10 @@ class EvaluateScreen:
 
         return image, total_loss, partial_losses
 
+    def loss_names(self):
+        return self._loss.loss_names()
+
+
 class EvaluateWorld:
     def __init__(self, network:SceneRepresentationNetwork, evaluator:pyrenderer.IImageEvaluator,
                  loss: Optional[LossNetWorld], dtype, device):
@@ -94,3 +99,6 @@ class EvaluateWorld:
             total_loss, partial_losses = self._loss(predictions, target, return_individual_losses=True)
 
         return predictions, total_loss, partial_losses
+
+    def loss_names(self):
+        return self._loss.loss_names()

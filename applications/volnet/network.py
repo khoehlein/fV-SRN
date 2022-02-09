@@ -16,6 +16,7 @@ import common.utils as utils
 import pyrenderer
 from .input_data import TrainingInputData
 
+
 class InputParametrization(nn.Module):
     # in earlier checkpoints, the factor 2pi was applied to the fourier matrix during 'forward'
     # In newer version, this is done directly in the constructor (more efficient).
@@ -38,19 +39,19 @@ class InputParametrization(nn.Module):
         self._num_time_fourier = num_time_fourier or 0
         self._fourier_position_direction_split = fourier_position_direction_split or -1
         self._premultiply2pi = InputParametrization.PREMULTIPLY_2_PI
-        if num_fourier_features>0:
+        if num_fourier_features > 0:
             out = 6 if (has_direction and not disable_direction_in_fourier) else 3
 
-            if self._num_time_fourier>0:
+            if self._num_time_fourier > 0:
                 num_position_fourier = num_fourier_features - self._num_time_fourier
             else:
                 num_position_fourier = num_fourier_features
 
-            if fourier_std>0:
+            if fourier_std > 0:
                 # random gaussian
                 B = torch.normal(0, fourier_std, (num_position_fourier, out))
                 if self._premultiply2pi:
-                    B = B * (2*np.pi)
+                    B = B * (2 * np.pi)
             else:
                 # scaled block-identity, based on NeRF
                 assert self._fourier_position_direction_split < 0, "fourier-split not compatible with NeRF-position-matrix"
@@ -168,6 +169,7 @@ class InputParametrization(nn.Module):
 
         return x
 
+
 class OutputParametrization(nn.Module):
     DENSITY = "density"
     RGBO = "rgbo"
@@ -201,13 +203,16 @@ class OutputParametrization(nn.Module):
     def num_output_channels(self):
         return self.num_input_channels()
 
+    def output_mode(self):
+        return self._output_mode
+
     def forward(self, x, mode='screen'):
         """
         Output parametrization from (B, Cin) to (B, Cout)
         where Cin=self.num_input_channels(), Cout=self.num_output_channels()
         """
         assert len(x.shape) == 2, \
-            "input is not of shape (B,Cin), but" + str(x.shape)
+            "input is not of shape (B, Cin), but" + str(x.shape)
         assert x.shape[1] == self.num_input_channels(), \
             "invalid number of input channels, expected %d but got %d" % (self.num_input_channels(), x.shape[1])
         assert mode in ["world", "screen"]
@@ -220,8 +225,8 @@ class OutputParametrization(nn.Module):
             else:
                 return x
         else:
-            rgb = x[...,:3]
-            absorption = x[...,3:]
+            rgb = x[..., :3]
+            absorption = x[..., 3:]
             if self._output_mode == OutputParametrization.RGBO:
                 rgb = torch.sigmoid(rgb)
                 absorption = F.softplus(absorption)
@@ -236,8 +241,11 @@ class OutputParametrization(nn.Module):
                 absorption = torch.exp(absorption)
             return torch.cat((rgb, absorption), dim=-1)
 
+
 class CustomActivations:
+
     class Sine(nn.Module):
+
         def __init__(self, w0=1):
             super().__init__()
             self.w0 = float(w0)
@@ -246,21 +254,26 @@ class CustomActivations:
             return torch.sin(self.w0 * x)
 
     class Snake(nn.Module):
+
         def __init__(self, f=1):
             super().__init__()
             self.f = float(f)
+
         def forward(self, x):
             return x + (1./self.f) * (torch.sin(self.f * x)**2)
 
     class SnakeAlt(nn.Module):
+
         def __init__(self, f=1):
             super().__init__()
             self.f = float(f)
+
         def forward(self, x):
             t = x + 1 - torch.cos(2*self.f * x)
             return t/(2.*self.f)
 
     class ModulatedSine(nn.Module):
+
         def __init__(self, input_channels, output_channels, latent_size, is_first, w0=1):
             super().__init__()
             self._w0 = w0
@@ -279,6 +292,7 @@ class CustomActivations:
                 self._lin2 = torch.nn.Linear(
                     input_channels+latent_size, output_channels, True)  # modulator
                 self._isize = input_channels
+
         def forward(self, x):
             if self._isfirst:
                 i = x[:,:self._isize]
@@ -296,12 +310,15 @@ class CustomActivations:
             return res
 
     class Select(nn.Module):
+
         def __init__(self, _from, _to):
             super().__init__()
             self._from = _from
             self._to = _to
+
         def forward(self, x):
-            return x[:,self._from:self._to]
+            return x[:, self._from:self._to]
+
 
 class ResidualSineLayer(nn.Module):
     """
@@ -324,10 +341,9 @@ class ResidualSineLayer(nn.Module):
 
     def init_weights(self):
         with torch.no_grad():
-            self.linear_1.weight.uniform_(-np.sqrt(6 / self.features) / self.omega_0,
-                                           np.sqrt(6 / self.features) / self.omega_0)
-            self.linear_2.weight.uniform_(-np.sqrt(6 / self.features) / self.omega_0,
-                                           np.sqrt(6 / self.features) / self.omega_0)
+            b = math.sqrt(6 / self.features) / self.omega_0
+            self.linear_1.weight.uniform_(-b, b)
+            self.linear_2.weight.uniform_(-b, b)
         #
     #
 
@@ -336,6 +352,7 @@ class ResidualSineLayer(nn.Module):
         sine_2 = torch.sin(self.omega_0 * self.linear_2(sine_1))
         return self.weight_2*(input+sine_2)
     #
+
 
 class InnerNetwork(nn.Sequential):
 
@@ -370,9 +387,8 @@ class InnerNetwork(nn.Sequential):
             last_layer = nn.Linear(last_channels, output_channels)
         elif activationX[0] == "ResidualSine":
             # special handling for residual blocks
-            if len(set(layer_sizes))!=1:
+            if len(set(layer_sizes)) != 1:
                 raise ValueError("for ResidualSine, all layers must have the same size")
-            hiddenSize = layer_sizes[0]
             # copied and modified from https://github.com/matthewberger/neurcomp/blob/main/siren.py
             for i, s in enumerate(layer_sizes):
                 layer_in = last_channels
@@ -390,7 +406,8 @@ class InnerNetwork(nn.Sequential):
                 last_channels = layer_out
             last_layer = nn.Linear(last_channels, output_channels)
             with torch.no_grad():
-                last_layer.weight.uniform_(-np.sqrt(6 / (last_channels)) / 30.0, np.sqrt(6 / (last_channels)) / 30.0)
+                b = math.sqrt(6 / (last_channels)) / 30.0
+                last_layer.weight.uniform_(-b, b)
         else:
             # normal activations
             activ_class = getattr(torch.nn, activationX[0], None)
@@ -401,15 +418,12 @@ class InnerNetwork(nn.Sequential):
                 layers.append(('%s%d'%(activation.lower(), i), activ_class(*activation_params)))
                 last_channels = s
             last_layer = nn.Linear(last_channels, output_channels)
-        if output_channels==4: #rgba
+        if output_channels == 4: #rgba
             last_layer.bias.data = torch.abs(last_layer.bias.data) + 1.0 # positive output to see something
         #else:
         #    last_layer.weight.data = 100 * last_layer.weight.data
         layers.append(('linear%d' % len(layer_sizes), last_layer))
-
-
         super().__init__(collections.OrderedDict(layers))
-
         self._input_channels = input_channels
         self._output_channels = output_channels
 
@@ -438,35 +452,40 @@ class InnerNetworkMeta(nn.Module):
 
         self._input_channels = input_channels
         self._output_channels = output_channels
-        self._layers_main = layers_main
-        self._activation_main = activation_main
-        self._activation_meta = activation_meta
-        self._layers_meta = layers_meta
         self._latent_size = latent_size
         self._enable_pretraining = enable_pretraining
 
-        # main scene representation network
+        self._build_main_network(activation_main, input_channels, layers_main, output_channels)
+        self._build_meta_network(activation_meta, latent_size, layers_meta)
+
+        if self._enable_pretraining:
+            self.pretrain_parameters = torch.nn.parameter.Parameter(torch.Tensor(1, self._num_parameters))
+            torch.nn.init.uniform_(self.pretrain_parameters, -self._bound, self._bound)
+
+    def _build_main_network(self, activation_main, input_channels, layers_main, output_channels):
         layers_main_sizes = list(map(int, layers_main.split(':')))
         activ_main_class = getattr(torch.nn, activation_main, None)
         if activ_main_class is None:
             activ_main_class = getattr(CustomActivations, activation_main)
-        layers_descr = [] # tuples of (start_idx, end_idx_weights, end_idx_bias, input_shape, output_shape)
+        layers_descr = []  # tuples of (start_idx, end_idx_weights, end_idx_bias, input_shape, output_shape)
         activations = []
         num_parameters = 0
         last_channels = input_channels
         max_size = 0
+
         def add_layer(inc, outc, activ):
             nonlocal num_parameters, layers_descr, max_size
             layers_descr.append((
                 num_parameters,
                 num_parameters + inc * outc,
-                num_parameters + (inc+1) * outc,
+                num_parameters + (inc + 1) * outc,
                 inc,
                 outc
             ))
             max_size = max(max_size, inc, outc)
-            num_parameters += (inc+1) * outc
+            num_parameters += (inc + 1) * outc
             activations.append(activ_main_class() if activ else None)
+
         for i, s in enumerate(layers_main_sizes):
             add_layer(last_channels, s, True)
             last_channels = s
@@ -475,8 +494,9 @@ class InnerNetworkMeta(nn.Module):
         self._layers_descr = layers_descr
         self._activations = activations
         self._num_parameters = num_parameters
+        self._bound = 1 / (max_size * len(self._layers_descr))
 
-        # meta network
+    def _build_meta_network(self, activation_meta, latent_size, layers_meta):
         layers_meta_sizes = list(map(int, layers_meta.split(':')))
         activ_meta_class = getattr(torch.nn, activation_meta, None)
         if activ_meta_class is None:
@@ -488,22 +508,15 @@ class InnerNetworkMeta(nn.Module):
             layers_meta.append(('linear%d' % i, nn.Linear(last_channels, s)))
             layers_meta.append(('relu%d' % (i), activ_meta_class()))
             last_channels = s
-        last_layer = nn.Linear(last_channels, num_parameters)
+        last_layer = nn.Linear(last_channels, self._num_parameters)
         # because the last layer predicts the parameters for the SRN,
         # these values are used in the network multiplications and quickly explode in magnitude
         # scale them down!
-        bound = 1 / (max_size * len(layers_descr))
         with torch.no_grad():
-            last_layer.weight *= bound
-            last_layer.bias *= 1 / (len(layers_descr))
+            last_layer.weight *= self._bound
+            last_layer.bias *= 1 / (len(self._layers_descr))
         layers_meta.append(('linear%d' % len(layers_meta_sizes), last_layer))
         self._meta_network = nn.Sequential(collections.OrderedDict(layers_meta))
-
-        if self._enable_pretraining:
-            self.pretrain_parameters = torch.nn.parameter.Parameter(
-                torch.Tensor(1, num_parameters))
-            torch.nn.init.uniform_(self.pretrain_parameters, -bound, bound)
-
 
     def forward(self, latent_variables, points):
         """

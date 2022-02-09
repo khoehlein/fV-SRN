@@ -125,6 +125,7 @@ class _MCCache:
             self._cache.close()
             self._cache = None
 
+
 class TrainingData:
     """
     Class to create the dataloaders for training and validation.
@@ -298,7 +299,6 @@ class TrainingData:
         dataset_train = [dataset[j] for j in indices_train]
         return torch.utils.data.DataLoader(dataset_train, batch_size=batchsize, shuffle=shuffle, collate_fn=_cat_collate if cat else None),   \
             torch.utils.data.DataLoader(dataset_val, batch_size=batchsize, shuffle=False, collate_fn=_cat_collate if cat else None)
-
 
     def _create_world_dataset(self,
                               prefix: str,

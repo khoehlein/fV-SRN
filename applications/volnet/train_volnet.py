@@ -34,6 +34,7 @@ from volnet.training_data import TrainingData
 from volnet.optimizer import Optimizer
 from volnet.evaluation import EvaluateWorld, EvaluateScreen
 
+
 def main():
     # Settings
     parser = argparse.ArgumentParser(
@@ -61,6 +62,7 @@ def main():
     parser.add_argument('--seed', type=int, default=124, help='random seed to use. Default=124')
 
     opt = vars(parser.parse_args())
+
     torch.manual_seed(opt['seed'])
     np.random.seed(opt['seed'])
     torch.set_num_threads(4)
@@ -95,7 +97,7 @@ def main():
     # optimizer
     optimizer = Optimizer(opt, network.parameters(), dtype, device)
     # evaluation helpers
-    if training_data.training_mode()=='world':
+    if training_data.training_mode() == 'world':
         evaluator_train = EvaluateWorld(
             network, input_data.default_image_evaluator(), loss_world, dtype, device)
     else:
@@ -103,7 +105,7 @@ def main():
             network, input_data.default_image_evaluator(), loss_screen,
             training_data.training_image_size(), training_data.training_image_size(),
             True, training_data.train_disable_inversion_trick(), dtype, device)
-    if training_data.validation_mode()=='world':
+    if training_data.validation_mode() == 'world':
         evaluator_val = EvaluateWorld(
             network, input_data.default_image_evaluator(), loss_world, dtype, device)
     else:
@@ -129,6 +131,7 @@ def main():
     print("Log directory:", opt['logdir'])
     print("HDF5 directory:", opt['hdf5dir'])
 
+
     def findNextRunNumber(folder):
         if not os.path.exists(folder): return 0
         files = os.listdir(folder)
@@ -136,6 +139,7 @@ def main():
         if len(files) == 0:
             return 0
         return int(files[-1][3:])
+
 
     overwrite_output = False
     if opt['name'] == None:
@@ -228,9 +232,8 @@ def main():
                     optimizer.reset(network.parameters())
                 # update training data
                 if training_data.is_rebuild_dataset():
-                    if (epoch+1)%training_data.rebuild_dataset_epoch_frequency() == 0:
-                        training_data.rebuild_dataset(
-                            input_data, network_output_mode, network)
+                    if (epoch + 1) % training_data.rebuild_dataset_epoch_frequency() == 0:
+                        training_data.rebuild_dataset(input_data, network_output_mode, network)
                 # TRAIN
                 partial_losses = defaultdict(float)
                 network.train()

@@ -4,6 +4,7 @@ import argparse
 
 import losses.lossbuilder
 
+
 class LossFactory:
 
     @staticmethod
@@ -57,9 +58,11 @@ class LossFactory:
             LossNetWorld(mode, l1, l2, absorption_weighting, device), \
             mode
 
+
 class LossNetScreen(nn.Module):
+
     def __init__(self, l1: float, l2: float,
-                 dssim: float=0, lpips: float=0,
+                 dssim: float = 0., lpips: float = 0.,
                  multiply_alpha: bool = False,
                  device: torch.device = None):
         """

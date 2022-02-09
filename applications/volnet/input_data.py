@@ -13,6 +13,7 @@ from typing import Callable, Union
 import common.utils as utils
 import pyrenderer
 
+
 class TrainingInputData:
 
     @staticmethod
@@ -130,15 +131,19 @@ class TrainingInputData:
 
     def volume_filenames(self):
         return self._volume_filenames
+
     def ensemble_indices(self):
         assert self._volume_filenames is not None
         return self._ensemble_indices
+
     def time_keyframe_indices(self):
         assert self._volume_filenames is not None
         return self._time_keyframe_indices
+
     def time_train_indices(self):
         assert self._volume_filenames is not None
         return self._time_train_indices
+
     def time_val_indices(self):
         assert self._volume_filenames is not None
         return self._time_val_indices
