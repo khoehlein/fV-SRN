@@ -12,7 +12,9 @@ import logging
 import common.utils as utils
 import pyrenderer
 
+
 class ISampler(abc.ABC):
+
     @abc.abstractmethod
     def sample(self, i: np.ndarray):
         """
@@ -22,6 +24,7 @@ class ISampler(abc.ABC):
             dimension D was specified in the constructor
         """
         pass
+
 
 class RandomSampler(ISampler):
     """
@@ -34,6 +37,7 @@ class RandomSampler(ISampler):
     def sample(self, i: np.ndarray):
         B, = i.shape
         return np.random.random_sample((B, self._d))
+
 
 class PlasticSampler(ISampler):
     """
@@ -49,7 +53,7 @@ class PlasticSampler(ISampler):
         self._d = d
 
         def gamma(d): # Use Newton-Rhapson-Method
-            x=1.0000
+            x = 1.0000
             for i in range(20):
                 x = x-(pow(x,d+1)-x-1)/((d+1)*pow(x,d)-1)
             return x
@@ -62,6 +66,7 @@ class PlasticSampler(ISampler):
     def sample(self, i : np.ndarray):
         z = (0.5 + self._alpha*(i[:,np.newaxis]+1)) % 1
         return z
+
 
 class HaltonSampler:
     def __init__(self, d : int):
@@ -93,8 +98,9 @@ class HaltonSampler:
         ret = np.empty((B,self._d), dtype=np.float32)
         for a in range(B):
             for b in range(self._d):
-                ret[a,b] = self._radicalInverse(i[a], self._primes[b])
+                ret[a, b] = self._radicalInverse(i[a], self._primes[b])
         return ret
+
 
 def get_sampled_positions(dimension: int, num_samples: int, start_index: int,
                           sampler: str, cache_folder: str = None):
@@ -164,6 +170,7 @@ def get_sampled_positions(dimension: int, num_samples: int, start_index: int,
 
         return content
 
+
 def get_sampled_positions_importance(
     num_samples: int, sampler: str,
     volume_density: torch.Tensor, tf: pyrenderer.ITransferFunction,
@@ -199,6 +206,7 @@ def get_sampled_positions_importance(
     result = np.concatenate(results, axis=0)
     print(result.shape[0], "positions sampled")
     return result
+
 
 def __test_importance_sampling():
     # settings
@@ -241,6 +249,7 @@ def __test_importance_sampling():
         write(1,0,100,0)
 
     print("Done")
+
 
 if __name__ == '__main__':
     __test_importance_sampling()

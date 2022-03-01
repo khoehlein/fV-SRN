@@ -79,6 +79,7 @@ def _cat_collate(batch):
 
     raise TypeError(_cat_collate_err_msg_format.format(elem_type))
 
+
 class _MCCache:
     def __init__(self, settings_file : Optional[str]):
         """
@@ -321,7 +322,7 @@ class TrainingData:
         N = num_tfs * num_timesteps * num_ensembles * num_points
         num_batches = N//batchsize
         C = 1 if network_output_mode=="density" else 4
-        memory = utils.humanbytes(N * (3+C) * 4) # (position (3) + channels (C)) * sizeof(float)
+        memory = utils.humanbytes(N * (3 + C) * 4) # (position (3) + channels (C)) * sizeof(float)
         print(f"Generate world-space dataset for {num_tfs} TFs, {num_timesteps} timesteps, {num_ensembles} ensembles, and {num_points} points.")
         print(f"This gives rise to {N} samples, split over {num_batches} batches with a batch size of {batchsize}.")
         print(f"In total, this requires {memory} for the DataLoader")
@@ -809,24 +810,28 @@ class TrainingData:
         self._train_dataloader, self._val_dataloader = self._create_dataloader(
             dataset, sub_batches_final, self._copy_and_split, True, True)
 
-
     def training_mode(self):
         return self._training_mode
+
     def validation_mode(self):
         return self._validation_mode
 
     def training_image_size(self):
         assert self.training_mode() == 'screen'
         return self._train_image_size
+
     def validation_image_size(self):
         assert self.validation_mode() == 'screen'
         return self._val_image_size
+
     def visualization_image_size(self):
         return self._vis_imagesize
 
     def training_dataloader(self) -> torch.utils.data.DataLoader:
         return self._train_dataloader
+
     def validation_dataloader(self) -> torch.utils.data.DataLoader:
         return self._val_dataloader
+
     def visualization_dataloader(self) -> torch.utils.data.DataLoader:
         return self._vis_dataloader

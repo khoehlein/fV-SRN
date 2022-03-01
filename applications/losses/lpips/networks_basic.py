@@ -152,8 +152,8 @@ class L2(FakeNet):
             value = torch.mean(torch.mean(torch.mean((in0-in1)**2,dim=1).view(N,1,X,Y),dim=2).view(N,1,1,Y),dim=3).view(N)
             return value
         elif(self.colorspace=='Lab'):
-            value = l2(tensor2np(tensor2tensorlab(in0.data,to_norm=False)), 
-                tensor2np(tensor2tensorlab(in1.data,to_norm=False)), range=100.).astype('float')
+            value = l2(tensor2np(tensor2tensorlab(in0.sample_summary, to_norm=False)),
+                       tensor2np(tensor2tensorlab(in1.sample_summary, to_norm=False)), range=100.).astype('float')
             ret_var = Variable( torch.Tensor((value,) ) )
             if(self.use_gpu):
                 ret_var = ret_var.cuda()
@@ -165,10 +165,10 @@ class DSSIM(FakeNet):
         assert(in0.size()[0]==1) # currently only supports batchSize 1
 
         if(self.colorspace=='RGB'):
-            value = dssim(1.*tensor2im(in0.data), 1.*tensor2im(in1.data), range=255.).astype('float')
+            value = dssim(1. * tensor2im(in0.sample_summary), 1. * tensor2im(in1.sample_summary), range=255.).astype('float')
         elif(self.colorspace=='Lab'):
-            value = dssim(tensor2np(tensor2tensorlab(in0.data,to_norm=False)), 
-                tensor2np(tensor2tensorlab(in1.data,to_norm=False)), range=100.).astype('float')
+            value = dssim(tensor2np(tensor2tensorlab(in0.sample_summary, to_norm=False)),
+                          tensor2np(tensor2tensorlab(in1.sample_summary, to_norm=False)), range=100.).astype('float')
         ret_var = Variable( torch.Tensor((value,) ) )
         if(self.use_gpu):
             ret_var = ret_var.cuda()

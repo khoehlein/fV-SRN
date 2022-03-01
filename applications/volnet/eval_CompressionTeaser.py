@@ -48,6 +48,7 @@ else:
     VOLUME_PREFIX_SCALARFLOW = "E:/Datasets/Volumes/ScalarFlow"
     VOLUME_PREFIX = "E:/Datasets/Volumes/Scalar"
 
+
 class Config(NamedTuple):
     name: str
     settings: str
@@ -57,6 +58,7 @@ class Config(NamedTuple):
     overwrite_samples: Optional[str] = None
     num_refinement: int = 0
     overwrite_epochs: Optional[int] = None
+
 
 configX = [
     Config(
@@ -105,6 +107,7 @@ NUM_SAMPLES = "256**3"
 NUM_EPOCHS = 200
 STEPSIZE_PER_VOXEL = 1
 
+
 def getOnlyGridResolution(latent_grid_resolution, latent_grid_channels):
     """
     Returns the resolution of the "only-grid" option for the specific latent grid config
@@ -113,6 +116,7 @@ def getOnlyGridResolution(latent_grid_resolution, latent_grid_channels):
     :return:
     """
     return int(np.ceil(np.cbrt(latent_grid_resolution**3 * latent_grid_channels)))
+
 
 def getNetworkParameters(channels:int, layers:int):
     """
@@ -125,6 +129,7 @@ def getNetworkParameters(channels:int, layers:int):
     # -1 because last layer is implicit
     # The parameter lists the feature size of the hidden features
     return ["--layers", ':'.join([str(channels)] * (layers - 1))]
+
 
 def getNetworkParameterCount(channels_latent, num_fourier, channels_hidden, num_hidden, channels_last):
     """
@@ -146,6 +151,7 @@ def getNetworkParameterCount(channels_latent, num_fourier, channels_hidden, num_
     count += (num_hidden-2) * (channels_hidden * (channels_hidden+1))
     count += channels_hidden * channels_last + channels_last # last layer
     return count
+
 
 def findNetworkDimension(target_num_parameters, channels_last):
     """
@@ -211,6 +217,7 @@ def findNetworkDimension(target_num_parameters, channels_last):
 def get_hdf5_file(config: Config, case:str):
     assert case in [RESULT_HYBRID, RESULT_ONLYGRID, RESULT_REFERENCE, RESULT_ONLYNETWORK]
     return os.path.join(BASE_PATH, "hdf5", config.name + "-" + case + ".hdf5")
+
 
 def main():
     cfgs = []

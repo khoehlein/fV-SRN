@@ -10,6 +10,7 @@ import tqdm
 import common.utils as utils
 import pyrenderer
 
+
 class Raytracing:
 
     def __init__(self,

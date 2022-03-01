@@ -122,7 +122,7 @@ def make_plots():
                 [localStats[key][statTag][ensemble][t][c] for c in range(num_cameras)]) for t in
                  range(len(X))])
             h = axs[row].plot(X, Y, 'o-', linewidth=1, markersize=2,
-                              color=variant.color)
+                              mode=variant.color)
             if row == 0:
                 handles.append(h[0])
                 handle_names.append(variant.human_name)

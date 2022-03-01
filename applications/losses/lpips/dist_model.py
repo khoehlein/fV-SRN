@@ -121,7 +121,7 @@ class DistModel(BaseModel):
     def clamp_weights(self):
         for module in self.net.modules():
             if(hasattr(module, 'weight') and module.kernel_size==(1,1)):
-                module.weight.data = torch.clamp(module.weight.data,min=0)
+                module.weight.sample_summary = torch.clamp(module.weight.sample_summary, min=0)
 
     def set_input(self, data):
         self.input_ref = data['ref']
@@ -158,12 +158,12 @@ class DistModel(BaseModel):
 
     def compute_accuracy(self,d0,d1,judge):
         ''' d0, d1 are Variables, judge is a Tensor '''
-        d1_lt_d0 = (d1<d0).cpu().data.numpy().flatten()
+        d1_lt_d0 = (d1<d0).cpu().sample_summary.numpy().flatten()
         judge_per = judge.cpu().numpy().flatten()
         return d1_lt_d0*judge_per + (1-d1_lt_d0)*(1-judge_per)
 
     def get_current_errors(self):
-        retDict = OrderedDict([('loss_total', self.loss_total.data.cpu().numpy()),
+        retDict = OrderedDict([('loss_total', self.loss_total.sample_summary.cpu().numpy()),
                             ('acc_r', self.acc_r)])
 
         for key in retDict.keys():
@@ -227,8 +227,8 @@ def score_2afc_dataset(data_loader, func, name=''):
     gts = []
 
     for data in tqdm(data_loader.load_data(), desc=name):
-        d0s+=func(data['ref'],data['p0']).data.cpu().numpy().flatten().tolist()
-        d1s+=func(data['ref'],data['p1']).data.cpu().numpy().flatten().tolist()
+        d0s+=func(data['ref'],data['p0']).sample_summary.cpu().numpy().flatten().tolist()
+        d1s+=func(data['ref'],data['p1']).sample_summary.cpu().numpy().flatten().tolist()
         gts+=data['judge'].cpu().numpy().flatten().tolist()
 
     d0s = np.array(d0s)
@@ -257,7 +257,7 @@ def score_jnd_dataset(data_loader, func, name=''):
     gts = []
 
     for data in tqdm(data_loader.load_data(), desc=name):
-        ds+=func(data['p0'],data['p1']).data.cpu().numpy().tolist()
+        ds+=func(data['p0'],data['p1']).sample_summary.cpu().numpy().tolist()
         gts+=data['same'].cpu().numpy().flatten().tolist()
 
     sames = np.array(gts)

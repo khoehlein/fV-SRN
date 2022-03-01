@@ -19,19 +19,30 @@ print("pyrenderer native library loaded")
 def __cleanup_renderer():
   pyrenderer.cleanup()
 
+
 def make_float3(vector):
   return pyrenderer.float3(vector[0], vector[1], vector[2])
+
+
 def make_float4(vector):
   return pyrenderer.float4(vector[0], vector[1], vector[2], vector[3])
+
+
 def make_double3(vector):
   return pyrenderer.double3(vector[0], vector[1], vector[2])
+
+
 def make_double4(vector):
   return pyrenderer.double4(vector[0], vector[1], vector[2], vector[3])
 
+
 def copy_double3(v:pyrenderer.double3):
   return pyrenderer.double3(v.x, v.y, v.z)
+
+
 def copy_double4(v:pyrenderer.double4):
   return pyrenderer.double3(v.x, v.y, v.z, v.w)
+
 
 def cvector_to_numpy(vector : Union[pyrenderer.float3, pyrenderer.float4, pyrenderer.double3, pyrenderer.double4]):
   if isinstance(vector, pyrenderer.float3):

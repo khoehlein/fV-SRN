@@ -1,6 +1,7 @@
 # C++
 bin/
 build/
+cmake-build-debug/
 
 # Python
 /applications/.idea

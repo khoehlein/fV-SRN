@@ -71,7 +71,8 @@ typedef std::function<void(const std::string&, int)> VolumeErrorCallback_t;
  *   7 bytes: padding, unused
  *  [Content]
  *   
- *   Ray memory dump of the volume, sizeX*sizeY*sizeZ entries of type 'datatype'.
+ *   Ray memory dump of the volume, sizeX*sizeY*sizeZ entries of type '
+ *   pe'.
  *   X is fastest, Z is slowest.
  * </pre>
  */

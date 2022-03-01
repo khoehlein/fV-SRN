@@ -23,7 +23,7 @@ from collections import defaultdict
 from typing import Tuple
 
 # From eval_VolumetricFeatures.py / Section 5.2
-BEST_NETWORK = (32,4)
+BEST_NETWORK = (32, 4)
 GRID_RESOLUTION = 32
 GRID_CHANNELS = 16
 
@@ -43,6 +43,7 @@ def main():
     train()
     statistics_file = eval()
     make_plots(statistics_file)
+
 
 def get_args_and_hdf5_file(activation, config: Tuple[str, str, str]):
     """
@@ -82,6 +83,7 @@ def get_args_and_hdf5_file(activation, config: Tuple[str, str, str]):
     hdf5_file = BASE_PATH+'/hdf5/' + output_name + ".hdf5"
     return parameters, hdf5_file, output_name
 
+
 def train():
     print("Configurations:", len(activationX) * len(configX))
     for config in configX:
@@ -93,6 +95,7 @@ def train():
                 print("\n=====================================\nRun", filename)
                 subprocess.run(args, check=True)
     print("\n===========================================\nDONE!")
+
 
 def eval():
     print("Evaluate")
@@ -222,6 +225,7 @@ def eval():
     with open(statistics_file, "w") as f:
         json.dump(output_stats, f)
     return statistics_file
+
 
 def make_plots(statistics_file):
     print("\n===================================== Make Plots")

@@ -419,7 +419,7 @@ class InnerNetwork(nn.Sequential):
                 last_channels = s
             last_layer = nn.Linear(last_channels, output_channels)
         if output_channels == 4: #rgba
-            last_layer.bias.data = torch.abs(last_layer.bias.data) + 1.0 # positive output to see something
+            last_layer.bias.sample_summary = torch.abs(last_layer.bias.sample_summary) + 1.0 # positive output to see something
         #else:
         #    last_layer.weight.data = 100 * last_layer.weight.data
         layers.append(('linear%d' % len(layer_sizes), last_layer))

@@ -31,20 +31,24 @@ configX = [
     ("RM20", "config-files/RichtmyerMeshkov-t20-v1-dvr.json"),
     ("RM60", "config-files/RichtmyerMeshkov-t60-v1-dvr.json"),
 ]
+
 networkX = [
     ("l48x10", 48, 10),
     ("l64x6", 64, 6)
 ]
+
 fourierX = [
     ("f%03d"%int(f*10), f) for f in [0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0]
 ] + [("fNeRF", -1)]
 #fourierX = [("fNeRF", -1)]
+
 
 def main():
     configs = collect_configurations()
     #train(configs)
     statistics_file = eval(configs)
     make_plots(statistics_file)
+
 
 def collect_configurations():
     cfgs = []
@@ -53,6 +57,7 @@ def collect_configurations():
             config[0], network[0], fourier[0])
         cfgs.append((config[1], network[1:], fourier[1], filename))
     return cfgs
+
 
 def get_args_and_hdf5_file(cfg):
     """
@@ -77,6 +82,7 @@ def get_args_and_hdf5_file(cfg):
         "--modeldir", 'volnet/results/eval_Fourier/model',
         "--hdf5dir", 'volnet/results/eval_Fourier/hdf5',
     ]
+
     def getNetworkParameters(network):
         channels, layers = network
         return ["--layers", ':'.join([str(channels)] * (layers - 1))]
@@ -97,6 +103,7 @@ def get_args_and_hdf5_file(cfg):
 
     hdf5_file = os.path.join(BASE_PATH, 'hdf5', filename + ".hdf5")
     return args, hdf5_file, filename
+
 
 def train(configs):
     print("Configurations:", len(configs))
