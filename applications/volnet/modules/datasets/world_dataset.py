@@ -13,9 +13,20 @@ from volnet.modules.datasets.evaluation.network_evaluator import NetworkEvaluato
 from volnet.modules.datasets.resampling.interface import IImportanceSampler
 from volnet.modules.helpers import parse_slice_string
 from volnet.modules.datasets.position_sampler import PositionSampler
-from volnet.modules.datasets.resampling.fixed_grid._fixed_grid_legacy import FixedGridImportanceSampler
 from volnet.modules.datasets.evaluation.volume_evaluator import VolumeEvaluator
 from volnet.training_data import _cat_collate as cat_collate
+
+import matplotlib.pyplot as plt
+
+
+def plot_3d(positions):
+    print('Stats:', np.amin(positions, axis=0), np.amax(positions, axis=0))
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    select = np.random.choice(np.arange(len(positions)), size=1000, replace=False)
+    ax.scatter(positions[select, 0], positions[select, 1], positions[select, 2], alpha=0.1)
+    plt.show()
+    plt.close()
 
 
 class WorldSpaceDensityData(Dataset):
@@ -131,7 +142,7 @@ class WorldSpaceDensityData(Dataset):
             volume_evaluator=None, position_sampler=None,
             # reweighting_mode='none',
             ensemble_index_slice=None, timestep_index_slice=None,
-            dtype=None
+            dtype=None, return_weights=False
     ):
         super(WorldSpaceDensityData, self).__init__()
         self.volume_data_storage = volume_data_storage
@@ -150,31 +161,41 @@ class WorldSpaceDensityData(Dataset):
         if dtype is None:
             dtype = torch.float32
         self.dtype = dtype
+        self.return_weights = return_weights
         self._reset_data()
         if volume_evaluator is not None and position_sampler is not None:
             self.sample_data(volume_evaluator, position_sampler)
 
     def _reset_data(self):
+        self.weights = []
         self.data = {key: [] for key in WorldSpaceDensityData.OUTPUT_KEYS}
 
-    def _add_samples_to_data(self, positions, targets, tf_index, timestep_index, ensemble_index):
+    def _add_samples_to_data(self, positions, targets, tf_index, timestep_index, ensemble_index, weights):
+        self.weights.append(weights)
         for key, data in zip(WorldSpaceDensityData.OUTPUT_KEYS,
                              [positions, targets, tf_index, timestep_index, ensemble_index]):
             self.data[key].append(data)
 
     def _finalize_data(self):
+        self.weights = np.concatenate(self.weights, axis=0)
         self.data = {key: np.concatenate(self.data[key], axis=0) for key in WorldSpaceDensityData.OUTPUT_KEYS}
         if self.sub_batching is None:
+            self.weights = self.weights.tolist()
             self.data = [values for values in zip(*[self.data[key] for key in WorldSpaceDensityData.OUTPUT_KEYS])]
         else:
             sub_batch_size = np.ceil(self.batch_size / self.sub_batching)
             num_samples = len(self.data[self.OUTPUT_KEYS[0]])
             num_sections = np.ceil(num_samples / sub_batch_size)
+            self.weights = np.array_split(self.weights, int(num_sections))
             self.data = [
                 values for values in zip(
                     *[np.array_split(self.data[key], int(num_sections)) for key in WorldSpaceDensityData.OUTPUT_KEYS]
                 )
             ]
+
+    @staticmethod
+    def _read_resolution_from_volume(feature):
+        return tuple(feature.get_level(0).to_tensor().shape[1:])
 
     def sample_data(self, volume_evaluator: VolumeEvaluator, position_sampler: PositionSampler):
         assert volume_evaluator.interpolator.grid_resolution_new_behavior, \
@@ -190,8 +211,9 @@ class WorldSpaceDensityData(Dataset):
             print(f"[INFO] Targets: min={targets.min().item()}, max={targets.max().item()}, mean={targets.mean().item()}")
             positions = positions.data.cpu().numpy()
             targets = targets.data.cpu().numpy()
+            weights = np.ones_like(targets)
             tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(0, ensemble_index, timestep_index, self.num_samples_per_volume)
-            self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data)
+            self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
         self._finalize_data()
         volume_evaluator.restore_defaults()
         return self
@@ -201,7 +223,7 @@ class WorldSpaceDensityData(Dataset):
         self._reset_data()
         for (timestep_index, timestep), (ensemble_index, ensemble) in product(enumerate(self.timestep_index), enumerate(self.ensemble_index)):
             volume_data = self.volume_data_storage.load_volume(timestep=timestep, ensemble=ensemble, index_access=False)
-            resolution = tuple(volume_data.get_feature(feature).get_level(0).to_tensor().shape[1:])
+            resolution = self._read_resolution_from_volume(volume_data.get_feature(feature))
             if new_behavior:
                 positions = np.meshgrid(*[(np.arange(r) + 0.5) / r for r in resolution], indexing='ij')
             else:
@@ -217,9 +239,10 @@ class WorldSpaceDensityData(Dataset):
             volume_evaluator.set_source(volume_data)
             targets = volume_evaluator.evaluate(torch.from_numpy(positions).to(volume_evaluator.device))
             targets = targets.data.cpu().numpy()
+            weights = np.ones_like(targets)
             print(f"[INFO] Targets: min={targets.min()}, max={targets.max()}, mean={targets.mean()}")
             tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(0, ensemble_index, timestep_index, len(targets))
-            self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data)
+            self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
         self._finalize_data()
         return self
 
@@ -229,23 +252,28 @@ class WorldSpaceDensityData(Dataset):
         ensemble_index = np.full((num_samples,), ensemble_idx, dtype=np.float32)
         return tf_index, timestep_index, ensemble_index
 
-    def resample_data(self, network, volume_evaluator: VolumeEvaluator, loss_evaluator: LossEvaluator, importance_sampler:IImportanceSampler):
-        volume_evaluator.restore_defaults()
+    def sample_data_with_loss_importance(
+            self,
+            network, volume_evaluator: VolumeEvaluator,
+            loss_evaluator: LossEvaluator, importance_sampler:IImportanceSampler
+    ):
         loss_evaluator.set_source(volume=volume_evaluator)
         self._reset_data()
         for (timestep_index, timestep), (ensemble_index, ensemble) in product(enumerate(self.timestep_index), enumerate(self.ensemble_index)):
             volume_data = self.volume_data_storage.load_volume(timestep=timestep, ensemble=ensemble, index_access=False)
+            resolution = self._read_resolution_from_volume(volume_data.get_feature(0))
             network_evaluator = WorldSpaceDensityEvaluator(network, 0, timestep_index, ensemble_index)
             volume_evaluator.set_source(volume_data)
             loss_evaluator.set_source(network=network_evaluator)
-            positions = importance_sampler.generate_samples(self.num_samples_per_volume, loss_evaluator)
+            positions, weights = importance_sampler.generate_samples(self.num_samples_per_volume, loss_evaluator, grid_size=resolution)
             targets = volume_evaluator.evaluate(positions)
             positions = positions.cpu().numpy()
-            targets = targets.cpu().numpy()
+            plot_3d(positions)
+            targets = targets.data.cpu().numpy()
+            weights = weights.data.cpu().numpy()
             tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(0, timestep_index, ensemble_index, self.num_samples_per_volume)
-            self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data)
+            self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
         self._finalize_data()
-        volume_evaluator.restore_defaults()
         return self
 
     def num_timesteps(self):
@@ -273,6 +301,8 @@ class WorldSpaceDensityData(Dataset):
         return len(self.data)
 
     def __getitem__(self, item):
+        if self.return_weights:
+            return self.data[item], self.weights[item]
         return self.data[item]
 
 

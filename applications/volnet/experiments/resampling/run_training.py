@@ -16,6 +16,7 @@ from volnet.experiments.profiling import build_profiler
 from volnet.lossnet import LossFactory
 from volnet.modules.datasets.input_data_emulator import InputDataEmulator
 from volnet.modules.datasets.position_sampler import PositionSampler
+from volnet.modules.datasets.resampling.resampler import DatasetResampler
 from volnet.modules.datasets.visualization_dataset import WorldSpaceVisualizationData
 from volnet.modules.datasets.volume_data_storage import VolumeDataStorage
 from volnet.modules.datasets.evaluation.volume_evaluator import VolumeEvaluator
@@ -34,6 +35,7 @@ def build_parser():
     PositionSampler.init_parser(parser)
     WorldSpaceDensityData.init_parser(parser)
     WorldSpaceVisualizationData.init_parser(parser)
+    DatasetResampler.init_parser(parser)
     RenderTool.init_parser(parser)
     SceneRepresentationNetwork.init_parser(parser)
     LossFactory.init_parser(parser)
@@ -86,6 +88,9 @@ def main():
 
     print('[INFO] Creating visualization dataset')
     visualization_data = WorldSpaceVisualizationData.from_dict(args, volume_data_storage, render_tool=render_tool)
+
+    print('[INFO] Building dataset resampler')
+    resampler = DatasetResampler.from_dict(args, device=device)
 
     print('[INFO] Initializing network')
     input_data_emulator = InputDataEmulator(volume_data_storage, training_data, validation_data)
@@ -179,10 +184,10 @@ def main():
                 if network.start_epoch():
                     optimizer.reset(network.parameters())
                 # update training data
-                # TODO: Implement dataset rebuilding
-                # if training_data.is_rebuild_dataset():
-                #     if (epoch + 1) % training_data.rebuild_dataset_epoch_frequency() == 0:
-                #         training_data.rebuild_dataset(input_data, network.output_mode(), network)
+                if resampler.requires_action(epoch + 1):
+                    network.eval()
+                    resampler.resample_dataset(training_data, volume_evaluator, network)
+
                 # TRAIN
                 partial_losses, num_batches = run_training()
                 storage_manager.update_training_metrics(epoch, partial_losses, num_batches, optimizer.get_lr()[0])

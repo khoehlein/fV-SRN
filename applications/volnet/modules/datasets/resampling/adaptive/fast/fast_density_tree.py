@@ -117,7 +117,11 @@ class NodeSet(object):
             device=self.device
         )
         if self.sample_summary is not None:
-            out.sample_summary = self.sample_summary.get_subset(index)
+            leaf_nodes = -torch.ones_like(self.split_dimension)
+            num_leaf_nodes = torch.sum(self.split_dimension < 0).item()
+            leaf_nodes[self.split_dimension < 0] = torch.arange(num_leaf_nodes, device=self.device)
+            leaf_nodes = leaf_nodes[index][self.split_dimension[index] < 0]
+            out.sample_summary = self.sample_summary.get_subset(leaf_nodes)
         if self.children_summary is not None:
             out.children_summary = self.children_summary.get_subset(index)
         return out
@@ -136,7 +140,7 @@ class NodeSet(object):
         return extent * x + lower
 
     def store_sample_summary(self, samples: torch.Tensor):
-        assert samples.shape[-1] == self.num_nodes()
+        assert samples.shape[-1] == torch.sum(self.split_dimension < 0).item()
         new_data = SampleSummary.from_sample(samples)
         if self.sample_summary is None:
             self.sample_summary = new_data
@@ -176,7 +180,7 @@ class NodeSet(object):
             assert self.sample_summary is not None
             self.children_summary = MergerSummary.merge(
                 (summary, None),
-                (self.sample_summary.get_subset(is_leaf_node), self.volume(index=is_leaf_node)),
+                (self.sample_summary, self.volume(index=is_leaf_node)),
                 index=is_leaf_node.to(dtype=torch.long)
             )
         else:
@@ -216,6 +220,7 @@ class FastDensityTree(object):
             min_depth=0, max_depth=16,
             num_samples_per_node=64, store_sample_summary=True,
             num_samples_per_batch=64 ** 3,
+            device=None
     ):
         assert root_box.device == sampler.device, f'[ERROR] Root box and sampler must be located on the same device. Found root box on {root_box.device} and sampler on {sampler.device}.'
         device = root_box.device
@@ -249,8 +254,6 @@ class FastDensityTree(object):
                 positions = batch.rescale(raw_samples).view(-1, batch.dimension)
                 values = field_evaluator.evaluate(positions).view(num_samples_per_node, num_current_nodes)
                 positions = positions.view(num_samples_per_node, num_current_nodes, batch.dimension)
-                if store_sample_summary:
-                    batch.store_sample_summary(values)
                 split_dimension = - torch.ones(num_current_nodes, dtype=torch.long, device=device)
                 if current_depth < max_depth:
                     classification = positions < batch.centers()[None, ...]
@@ -276,6 +279,9 @@ class FastDensityTree(object):
                     split_index = torch.arange(num_current_nodes, device=device)[split_required]
                     batch_children = batch.split_along_dimensions(split_dimension[split_required], index=split_index)
                     children.append(batch_children)
+                is_leaf_node = ~split_required
+                if store_sample_summary and torch.any(is_leaf_node):
+                    batch.store_sample_summary(values[:, is_leaf_node])
             if store_sample_summary and len(batches) > 1:
                 levels[current_depth] = NodeSet.merge(*batches) # to save data
             if len(children) > 1:

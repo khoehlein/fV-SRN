@@ -27,6 +27,7 @@ class FastDensityTreeSampler(ISampler):
 
         current_depth = 0
         samples = []
+        weights = []
         while torch.any(active_nodes):
             current_level = self.tree.levels[current_depth]
             active_subset = current_level.get_subset(active_nodes)
@@ -38,6 +39,7 @@ class FastDensityTreeSampler(ISampler):
                 sample_counts = counts[needs_samples]
                 sample_subset = active_subset.get_subset(needs_samples)
                 samples.append(self._draw_samples_from_subset(sample_subset, sample_counts))
+                weights.append(self._compute_weights(densities[needs_samples], sample_counts))
                 active_nodes[active_nodes.clone()] = needs_propagation
                 counts = counts[needs_propagation]
                 densities = densities[needs_propagation]
@@ -62,7 +64,8 @@ class FastDensityTreeSampler(ISampler):
                 densities = densities[is_nonzero]
             current_depth = current_depth + 1
         samples = torch.cat(samples, dim=0)
-        return samples
+        weights = torch.cat(weights, dim=0)
+        return samples, weights
 
     def _draw_samples_from_subset(self, node_set: NodeSet, counts: Tensor):
         assert len(counts) == node_set.num_nodes()
@@ -79,6 +82,15 @@ class FastDensityTreeSampler(ISampler):
         ]
         samples = torch.cat(samples, dim=0)
         return samples
+
+    def _compute_weights(self, densities, counts):
+        device = densities.device
+        dtype = densities.dtype
+        all_densities = [
+            torch.full((int(c.item()),), d.item(), dtype=dtype, device=device)
+            for d, c in zip(densities, counts)
+        ]
+        return 1. / torch.cat(all_densities).view(-1)
 
     def _apply_constraints(self, p_raw: Tensor, densities: Tensor):
         constraints = torch.zeros_like(p_raw[0])
@@ -131,7 +143,7 @@ def _test_sampler():
     alpha=0.01
     num_samples = 10000
     device = torch.device('cuda:0')
-    dtype = torch.float64
+    dtype = torch.float32
     evaluator = Evaluator(dimension, seed=seed, noise_amplitude=0.01)
 
     box = UnitCube(dimension, device=device, dtype=dtype)

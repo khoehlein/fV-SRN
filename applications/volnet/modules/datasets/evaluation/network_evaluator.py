@@ -7,7 +7,7 @@ from volnet.network import SceneRepresentationNetwork
 class NetworkEvaluator(IFieldEvaluator):
 
     def __init__(self, network: SceneRepresentationNetwork):
-        super(NetworkEvaluator, self).__init__(network.base_input_channels(), network.output_channels(), network.device)
+        super(NetworkEvaluator, self).__init__(network.base_input_channels(), network.output_channels(), network._device)
         self.network = network
 
     def forward(self, positions: Tensor) -> Tensor:

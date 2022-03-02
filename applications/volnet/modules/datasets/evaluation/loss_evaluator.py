@@ -32,7 +32,7 @@ class LossEvaluator(IFieldEvaluator):
     def forward(self, positions: Tensor) -> Tensor:
         volume_data = self.volume_evaluator.evaluate(positions)
         network_data = self.network_evaluator.evaluate(positions)
-        return self.loss_function(volume_data, network_data)
+        return self.loss_function(volume_data, network_data, reduction='none')
 
     def _verify_sources(self, network: Optional[NetworkEvaluator] = None, volume: Optional[VolumeEvaluator] = None):
         if network is None:
