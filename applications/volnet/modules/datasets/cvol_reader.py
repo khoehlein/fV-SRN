@@ -332,4 +332,7 @@ def _get_tensors():
 
 
 if __name__== '__main__':
-    _test_weird_offsetting()
+    data = VolumetricScene.from_cvol('/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/members/tk/t02.cvol')
+    data.set_active_feature(0)
+    feature = data.get_active_feature()
+    print('Finished')

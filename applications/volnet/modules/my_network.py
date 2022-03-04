@@ -364,7 +364,7 @@ class MySceneRepresentationNetwork(nn.Module):
         if '3d' not in self.latent_features or self.latent_features['3d']['ensemble'] is None:
             raise ValueError("Network wasn't loaded/initialized with ensemble-dependent volumentric latent grids")
         self.latent_features['3d']['ensemble'].reset_features(num_members)
-        return self.latent_features['3d']['ensemble'].features
+        return self.latent_features['3d']['ensemble'].num_channels
 
     # def export_to_pyrenderer(self, opt,
     #                          grid_encoding, return_grid_encoding_error=False): # pyrenderer.SceneNetwork.LatentGrid.Encoding):

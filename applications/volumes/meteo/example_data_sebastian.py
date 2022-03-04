@@ -120,7 +120,7 @@ class EnsembleConverter(object):
                     f'[INFO] Made it to the conversion step! Data shape: {full_data.shape}')
                 volumes[i].add_feature_from_tensor(member_id, torch.from_numpy(full_data))
         for i, vol in enumerate(volumes):
-            storage_path = os.path.join(self.target_dir, var_name, 't{:02d}.cvol'.format(var_name, i))
+            storage_path = os.path.join(self.target_dir, var_name, 't{:02d}.cvol'.format(i))
             vol.save(os.path.abspath(storage_path), compression=0)
 
     def _convert_variable_in_file(self, file_name, var_name, drop_nan_levels, attach_velocity, clamp_min, clamp_max):

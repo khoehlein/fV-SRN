@@ -180,7 +180,7 @@ class LossBuilder:
                                    content_layers,
                                    style_layers):
 
-        cnn = models.vgg19(pretrained=True).features.eval()
+        cnn = models.vgg19(pretrained=True).num_channels.eval()
         for p in cnn.parameters():
             p.requires_grad = False
 

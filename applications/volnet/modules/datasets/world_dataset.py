@@ -10,6 +10,7 @@ from common.mathparser import BigInteger
 from volnet.modules.datasets.dataset_type import DatasetType
 from volnet.modules.datasets.evaluation import LossEvaluator
 from volnet.modules.datasets.evaluation.network_evaluator import NetworkEvaluator
+from volnet.modules.datasets.output_mode import OutputMode
 from volnet.modules.datasets.resampling.interface import IImportanceSampler
 from volnet.modules.helpers import parse_slice_string
 from volnet.modules.datasets.position_sampler import PositionSampler
@@ -304,6 +305,10 @@ class WorldSpaceDensityData(Dataset):
         if self.return_weights:
             return self.data[item], self.weights[item]
         return self.data[item]
+
+    @staticmethod
+    def output_mode():
+        return OutputMode.DENSITY
 
 
 class WorldSpaceDensityEvaluator(NetworkEvaluator):
