@@ -2,8 +2,8 @@ from typing import List
 
 from torch import nn
 
-from volnet.modules.networks.processing.core_network.processor_sequential_wrapper import ProcessorSequentialWrapper
-from volnet.modules.networks.processing.core_network import custom_activations as ca
+from .processor_sequential_wrapper import ProcessorSequentialWrapper
+from . import custom_activations as ca
 
 
 class SimpleMLP(ProcessorSequentialWrapper):
@@ -13,7 +13,6 @@ class SimpleMLP(ProcessorSequentialWrapper):
             data_input_channels: int, latent_input_channels: int, output_channels: int,
             layer_sizes: List[int], activation: str, activation_params: List[str]
     ):
-
         activ_class = getattr(nn, activation, None)
         if activ_class is None:
             activ_class = getattr(ca, activation, None)

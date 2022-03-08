@@ -3,20 +3,28 @@ Helpers to evaluate the scene representation networks in world- and screen space
 Input: Network and the current batch from the dataloader
 """
 
-from typing import Optional
+from typing import Optional, Union
 import torch
 
+from volnet.modules.networks.pyrenderer import PyrendererSRN
 from volnet.network import SceneRepresentationNetwork
 from volnet.lossnet import LossNetScreen, LossNetWorld
-from volnet.training_data import TrainingData
 from volnet.raytracing import Raytracing
 
-import common.utils as utils
 import pyrenderer
 
 
+def _get_output_mode(network: Union[SceneRepresentationNetwork, PyrendererSRN]) -> str:
+    if isinstance(network, SceneRepresentationNetwork):
+        return network.output_mode().split(':')[0]
+    elif isinstance(network, PyrendererSRN):
+        return network.backend_output_mode().value.split(':')[0]
+    else:
+        raise NotImplementedError()
+
+
 class EvaluateScreen:
-    def __init__(self, network:SceneRepresentationNetwork, evaluator:pyrenderer.IImageEvaluator,
+    def __init__(self, network: Union[SceneRepresentationNetwork, PyrendererSRN], evaluator:pyrenderer.IImageEvaluator,
                  loss: Optional[LossNetScreen],
                  image_width:int, image_height:int, train:bool,
                  disable_inversion_trick: bool,
@@ -26,7 +34,7 @@ class EvaluateScreen:
         self._use_checkpointing = False if disable_inversion_trick else train
         self._loss = loss
 
-        self._network_output_mode = network.output_mode().split(':')[0]  # trim options
+        self._network_output_mode = _get_output_mode(network)  # trim options
         if self._network_output_mode == 'density' and train:
             raise ValueError( "For now, only rgbo-output is supported in screen-space for networks in training mode, no training through a TF yet")
         self._raytracing = Raytracing(evaluator, self._network_output_mode, 1.0, image_width, image_height, dtype, device)
@@ -62,20 +70,20 @@ class EvaluateScreen:
 
 
 class EvaluateWorld:
-    def __init__(self, network:SceneRepresentationNetwork, evaluator:pyrenderer.IImageEvaluator,
+    def __init__(self, network: Union[SceneRepresentationNetwork, PyrendererSRN], evaluator:pyrenderer.IImageEvaluator,
                  loss: Optional[LossNetWorld], dtype, device):
         self._network = network
         self._loss = loss
 
-        self._network_output_mode = network.output_mode().split(':')[0] # trim options
+        self._network_output_mode = _get_output_mode(network) # trim options
         self._loss_input_mode = self._network_output_mode if loss is None else loss.mode()
 
         assert self._network_output_mode in ['density', 'rgbo']
         assert self._loss_input_mode in ['density', 'rgbo']
 
-        if self._network_output_mode=='density' and self._loss_input_mode=='rgbo':
+        if self._network_output_mode == 'density' and self._loss_input_mode=='rgbo':
             raise NotImplementedError("Training through the TF is not supported yet")
-        if self._network_output_mode=='rgbo' and self._loss_input_mode=='density':
+        if self._network_output_mode == 'rgbo' and self._loss_input_mode=='density':
             raise ValueError("The loss function expects densities, but the network already predictions derived colors")
 
         if network.use_direction():

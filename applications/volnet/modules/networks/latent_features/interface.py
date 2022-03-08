@@ -16,6 +16,9 @@ class IFeatureModule(nn.Module):
     def num_channels(self):
         return self._num_channels
 
+    def output_channels(self):
+        return self.num_channels()
+
     def set_debug(self, debug):
         self._debug = debug
         return self
@@ -56,7 +59,7 @@ class ILatentFeatures(IFeatureModule):
         out = self.forward(positions, time, member)
         if self.is_debug():
             self._verify_outputs(positions, out)
-        return self
+        return out
 
     def forward(self, positions: Tensor, time: Tensor, member: Tensor) -> Tensor:
         raise NotImplementedError()
@@ -77,7 +80,4 @@ class ILatentFeatures(IFeatureModule):
         raise NotImplementedError()
 
     def uses_time(self) -> bool:
-        raise NotImplementedError()
-
-    def export_to_pyrenderer(self, grid_encoding, network: Optional[pyrenderer.SceneNetwork]=None, return_grid_encoding_error=False) -> pyrenderer.SceneNetwork:
         raise NotImplementedError()

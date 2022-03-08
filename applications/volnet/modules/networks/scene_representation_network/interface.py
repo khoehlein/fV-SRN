@@ -1,40 +1,46 @@
-from typing import Dict, Any, Optional
-
-import pyrenderer
 from torch import nn, Tensor
 
-from volnet.modules.networks.evaluation_mode import EvaluationMode
+from volnet.modules.networks.scene_representation_network.evaluation_mode import EvaluationMode
 
 
 class ISceneRepresentationNetwork(nn.Module):
 
-    def generalize_to_new_ensembles(self, num_members: int):
+    # def generalize_to_new_ensembles(self, num_members: int):
+    #     raise NotImplementedError()
+
+    # def supports_mixed_latent_spaces(self):
+    #     raise NotImplementedError()
+
+    def uses_direction(self):
         raise NotImplementedError()
 
-    def export_to_pyrenderer(self, grid_encoding, return_grid_encoding_error=False, network: Optional[pyrenderer.SceneNetwork] = None):
+    def uses_time(self):
         raise NotImplementedError()
 
-    def supports_mixed_latent_spaces(self):
+    def uses_positions(self):
+        raise NotImplementedError()
+
+    def uses_member(self):
+        raise NotImplementedError()
+
+    def uses_transfer_functions(self):
         raise NotImplementedError()
 
     def backend_output_mode(self):
         raise NotImplementedError()
 
-    def uses_direction(self):
+    def output_mode(self):
         raise NotImplementedError()
 
-    def num_latent_features_time(self):
-        raise NotImplementedError()
-
-    def num_latent_features_ensemble(self):
-        raise NotImplementedError()
-
-    def start_epoch(self):
-        raise NotImplementedError()
+    # def start_epoch(self):
+    #     raise NotImplementedError()
 
     def forward(
             self,
             positions: Tensor, transfer_functions: Tensor, time: Tensor, member:Tensor,
             evaluation_mode: EvaluationMode
     ):
+        raise NotImplementedError()
+
+    def output_channels(self):
         raise NotImplementedError()

@@ -18,8 +18,9 @@ class FixedGridImportanceSampler(IImportanceSampler):
     def init_parser(parser: argparse.ArgumentParser):
         group = parser.add_argument_group('FixedGridImportanceSampler')
         prefix = '--importance-sampler:grid:'
-        group.add_argument(prefix + 'grid-size', type=int, default=None, help="""
+        group.add_argument(prefix + 'grid-size', type=str, default=None, help="""
         grid resolution for loss-importance-based resampling of the dataset
+        Example: 64:64:64
         """)
         group.add_argument(prefix + 'num-samples-per-voxel', type=int, default=8, help="""
         number of samples per voxel for loss evaluation in importance-based dataset resampling
@@ -47,7 +48,12 @@ class FixedGridImportanceSampler(IImportanceSampler):
             for key in ['grid_size', 'num_samples_per_voxel', 'min_density', 'batch_size', 'sub_sampling']
         }
         if out['grid_size'] is not None:
-            out['grid_size'] = tuple([out['grid_size']] * 3)
+            gs = out['grid_size'].split(':')
+            assert len(gs) in {1, 3}
+            if len(gs) == 1:
+                gs = [gs[0]] * 3
+            out = (int(gs[0]), int(gs[1]), int(gs[2]))
+            out['grid_size'] = out
         return out
 
     def __init__(

@@ -1,14 +1,14 @@
 from typing import Optional
 
 import pyrenderer
-from torch import Tensor
+from torch import Tensor, nn
 
-from volnet.modules.networks.evaluation_mode import EvaluationMode
-from volnet.modules.networks.postprocessing.backend_output_mode import BackendOutputMode
+from volnet.modules.networks.scene_representation_network.evaluation_mode import EvaluationMode
 from volnet.modules.datasets.output_mode import OutputMode
+from .backend_output_mode import BackendOutputMode
 
 
-class IOutputParameterization():
+class IOutputParameterization(nn.Module):
 
     def input_channels(self) -> int:
         raise NotImplementedError()

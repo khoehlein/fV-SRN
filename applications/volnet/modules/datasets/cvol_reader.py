@@ -129,7 +129,7 @@ class VolumetricScene(object):
 
         def _read_new_header(self, f):
             version = self._uint_from_bytes(f.read(4))
-            world_size = tuple(reversed([self._float_from_bytes(f.read(4)) for _ in range(3)]))
+            world_size = tuple([self._float_from_bytes(f.read(4)) for _ in range(3)])
             num_features = self._uint_from_bytes(f.read(4))
             flags = self._uint_from_bytes(f.read(4))
             f.read(4)
@@ -152,7 +152,7 @@ class VolumetricScene(object):
         def _read_old_header(self, f):
             grid_size = [self._uint_from_bytes(f.read(8)) for _ in range(3)]
             voxel_size = [self._double_from_bytes(f.read(8)) for _ in range(3)]
-            world_size = tuple(reversed([g * v for g, v in zip(grid_size, voxel_size)]))
+            world_size = tuple([g * v for g, v in zip(grid_size, voxel_size)])
             data_type_code = self._uint_from_bytes(f.read(4))
             flags = int(f.read(1) != b'\x00')
             f.read(7)

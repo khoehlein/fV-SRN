@@ -5,7 +5,7 @@ from numpy import pi as PI
 import torch
 from torch import Tensor
 
-from volnet.modules.networks.preprocessing.interface import IComponentProcessor
+from .interface import IComponentProcessor
 
 
 class IFourierFeatures(IComponentProcessor):
@@ -15,8 +15,8 @@ class IFourierFeatures(IComponentProcessor):
     """
 
     def __init__(self, fourier_matrix: Tensor):
-        in_channels, out_channels = fourier_matrix.shape
-        super(IFourierFeatures, self).__init__(in_channels, out_channels)
+        in_channels, half_out_channels = fourier_matrix.shape
+        super(IFourierFeatures, self).__init__(in_channels, 2 * half_out_channels)
         self.register_buffer('fourier_matrix', fourier_matrix)
 
     def forward(self, x: Tensor):

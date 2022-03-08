@@ -2,10 +2,11 @@ from typing import Callable, Dict
 
 from torch import Tensor
 
-from volnet.modules.networks.evaluation_mode import EvaluationMode
-from volnet.modules.networks.postprocessing.interface import IOutputParameterization
-from volnet.modules.networks.postprocessing.backend_output_mode import BackendOutputMode
+from volnet.modules.networks.scene_representation_network.evaluation_mode import EvaluationMode
 from volnet.modules.datasets.output_mode import OutputMode
+from .backend_output_mode import BackendOutputMode
+
+from .interface import IOutputParameterization
 
 
 class ConstantChannelParameterization(IOutputParameterization):

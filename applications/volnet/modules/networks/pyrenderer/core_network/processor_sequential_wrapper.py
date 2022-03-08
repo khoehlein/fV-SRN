@@ -5,7 +5,7 @@ import pyrenderer
 import torch
 from torch import nn, Tensor
 
-from volnet.modules.networks.processing.interface import ICoreNetwork
+from volnet.modules.networks.core_network import ICoreNetwork
 
 
 class ProcessorSequentialWrapper(ICoreNetwork):

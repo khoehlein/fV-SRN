@@ -4,7 +4,7 @@ from typing import Optional, Dict, Any, Union
 from torch.nn import functional as F
 
 from volnet.modules.datasets.evaluation import VolumeEvaluator, LossEvaluator
-from volnet.modules.datasets.position_sampler import PositionSampler
+from volnet.modules.datasets.sampling.position_sampler import PositionSampler
 from volnet.modules.datasets.resampling import IImportanceSampler
 from volnet.modules.datasets.resampling.adaptive import DensityTreeImportanceSampler
 from volnet.modules.datasets.resampling.fixed_grid import FixedGridImportanceSampler
@@ -24,7 +24,7 @@ class DatasetResampler(object):
         prefix = '--dataset-resampling:'
         group.add_argument(
             prefix + 'method', type=str, default='random',
-            help="""loss type to compute for loss-importance-based resampling of the dataset"""
+            help="""method for resampling dataset Choices: random, importance:grid, importance:tree, importance:warp"""
         )
         group.add_argument(
             prefix + 'loss', type=str, default='l1', choices=['l1', 'l2', 'mse'],

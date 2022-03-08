@@ -4,9 +4,9 @@ import torch
 from torch import nn, Tensor
 
 from volnet.modules.networks.latent_features.indexing.key_indexer import KeyIndexer
-from volnet.modules.networks.latent_features.initialization.interface import IInitializer
+from volnet.modules.networks.latent_features.init import IInitializer
 from volnet.modules.networks.latent_features.interface import IFeatureModule
-from volnet.modules.networks.latent_features.indexing.features import FeatureGrid
+from volnet.modules.networks.latent_features.marginal.features import FeatureGrid
 
 
 class IFeatureArray(IFeatureModule):

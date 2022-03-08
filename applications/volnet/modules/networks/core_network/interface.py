@@ -20,6 +20,3 @@ class ICoreNetwork(nn.Module):
 
     def last_layer(self):
         raise NotImplementedError()
-
-    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None) -> pyrenderer.SceneNetwork:
-        raise NotImplementedError()

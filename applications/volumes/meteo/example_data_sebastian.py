@@ -12,6 +12,9 @@ import common.utils as commut # required to properly find pyrenderer
 import pyrenderer
 
 
+RESCALING = 'normalize' # 'clamp'
+
+
 class Axis(Enum):
     TIME = 'time'
     LEVEL = 'lev'
@@ -112,7 +115,7 @@ class EnsembleConverter(object):
                       f'Mean: {np.mean(variable_data)}, ' +
                       f'Std: {np.std(variable_data)}'
                       )
-                variable_data = self._normalize_data(variable_data, clamp_min, clamp_max)
+                variable_data = self._rescale_data(variable_data, clamp_min, clamp_max)
                 full_data = variable_data
                 if velocity_data is not None:
                     full_data = np.concatenate([full_data, velocity_data], axis=0)
@@ -144,7 +147,7 @@ class EnsembleConverter(object):
                   f'Mean: {np.mean(variable_data)}, ' +
                   f'Std: {np.std(variable_data)}'
             )
-            variable_data = self._normalize_data(variable_data, clamp_min, clamp_max)
+            variable_data = self._rescale_data(variable_data, clamp_min, clamp_max)
             self._store_snapshot(var_name, member_id, i, variable_data, velocity_data)
 
     @staticmethod
@@ -202,25 +205,31 @@ class EnsembleConverter(object):
         vol.worldX = 10
         vol.worldY = 10
         vol.worldZ = 1
-        vol.add_feature_from_tensor("vel+density", torch.from_numpy(full_data))
+        vol.add_feature_from_tensor("density" if velocity_data is None else "vel+density", torch.from_numpy(full_data))
         vol.save(os.path.abspath(storage_path), compression=0)
 
     def _get_storage_path(self, var_name, member_id, i):
         return os.path.join(self.target_dir, var_name, member_id, 't{:02d}.cvol'.format(i))
 
-    def _normalize_data(self, data, clamp_min, clamp_max):
-        if clamp_min is not None:
-            data = np.clip(data, a_min=clamp_min)
-            norm_min = clamp_min
+    def _rescale_data(self, data, clamp_min, clamp_max):
+        if RESCALING == 'clamp':
+            if clamp_min is not None:
+                data = np.clip(data, a_min=clamp_min)
+                norm_min = clamp_min
+            else:
+                norm_min = np.min(data)
+            if clamp_max is not None:
+                data = np.clip(data, a_max=clamp_max)
+                norm_max = clamp_max
+            else:
+                norm_max = np.max(data)
+            data = (data - norm_min) / (norm_max - norm_min)
+        elif RESCALING == 'normalize':
+            data = (data - np.mean(data)) / np.std(data, ddof=1)
         else:
-            norm_min = np.min(data)
-        if clamp_max is not None:
-            data = np.clip(data, a_max=clamp_max)
-            norm_max = clamp_max
-        else:
-            norm_max = np.max(data)
-        data = (data - norm_min) / (norm_max - norm_min)
+            raise NotImplementedError()
         return data
+
 
 
 def build_parser():

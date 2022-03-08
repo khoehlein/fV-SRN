@@ -3,21 +3,22 @@ from typing import Dict, Any, Optional
 
 from torch import Tensor
 
-from volnet.modules.networks.postprocessing.density_output import CHOICES as density_outputs_by_name
-from volnet.modules.networks.postprocessing.rgbo_output import CHOICES as rgbo_outputs_by_name
-from volnet.modules.networks.evaluation_mode import EvaluationMode
-from volnet.modules.networks.postprocessing.interface import IOutputParameterization
-from volnet.modules.networks.postprocessing.backend_output_mode import BackendOutputMode
+from volnet.modules.networks.output_parameterization.density_output import CHOICES as DENSITY_OUTPUTS_BY_NAME
+from volnet.modules.networks.output_parameterization.rgbo_output import CHOICES as RGBO_OUTPUTS_BY_NAME
+from volnet.modules.networks.scene_representation_network.evaluation_mode import EvaluationMode
+from volnet.modules.networks.output_parameterization import IOutputParameterization
+from volnet.modules.networks.output_parameterization import BackendOutputMode
 from volnet.modules.datasets.output_mode import OutputMode
 
+
 _choices_by_output_mode = {
-    OutputMode.DENSITY: density_outputs_by_name,
-    OutputMode.RGBO: rgbo_outputs_by_name,
+    OutputMode.DENSITY: DENSITY_OUTPUTS_BY_NAME,
+    OutputMode.RGBO: RGBO_OUTPUTS_BY_NAME,
     OutputMode.MULTIVARIATE: {} # currently not supported
 }
 
 
-class OutputParameterization(IOutputParameterization):
+class PyrendererOutputParameterization(IOutputParameterization):
 
     OUTPUT_MODE: OutputMode = None # will be set during parser initialization
 
@@ -31,11 +32,13 @@ class OutputParameterization(IOutputParameterization):
         group = parser.add_argument_group('OutputParameterization')
         prefix = '--network:output:'
         if cls.OUTPUT_MODE is None:
-            assert output_mode is not None
             cls.set_output_mode(output_mode)
+        if output_mode is None:
+            output_mode = cls.OUTPUT_MODE
+        assert output_mode is not None, '[ERROR] Output mode must be given either through class argument or keyword argument'
         choices = list(_choices_by_output_mode[cls.OUTPUT_MODE].keys())
         group.add_argument(
-            prefix + 'parameterization-mode', choices=choices, type=str, default='',
+            prefix + 'parameterization-method', choices=choices, type=str, default='',
             help="""
             The possible outputs of the network:
             - density: a scalar density is produced that is then mapped to color via the TF.
@@ -53,11 +56,12 @@ class OutputParameterization(IOutputParameterization):
         if output_mode is None:
             assert cls.OUTPUT_MODE is not None, '[ERROR] OutputParameterization output mode must be set before instance can be created from arguments.'
             output_mode = cls.OUTPUT_MODE
-        parameterization_mode = args['network:output:parameterization-mode']
+        parameterization_mode = args['network:output:parameterization_method']
         parameterization_class = _choices_by_output_mode[output_mode][parameterization_mode]
         return cls(parameterization_class())
 
     def __init__(self, parameterization: IOutputParameterization):
+        super(PyrendererOutputParameterization, self).__init__()
         self._parameterization = parameterization
 
     def input_channels(self) -> int:

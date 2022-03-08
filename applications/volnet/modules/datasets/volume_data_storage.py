@@ -22,7 +22,8 @@ class VolumeDataStorage(object):
                              + ':06d}/density_{'
                              + VolumeDataStorage.FILE_PATTERN_TIME_KEY
                              + ':06d}.cvol"')
-        group.add_argument('--volume-filename-pattern', type=str, help=f"""
+        prefix = '--data-storage:'
+        group.add_argument(prefix + 'filename-pattern', type=str, help=f"""
         file name pattern used to generate volume file names. 
         To specify time and ensemble indices, the following keys are used:
         
@@ -31,16 +32,16 @@ class VolumeDataStorage(object):
         
         Example: {example_pattern}
         """, required=True)
-        group.add_argument('--base-path', type=str, default=None, help="""
+        group.add_argument(prefix + 'base-path', type=str, default=None, help="""
         base path to be prepended in front of file name pattern
         """)
-        group.add_argument('--ensemble-index-range', type=str, default=None, help="""
+        group.add_argument(prefix + 'ensemble:index-range', type=str, default=None, help="""
             Ranges used for the ensemble index. The indices are obtained via
             <code>range(*map(int, {ensemble_index_range}.split(':')))</code>
             
             Example: "0:10:2" (Default: "0:1")
         """)
-        group.add_argument('--timestep-index-range', type=str, default=None, help="""
+        group.add_argument(prefix + 'timestep:index-range', type=str, default=None, help="""
             Ranges used for the keyframes for time interpolation. 
             At those timesteps, representative vectors are generated, optionally trained,
             and interpolated between timesteps
@@ -48,7 +49,7 @@ class VolumeDataStorage(object):
 
             Example: "0:10:2" (Default: "0:1")
         """)
-        group.add_argument('--disable-file-verification', action='store_false', dest='verify_files_exist', help="""
+        group.add_argument(prefix + 'disable-file-verification', action='store_false', dest='verify_files_exist', help="""
         disable file verification for performance reasons
         """)
         group.set_defaults(verify_files_exist=True)
@@ -68,9 +69,10 @@ class VolumeDataStorage(object):
 
     @classmethod
     def from_dict(cls, args):
+        prefix = 'data_storage:'
         return cls(
-            args['volume_filename_pattern'], base_path=args['base_path'],
-            timestep_index=args['timestep_index_range'], ensemble_index=args['ensemble_index_range'],
+            args[prefix + 'filename_pattern'], base_path=args[prefix + 'base_path'],
+            timestep_index=args[prefix + 'timestep:index_range'], ensemble_index=args[prefix + 'ensemble:index_range'],
             verify_files_exist=args['verify_files_exist']
         )
 

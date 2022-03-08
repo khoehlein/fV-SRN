@@ -33,16 +33,16 @@ class PositionSampler(object):
                 group_.add_argument(prefix + arg, **kwargs)
 
             add_argument_with_prefix(
-                'sampling-method', type=str, default='random', choices=['random', 'plastic', 'halton'],
+                'method', type=str, default='random', choices=['random', 'plastic', 'halton'],
                 help="""
                 name of sampling algorithm
                 """)
 
-        group = parser.add_argument_group('WorldModePositionSampling')
-        add_arguments(group, '--', True)  # flags affect both training and validation
-        add_arguments(group, f'--{DatasetType.TRAINING.value}:', False)  # flags affect only training and overwrite previous settings
-        add_arguments(group, f'--{DatasetType.VALIDATION.value}:', False)  # flags affect only validation and overwrite previous settings
-        group.add_argument('--sampler-cache', type=str, default=None, help="""
+        group = parser.add_argument_group('WorldSpacePositionSampling')
+        add_arguments(group, '--sampling:', True)  # flags affect both training and validation
+        add_arguments(group, f'--sampling:{DatasetType.TRAINING.value}:', False)  # flags affect only training and overwrite previous settings
+        add_arguments(group, f'--sampling:{DatasetType.VALIDATION.value}:', False)  # flags affect only validation and overwrite previous settings
+        group.add_argument('--sampling:cache', type=str, default=None, help="""
         path to cache directory for position sampler
         """)
 
@@ -50,15 +50,15 @@ class PositionSampler(object):
     def from_dict(cls, args: Dict[str, Any], mode: Optional[DatasetType] = DatasetType.TRAINING):
 
         def get_argument(option):
-            argument = args[option] # default argument
-            mode_argument = args[f'{mode.value}:{option}'] # mode argument
+            argument = args['sampling:' + option] # default argument
+            mode_argument = args[f'sampling:{mode.value}:{option}'] # mode argument
             if mode_argument is not None:
                 # overwrite default if mode argument is given
                 argument = mode_argument
             return argument
 
-        method = get_argument('sampling_method')
-        cache = args['sampler_cache']
+        method = get_argument('method')
+        cache = args['sampling:cache']
         return cls(method=method, cache=cache, dimension=3)
 
     def __init__(self, method='random', dimension=3, cache=None):

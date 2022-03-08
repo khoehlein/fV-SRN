@@ -34,10 +34,11 @@ class RenderTool(object):
     @staticmethod
     def init_parser(parser: argparse.ArgumentParser):
         group = parser.add_argument_group('Rendering')
-        group.add_argument('--renderer-settings-file', type=str, required=True, help="""
+        prefix = '--renderer:'
+        group.add_argument(prefix + 'settings-file', type=str, required=True, help="""
             Settings .json file,specifying camera, step size and initial volume.
         """)
-        group.add_argument('--tf-dir', type=str, default=None, help="""
+        group.add_argument(prefix + 'tf-dir', type=str, default=None, help="""
         Directory with transfer function files for TF-generalization training.
         If not specified, the TF from the settings is used.
         If specified, this replaces the TF from the settings.
@@ -45,7 +46,7 @@ class RenderTool(object):
 
     @classmethod
     def from_dict(cls, args, device):
-        settings_file = os.path.abspath(args['renderer_settings_file'])
+        settings_file = os.path.abspath(args['renderer:settings_file'])
         if cls._config_file_mapper is not None:
             settings_file = cls._config_file_mapper(settings_file)
         image_evaluator = pyrenderer.load_from_json(settings_file)

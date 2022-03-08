@@ -3,10 +3,9 @@ from typing import List, Any, Optional, Tuple
 import torch
 from torch import Tensor, nn
 
-from volnet.modules.networks.latent_features.indexing.features import FeatureVector, FeatureGrid
+from volnet.modules.networks.latent_features.marginal.features import FeatureVector, FeatureGrid
 from volnet.modules.networks.latent_features.indexing.key_indexer import KeyIndexer
-from volnet.modules.networks.latent_features.initialization.interface import IInitializer
-from volnet.modules.networks.latent_features.initialization.torch_init import DefaultInitializer
+from volnet.modules.networks.latent_features.init import IInitializer, DefaultInitializer
 from volnet.modules.networks.latent_features.interface import IFeatureModule
 
 
@@ -82,7 +81,7 @@ class EnsembleFeatureGrid(IEnsembleFeatures):
 
     def __init__(
             self,
-            member_keys: List[Any], grid_size: Tuple[int, int, int], num_channels: int,
+            member_keys: List[Any], num_channels: int, grid_size: Tuple[int, int, int],
             initializer: Optional[IInitializer] = None,
             debug=False, device=None, dtype=None
     ):

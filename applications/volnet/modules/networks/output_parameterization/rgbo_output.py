@@ -4,9 +4,9 @@ import torch
 from torch import Tensor
 from torch.nn import functional as F
 
-from volnet.modules.networks.postprocessing.constant_channel_parameterization import ConstantChannelParameterization
-from volnet.modules.networks.postprocessing.backend_output_mode import BackendOutputMode
 from volnet.modules.datasets.output_mode import OutputMode
+from .backend_output_mode import BackendOutputMode
+from .constant_channel_parameterization import ConstantChannelParameterization
 
 
 class _RGBOOutput(ConstantChannelParameterization):
@@ -85,6 +85,7 @@ class SoftClampExponentialRGBOOutput(_RGBOOutput):
 
 
 CHOICES = {
+    '': SoftClampRGBOOutput,
     'soft-clamp': SoftClampRGBOOutput,
     'direct': DirectRGBOOutput,
     'soft-clamp-exp': SoftClampExponentialRGBOOutput

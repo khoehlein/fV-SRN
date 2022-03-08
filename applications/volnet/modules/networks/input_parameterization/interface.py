@@ -1,6 +1,3 @@
-from typing import Optional
-
-import pyrenderer
 from torch import nn, Tensor
 
 
@@ -26,5 +23,17 @@ class IInputParameterization(nn.Module):
     def output_channels(self) -> int:
         raise NotImplementedError()
 
-    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None) -> pyrenderer.SceneNetwork:
+    def uses_positions(self):
+        raise NotImplementedError()
+
+    def uses_transfer_functions(self):
+        raise NotImplementedError()
+
+    def uses_time(self) -> bool:
+        raise NotImplementedError()
+
+    def uses_member(self):
+        raise NotImplementedError()
+
+    def uses_directions(self) -> bool:
         raise NotImplementedError()

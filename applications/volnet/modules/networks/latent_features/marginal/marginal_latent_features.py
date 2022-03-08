@@ -1,11 +1,9 @@
-from typing import Any, Optional, Union, Tuple
+from typing import Any, Optional
 
-import numpy as np
-import pyrenderer
 import torch
 from torch import Tensor
 
-from volnet.modules.networks.latent_features.indexing.features import FeatureGrid
+from volnet.modules.networks.latent_features.marginal.features import FeatureGrid
 from volnet.modules.networks.latent_features.interface import ILatentFeatures
 from volnet.modules.networks.latent_features.marginal.ensemble_features import IEnsembleFeatures
 from volnet.modules.networks.latent_features.marginal.temporal_features import ITemporalFeatures
@@ -18,66 +16,6 @@ class MarginalLatentFeatures(ILatentFeatures):
 
     def uses_time(self) -> bool:
         return self.temporal_features is not None
-
-    def export_to_pyrenderer(
-            self,
-            grid_encoding,
-            network: Optional[pyrenderer.SceneNetwork] = None,
-            return_grid_encoding_error=False
-    ) -> Union[pyrenderer.SceneNetwork, Tuple[pyrenderer.SceneNetwork, float]]:
-        if self.uses_linear_features():
-            raise RuntimeError('[ERROR] Use of linear features is not supported in pyrenderer export!')
-        if network is None:
-            network = pyrenderer.SceneNetwork()
-        encoding_error = 0
-        encoding_error_count = 0
-        if self.uses_positions():
-            if self.uses_time() or self.uses_member():
-                time_key_frames = self.temporal_features.get_time_key_frames().tolist() if self.uses_time() else [0]
-                if len(time_key_frames) > 1:
-                    delta = time_key_frames[0] - time_key_frames[1]
-                    expected = delta * np.arange(len(time_key_frames)) + time_key_frames[0]
-                    assert np.all(np.array(time_key_frames) == expected), \
-                        '[ERROR] Pyrenderer doesnot support irregular time grids.'
-                ensemble_keys = self.ensemble_features.get_ensemble_keys() if self.uses_member() else [0]
-                if len(ensemble_keys) > 1:
-                    expected = np.arange(len(ensemble_keys)) + ensemble_keys[0]
-                    assert np.all(np.array(ensemble_keys) == expected), \
-                        '[ERROR] Pyrenderer does not support irregular member keys.'
-                grid_info = pyrenderer.SceneNetwork.LatentGridTimeAndEnsemble(
-                    time_min=time_key_frames[0],
-                    time_num=self.temporal_features.num_key_times() if self.uses_time() else 0,
-                    time_step=time_key_frames[1] - time_key_frames[0] if len(time_key_frames) > 1 else 1,
-                    ensemble_min=min(ensemble_keys),
-                    ensemble_num=self.ensemble_features.num_members() if self.uses_member() else 0)
-                if self.uses_time():
-                    grid = self.temporal_features.get_grid()
-                    for i in range(self.temporal_features.num_key_times()):
-                        e = grid_info.set_time_grid_from_torch(i, grid[i:i + 1], grid_encoding)
-                        encoding_error += e
-                        encoding_error_count += 1
-                if self.uses_member():
-                    grid = self.ensemble_features.get_grid()
-                    for i in range(self.ensemble_features.num_members()):
-                        e = grid_info.set_ensemble_grid_from_torch(i, grid[i:i + 1], grid_encoding)
-                        encoding_error += e
-                        encoding_error_count += 1
-                network.latent_grid = grid_info
-            else:
-                grid = self.volumetric_features.get_grid()
-                grid_info = pyrenderer.SceneNetwork.LatentGridTimeAndEnsemble(
-                    time_min=0, time_num=1, time_step=1,
-                    ensemble_min=0, ensemble_num=0)
-                e = grid_info.set_time_grid_from_torch(0, grid, grid_encoding)
-                encoding_error += e
-                encoding_error_count += 1
-                network.latent_grid = grid_info
-            if not network.latent_grid.is_valid():
-                raise RuntimeError('[ERROR] Exported latent grid is invalid')
-        if return_grid_encoding_error:
-            out = encoding_error / encoding_error_count if encoding_error_count > 0 else 0
-            return network, out
-        return network
 
     def __init__(
             self,

@@ -17,31 +17,32 @@ class StorageManager(object):
     @staticmethod
     def init_parser(parser: argparse.ArgumentParser, base_directory):
         parser_group = parser.add_argument_group("Output")
-        parser.add_argument('--output-base-dir', type=str, default=base_directory)
-        parser_group.add_argument('--log-dir', type=str, default='results/log',
+        prefix = '--output:'
+        parser.add_argument(prefix + 'base-dir', type=str, default=base_directory)
+        parser_group.add_argument(prefix + 'log-dir', type=str, default='results/log',
                                   help='directory for tensorboard logs')
-        parser_group.add_argument('--checkpoint-dir', type=str, default='results/model',
+        parser_group.add_argument(prefix + 'checkpoint-dir', type=str, default='results/model',
                                   help='Output directory for the checkpoints')
-        parser_group.add_argument('--hdf5-dir', type=str, default='results/hdf5',
+        parser_group.add_argument(prefix + 'hdf5-dir', type=str, default='results/hdf5',
                                   help='Output directory for the hdf5 summary files')
-        parser_group.add_argument('--name', type=str, default=None,
+        parser_group.add_argument(prefix + 'experiment-name', type=str, default=None,
                                   help='Output name. If not specified, use the next available index')
-        parser_group.add_argument('--save-frequency', type=int, default=10,
+        parser_group.add_argument(prefix + 'save-frequency', type=int, default=10,
                                   help='Every that many epochs, a checkpoint is saved')
         parser_group.add_argument('--profile', action='store_true')
 
     def __init__(self, opt, overwrite_output=False):
         self.opt = opt
         self.opt.update({
-            key: os.path.join(opt['output_base_dir'], opt[key])
-            for key in ['log_dir', 'checkpoint_dir', 'hdf5_dir']
+            key: os.path.join(opt['output:base_dir'], opt[key])
+            for key in ['output:log_dir', 'output:checkpoint_dir', 'output:hdf5_dir']
         })
         self.overwrite_output = overwrite_output
 
     def print_output_directories(self):
-        print("Model directory:", self.opt['checkpoint_dir'])
-        print("Log directory:", self.opt['log_dir'])
-        print("HDF5 directory:", self.opt['hdf5_dir'])
+        print("Model directory:", self.opt['output:checkpoint_dir'])
+        print("Log directory:", self.opt['output:log_dir'])
+        print("HDF5 directory:", self.opt['output:hdf5_dir'])
 
     def _find_next_run_number(self, folder):
         if not os.path.exists(folder): return 0
@@ -53,24 +54,24 @@ class StorageManager(object):
 
     def make_output_directories(self):
         opt = self.opt
-        if opt['name'] is None:
-            nextRunNumber = max(self._find_next_run_number(opt['log_dir']),
-                                self._find_next_run_number(opt['checkpoint_dir'])) + 1
+        if opt['output:experiment_name'] is None:
+            nextRunNumber = max(self._find_next_run_number(opt['output:log_dir']),
+                                self._find_next_run_number(opt['output:checkpoint_dir'])) + 1
             print('Current run: %05d' % nextRunNumber)
             runName = 'run%05d' % nextRunNumber
         else:
-            runName = opt['name']
+            runName = opt['output:experiment_name']
             self.overwrite_output = True
-        self.log_dir = os.path.join(opt['log_dir'], runName)
-        self.checkpoint_dir = os.path.join(opt['checkpoint_dir'], runName)
-        self.hdf5_file = os.path.join(opt['hdf5_dir'], runName + ".hdf5")
+        self.log_dir = os.path.join(opt['output:log_dir'], runName)
+        self.checkpoint_dir = os.path.join(opt['output:checkpoint_dir'], runName)
+        self.hdf5_file = os.path.join(opt['output:hdf5_dir'], runName + ".hdf5")
         if self.overwrite_output and (os.path.exists(self.log_dir) or os.path.exists(self.checkpoint_dir) or os.path.exists(self.hdf5_file)):
             print(f"Warning: Overwriting previous run with name {runName}")
             if os.path.exists(self.log_dir):
                 shutil.rmtree(self.log_dir)
         os.makedirs(self.log_dir, exist_ok=self.overwrite_output)
         os.makedirs(self.checkpoint_dir, exist_ok=self.overwrite_output)
-        os.makedirs(opt['hdf5_dir'], exist_ok=True)
+        os.makedirs(opt['output:hdf5_dir'], exist_ok=True)
 
     def store_script_info(self):
         with open(os.path.join(self.checkpoint_dir, 'info.txt'), "w") as text_file:

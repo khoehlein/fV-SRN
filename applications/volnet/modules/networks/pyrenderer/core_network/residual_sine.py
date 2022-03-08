@@ -4,8 +4,8 @@ from typing import List
 import torch
 from torch import nn, Tensor
 
-from volnet.modules.networks.processing.core_network.custom_activations import Sine
-from volnet.modules.networks.processing.core_network.processor_sequential_wrapper import ProcessorSequentialWrapper
+from .custom_activations import Sine
+from .processor_sequential_wrapper import ProcessorSequentialWrapper
 
 
 class ResidualSineLayer(nn.Module):

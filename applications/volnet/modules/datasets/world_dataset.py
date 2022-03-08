@@ -13,14 +13,14 @@ from volnet.modules.datasets.evaluation.network_evaluator import NetworkEvaluato
 from volnet.modules.datasets.output_mode import OutputMode
 from volnet.modules.datasets.resampling.interface import IImportanceSampler
 from volnet.modules.helpers import parse_slice_string
-from volnet.modules.datasets.position_sampler import PositionSampler
+from volnet.modules.datasets.sampling.position_sampler import PositionSampler
 from volnet.modules.datasets.evaluation.volume_evaluator import VolumeEvaluator
 from volnet.training_data import _cat_collate as cat_collate
 
 import matplotlib.pyplot as plt
 
 
-def plot_3d(positions):
+def _plot_3d(positions):
     print('Stats:', np.amin(positions, axis=0), np.amax(positions, axis=0))
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
@@ -269,7 +269,7 @@ class WorldSpaceDensityData(Dataset):
             positions, weights = importance_sampler.generate_samples(self.num_samples_per_volume, loss_evaluator, grid_size=resolution)
             targets = volume_evaluator.evaluate(positions)
             positions = positions.cpu().numpy()
-            plot_3d(positions)
+            # _plot_3d(positions)
             targets = targets.data.cpu().numpy()
             weights = weights.data.cpu().numpy()
             tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(0, timestep_index, ensemble_index, self.num_samples_per_volume)

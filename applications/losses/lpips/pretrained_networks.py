@@ -5,7 +5,7 @@ from torchvision import models as tv
 class squeezenet(torch.nn.Module):
     def __init__(self, requires_grad=False, pretrained=True):
         super(squeezenet, self).__init__()
-        pretrained_features = tv.squeezenet1_1(pretrained=pretrained).num_channels
+        pretrained_features = tv.squeezenet1_1(pretrained=pretrained).features
         self.slice1 = torch.nn.Sequential()
         self.slice2 = torch.nn.Sequential()
         self.slice3 = torch.nn.Sequential()
@@ -56,7 +56,7 @@ class squeezenet(torch.nn.Module):
 class alexnet(torch.nn.Module):
     def __init__(self, requires_grad=False, pretrained=True):
         super(alexnet, self).__init__()
-        alexnet_pretrained_features = tv.alexnet(pretrained=pretrained).num_channels
+        alexnet_pretrained_features = tv.alexnet(pretrained=pretrained).features
         self.slice1 = torch.nn.Sequential()
         self.slice2 = torch.nn.Sequential()
         self.slice3 = torch.nn.Sequential()
@@ -93,10 +93,11 @@ class alexnet(torch.nn.Module):
 
         return out
 
+
 class vgg16(torch.nn.Module):
     def __init__(self, requires_grad=False, pretrained=True):
         super(vgg16, self).__init__()
-        vgg_pretrained_features = tv.vgg16(pretrained=pretrained).num_channels
+        vgg_pretrained_features = tv.vgg16(pretrained=pretrained).features
         self.slice1 = torch.nn.Sequential()
         self.slice2 = torch.nn.Sequential()
         self.slice3 = torch.nn.Sequential()

@@ -1,8 +1,8 @@
 import torch
 from torch import Tensor
 
-from volnet.modules.networks.postprocessing.constant_channel_parameterization import ConstantChannelParameterization
-from volnet.modules.networks.postprocessing.backend_output_mode import BackendOutputMode
+from .constant_channel_parameterization import ConstantChannelParameterization
+from .backend_output_mode import BackendOutputMode
 from volnet.modules.datasets.output_mode import OutputMode
 
 
@@ -41,6 +41,7 @@ class DirectDensityOutput(_DensityOutput):
 
 
 CHOICES = {
+    '': SoftClampDensityOutput,
     'soft-clamp': SoftClampDensityOutput,
     'direct': DirectDensityOutput,
 }

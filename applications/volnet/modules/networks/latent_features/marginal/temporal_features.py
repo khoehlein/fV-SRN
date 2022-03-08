@@ -2,10 +2,9 @@ from typing import Optional, Tuple, List, Any
 
 from torch import Tensor
 
-from volnet.modules.networks.latent_features.indexing.feature_arrays import FeatureVectorArray, FeatureGridArray
+from volnet.modules.networks.latent_features.marginal.feature_arrays import FeatureVectorArray, FeatureGridArray
 from volnet.modules.networks.latent_features.indexing.time_indexer import TimeIndexer
-from volnet.modules.networks.latent_features.initialization.interface import IInitializer
-from volnet.modules.networks.latent_features.initialization.torch_init import DefaultInitializer
+from volnet.modules.networks.latent_features.init import IInitializer, DefaultInitializer
 from volnet.modules.networks.latent_features.interface import IFeatureModule
 
 
@@ -58,9 +57,10 @@ class TemporalFeatureVector(ITemporalFeatures):
 
     def forward(self, positions: Tensor, time: Tensor) -> Tensor:
         lower, upper, fraction = self.key_time_index.query(time)
+        fraction = fraction[:, None]
         features_lower = self.key_features.evaluate(positions, lower)
         features_upper = self.key_features.evaluate(positions, upper)
-        features = features_lower + fraction[:, None] * features_upper
+        features = (1. - fraction) * features_lower + fraction * features_upper
         return features
 
     def uses_positions(self):

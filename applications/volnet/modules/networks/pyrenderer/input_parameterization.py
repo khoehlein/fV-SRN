@@ -5,48 +5,31 @@ import pyrenderer
 import torch
 from torch import Tensor
 
-from volnet.modules.networks.preprocessing.direct_forward import DirectForward
-from volnet.modules.networks.preprocessing.fourier_features import (
+from volnet.modules.networks.input_parameterization import (
+    DirectForward,
     IFourierFeatures, RandomFourierFeatures, NerfFourierFeatures
 )
-from volnet.modules.networks.preprocessing.interface import IInputParameterization
+from volnet.modules.networks.input_parameterization import IInputParameterization
 
 
-class InputParameterization(IInputParameterization):
+class PyrendererInputParameterization(IInputParameterization):
 
-    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None) -> pyrenderer.SceneNetwork:
-        if network is None:
-            network = pyrenderer.SceneNetwork()
-        if self.fourier_positions is not None:
-            B = self.fourier_positions.get_fourier_matrix()
-            network.input.set_fourier_matrix_from_tensor(B, True)
-        else:
-            network.input.disable_fourier_features()
-        network.input.has_time = self.uses_time()
-        return network
-
-    def init_parser(self, parser: argparse.ArgumentParser):
+    @staticmethod
+    def init_parser(parser: argparse.ArgumentParser):
         group = parser.add_argument_group('InputParameterization')
-        prefix = '--network:inputs:'
+        prefix = '--network:input:'
         group.add_argument(
-            prefix + 'use-direct-time', dest='network:inputs:use_direct_time', action='store_true',
+            prefix + 'use-direct-time', dest='network_inputs_use_direct_time', action='store_true',
             help="""use time as direct input to the core processing module"""
         )
-        group.add_argument(
-            prefix + 'fourier:method', type=str, default='nerf', choices=['nerf', 'random'],
-            help="""method for constructing the Fourier matrices"""
-        )
-        group.add_argument(
-            prefix + 'fourier:random:std', type=float, default=0.01,
-            help="""standard deviation for computinf Fourier matrices in random mode"""
-        )
+        group.set_defaults(network_inputs_use_direct_time=False)
         group.add_argument(
             prefix + 'fourier:positions:num-features', type=int, default=0,
             help="""number of Fourier features on position input"""
         )
         group.add_argument(
             prefix + 'fourier:positions:method', type=str, default=None, choices=['nerf', 'random'],
-            help="""method for constructing the Fourier matrices forpositions"""
+            help="""method for constructing the Fourier matrices for positions"""
         )
         group.add_argument(
             prefix + 'fourier:time:num-features', type=int, default=0,
@@ -62,7 +45,7 @@ class InputParameterization(IInputParameterization):
         )
         group.add_argument(
             prefix + 'fourier:random:std', type=float, default=0.01,
-            help="""standard deviation for computinf Fourier matrices in random mode"""
+            help="""standard deviation for Fourier matrices in random mode"""
         )
 
     @classmethod
@@ -70,7 +53,7 @@ class InputParameterization(IInputParameterization):
         def get_arg(name):
             return args['network:input:' + name]
 
-        use_direct_time = get_arg('use_direct_time')
+        use_direct_time = args['network_inputs_use_direct_time']
 
         def build_fourier_processor(name: str, in_channels: int):
             num_features = get_arg(f'fourier:{name}:num_features')
@@ -98,7 +81,7 @@ class InputParameterization(IInputParameterization):
             fourier_time: Optional[IFourierFeatures] = None,
             use_direct_time: Optional[bool] = False
     ):
-        super(InputParameterization, self).__init__()
+        super(PyrendererInputParameterization, self).__init__()
         self.direct_positions = DirectForward(3)
         self.direct_time = DirectForward(1) if use_direct_time else None
         self.fourier_positions = fourier_positions
@@ -144,6 +127,9 @@ class InputParameterization(IInputParameterization):
     def uses_fourier_positions(self):
         return self.fourier_positions is not None
 
+    def uses_positions(self):
+        return True
+
     def uses_time(self):
         return self.uses_direct_time() or self.uses_fourier_time()
 
@@ -152,3 +138,26 @@ class InputParameterization(IInputParameterization):
         Support for directions is not implemented!
         """
         return False
+
+    def uses_transfer_functions(self):
+        """
+        Support for transfer functions is not implemented!
+        """
+        return False
+
+    def uses_member(self):
+        """
+        Support for member is not implemented!
+        """
+        return False
+
+    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None) -> pyrenderer.SceneNetwork:
+        if network is None:
+            network = pyrenderer.SceneNetwork()
+        if self.fourier_positions is not None:
+            B = self.fourier_positions.get_fourier_matrix()
+            network.input.set_fourier_matrix_from_tensor(B, True)
+        else:
+            network.input.disable_fourier_features()
+        network.input.has_time = self.uses_time()
+        return network

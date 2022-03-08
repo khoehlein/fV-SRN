@@ -67,10 +67,11 @@ class FeatureGrid(IFeatureModule):
         return tuple(self.data.shape[-3:])
 
     def evaluate(self, positions: Tensor):
-        grid = 2. * torch.flip(positions, [-1]) - 1.
+        grid = 2. * positions - 1.
         grid = grid.view(*[1 for _ in self.grid_size()], *positions.shape)
-        samples = F.grid_sample(self.data[None, ...], grid, mode='bilinear', align_corners=False)
-        return samples.view(len(positions), self.num_channels())
+        samples = F.grid_sample(self.data[None, ...], grid, mode='bilinear', align_corners=False, padding_mode='border')
+        out = samples.view(self.num_channels(), len(positions)).T
+        return out
 
     def get_grid(self):
         return self.data

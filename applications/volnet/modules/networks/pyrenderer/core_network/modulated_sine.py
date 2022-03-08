@@ -3,7 +3,7 @@ from typing import List
 import torch
 from torch import Tensor, nn
 
-from volnet.modules.networks.processing.core_network.processor_sequential_wrapper import ProcessorSequentialWrapper
+from .processor_sequential_wrapper import ProcessorSequentialWrapper
 
 
 class ModulatedSine(nn.Module):

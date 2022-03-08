@@ -1035,22 +1035,37 @@ class SceneRepresentationNetwork(nn.Module):
             ensemble = ensemble[:1]
             time = time[:1]
 
+        latent_space = self._evaluate_latent_space(ensemble, time, x)
+
+        if self._has_meta_network:
+            x = torch.cat(x2, dim=1)
+            y = self._input_parametrization(x)
+            z = torch.cat(latent_space, dim=1)
+            y = self._hidden_layers(z, y)
+        else:
+            x2 = x2 + latent_space
+            x = torch.cat(x2, dim=1)
+            y = self._input_parametrization(x)
+            y = self._hidden_layers(y)
+        return self._output_parametrization(y, mode=mode)
+
+    def _evaluate_latent_space(self, ensemble, time, x):
         latent_space = []
         if self._volumetric_features_time_dependent:
             # copy tf, ensemble, tf to CPU for manual interpolation
             # the slicing to one element above was already done
             # (_volumetric_features_time_dependent implies supports_mixed_latent_spaces()==False)
-            #tf = tf.item() #unused at the moment
+            # tf = tf.item() #unused at the moment
             if self._time_features > 0:
                 time = time.item()
                 num_timesteps = self._volumetric_latent_space_time.shape[0]
-                time_low = np.clip(int(np.floor(time)), 0, num_timesteps-1)
-                time_high = min(time_low+1, num_timesteps-1)
+                time_low = np.clip(int(np.floor(time)), 0, num_timesteps - 1)
+                time_high = min(time_low + 1, num_timesteps - 1)
                 time_f = time - time_low
                 # interpolation in space
                 grid_positions = x.unsqueeze(0).unsqueeze(1).unsqueeze(1)  # 1,N,1,1,3
                 tmp = F.grid_sample(
-                    self._volumetric_latent_space_time[time_low:time_low+1,...],
+                    self._volumetric_latent_space_time[time_low:time_low + 1, ...],
                     grid_positions * 2 - 1, align_corners=False, padding_mode='border')
                 latent_low = tmp[0, :, 0, 0, :].t()
                 tmp = F.grid_sample(
@@ -1058,7 +1073,7 @@ class SceneRepresentationNetwork(nn.Module):
                     grid_positions * 2 - 1, align_corners=False, padding_mode='border')
                 latent_high = tmp[0, :, 0, 0, :].t()
                 # interpolate in time
-                latent_space.append((1-time_f)*latent_low + time_f*latent_high)
+                latent_space.append((1 - time_f) * latent_low + time_f * latent_high)
 
             if self._ensemble_features > 0:
                 ensemble = ensemble.item()
@@ -1083,27 +1098,16 @@ class SceneRepresentationNetwork(nn.Module):
             if self._ensemble_features > 0:
                 ensemble_latent_space = pyrenderer.interp1D(
                     self._ensemble_latent_space,
-                    ensemble.unsqueeze(1))[...,0]
+                    ensemble.unsqueeze(1))[..., 0]
                 latent_space.append(ensemble_latent_space)
             if self._time_features > 0:
                 time_latent_space = pyrenderer.interp1D(
                     self._time_latent_space,
-                    time.unsqueeze(1))[...,0]
+                    time.unsqueeze(1))[..., 0]
                 latent_space.append(time_latent_space)
             if self._has_volumetric_features:
                 input = self._volumetric_latent_space
-                grid = x[...,:3].unsqueeze(0).unsqueeze(1).unsqueeze(1) # 1,N,1,1,3
-                output = F.grid_sample(input, grid*2-1, align_corners=False, padding_mode='border')
-                latent_space.append(output[0,:,0,0,:].t())
-
-        if self._has_meta_network:
-            x = torch.cat(x2, dim=1)
-            y = self._input_parametrization(x)
-            z = torch.cat(latent_space, dim=1)
-            y = self._hidden_layers(z, y)
-        else:
-            x2 = x2 + latent_space
-            x = torch.cat(x2, dim=1)
-            y = self._input_parametrization(x)
-            y = self._hidden_layers(y)
-        return self._output_parametrization(y, mode=mode)
+                grid = x[..., :3].unsqueeze(0).unsqueeze(1).unsqueeze(1)  # 1,N,1,1,3
+                output = F.grid_sample(input, grid * 2 - 1, align_corners=False, padding_mode='border')
+                latent_space.append(output[0, :, 0, 0, :].t())
+        return latent_space

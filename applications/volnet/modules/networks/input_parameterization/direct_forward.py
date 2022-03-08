@@ -1,6 +1,6 @@
 from torch import Tensor
 
-from volnet.modules.networks.preprocessing.interface import IComponentProcessor
+from .interface import IComponentProcessor
 
 
 class DirectForward(IComponentProcessor):

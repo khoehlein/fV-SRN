@@ -1,14 +1,13 @@
-from typing import Optional, Tuple, Union
+from typing import Optional
 
-import pyrenderer
 from torch import Tensor
 
+from volnet.modules.networks.input_parameterization import IInputParameterization
 from volnet.modules.networks.latent_features import ILatentFeatures
-from volnet.modules.networks.evaluation_mode import EvaluationMode
-from volnet.modules.networks.postprocessing.interface import IOutputParameterization
-from volnet.modules.networks.preprocessing import IInputParameterization
-from volnet.modules.networks.processing import ICoreNetwork
-from volnet.modules.networks.scene_representation_network.interface import ISceneRepresentationNetwork
+from volnet.modules.networks.core_network import ICoreNetwork
+from volnet.modules.networks.output_parameterization import IOutputParameterization
+from .interface import ISceneRepresentationNetwork
+from .evaluation_mode import EvaluationMode
 
 
 class ModularSRN(ISceneRepresentationNetwork):
@@ -26,6 +25,10 @@ class ModularSRN(ISceneRepresentationNetwork):
         self.output_parameterization = output_parameterization
         self.latent_features = latent_features
 
+    @property
+    def _device(self):
+        return self.core_network.last_layer().weight.data.device
+
     def forward(
             self,
             positions: Tensor, transfer_functions: Tensor, time: Tensor, member:Tensor,
@@ -40,23 +43,26 @@ class ModularSRN(ISceneRepresentationNetwork):
         prediction = self.output_parameterization.forward(network_output, evaluation_mode)
         return prediction
 
-    def export_to_pyrenderer(
-            self,
-            grid_encoding, return_grid_encoding_error=False,
-            network: Optional[pyrenderer.SceneNetwork]=None
-    ) -> Union[pyrenderer.SceneNetwork, Tuple[pyrenderer.SceneNetwork, float]]:
-        if self.input_parameterization.uses_time() and (self.latent_features is None or not self.latent_features.uses_time()):
-            raise RuntimeError(
-                "[ERROR] Time input for pyrenderer.SceneNetwork() works only for time-dependent latent grids (for now).")
-        network = self.input_parameterization.export_to_pyrenderer(network=network)
-        network = self.output_parameterization.export_to_pyrenderer(network=network)
-        if self.latent_features is not None:
-            network, error = self.latent_features.export_to_pyrenderer(grid_encoding, network, return_grid_encoding_error=True)
-        else:
-            error = 0.
-        network = self.core_network.export_to_pyrenderer(network=network)
-        if not network.valid():
-            raise RuntimeError('[ERROR] Failed to convert scene representation network to tensor cores.')
-        if return_grid_encoding_error:
-            return network, error
-        return network
+    def uses_positions(self):
+        return self.input_parameterization.uses_positions() or self.latent_features.uses_positions()
+
+    def uses_direction(self):
+        return self.input_parameterization.uses_directions()
+
+    def uses_time(self):
+        return self.input_parameterization.uses_time() or self.latent_features.uses_time()
+
+    def uses_member(self):
+        return self.input_parameterization.uses_member() or self.latent_features.uses_member()
+
+    def uses_transfer_functions(self):
+        return False
+
+    def backend_output_mode(self):
+        return self.output_parameterization.backend_output_mode()
+
+    def output_mode(self):
+        return self.output_parameterization.output_mode()
+
+    def output_channels(self):
+        return self.output_parameterization.output_channels()

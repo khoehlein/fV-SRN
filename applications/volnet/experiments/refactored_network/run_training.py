@@ -12,15 +12,17 @@ import tqdm
 from common import utils
 from volnet.evaluation import EvaluateWorld, EvaluateScreen
 from volnet.experiments.profiling import build_profiler
+from volnet.modules.datasets.resampling.resampler import DatasetResampler
 
-from volnet.network import SceneRepresentationNetwork
+from volnet.modules.networks.pyrenderer import PyrendererSRN, PyrendererOutputParameterization
+
 from volnet.lossnet import LossFactory
 from volnet.optimizer import Optimizer
 
 from volnet.modules.datasets import (
     VolumeDataStorage,
     WorldSpaceDensityData, WorldSpaceVisualizationData,
-    InputDataEmulator, DatasetType,
+    DatasetType,
 )
 
 from volnet.modules.datasets.sampling import PositionSampler
@@ -30,6 +32,11 @@ from volnet.modules.render_tool import RenderTool
 from volnet.modules.storage_manager import StorageManager
 from volnet.modules.visualizer import Visualizer
 
+# align model output with dataset output
+PyrendererOutputParameterization.set_output_mode(
+    WorldSpaceDensityData.output_mode()
+)
+
 
 def build_parser():
     parser = argparse.ArgumentParser()
@@ -38,8 +45,9 @@ def build_parser():
     PositionSampler.init_parser(parser)
     WorldSpaceDensityData.init_parser(parser)
     WorldSpaceVisualizationData.init_parser(parser)
+    DatasetResampler.init_parser(parser)
     RenderTool.init_parser(parser)
-    SceneRepresentationNetwork.init_parser(parser)
+    PyrendererSRN.init_parser(parser)
     LossFactory.init_parser(parser)
     Optimizer.init_parser(parser)
     parser.add_argument('--global-seed', type=int, default=124, help='random seed to use. Default=124')
@@ -96,9 +104,15 @@ def main():
     print('[INFO] Creating visualization dataset')
     visualization_data = WorldSpaceVisualizationData.from_dict(args, volume_data_storage, render_tool=render_tool)
 
+    print('[INFO] Building dataset resampler')
+    resampler = DatasetResampler.from_dict(args, device=device)
+
     print('[INFO] Initializing network')
-    input_data_emulator = InputDataEmulator(volume_data_storage, training_data, validation_data)
-    network = SceneRepresentationNetwork(args, input_data_emulator, dtype, device)
+    network = PyrendererSRN.from_dict(
+        args,
+        member_keys=training_data.ensemble_index,
+        dataset_key_times=training_data.timestep_index,
+    )
     network.to(device, dtype)
 
     print('[INFO] Building loss modules')
@@ -187,6 +201,11 @@ def main():
                 # update network
                 if network.start_epoch():
                     optimizer.reset(network.parameters())
+
+                # update training data
+                if resampler.requires_action(epoch + 1):
+                    network.eval()
+                    resampler.resample_dataset(training_data, volume_evaluator, network)
 
                 # TRAIN
                 partial_losses, num_batches = run_training()

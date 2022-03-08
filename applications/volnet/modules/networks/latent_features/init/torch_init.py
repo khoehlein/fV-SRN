@@ -3,7 +3,7 @@ from typing import List, Any, Optional, Dict
 import torch
 from torch import Tensor, nn
 
-from volnet.modules.networks.latent_features.initialization.interface import IInitializer
+from volnet.modules.networks.latent_features.init import IInitializer
 
 
 class PytorchInitializer(IInitializer):
@@ -55,4 +55,4 @@ Gaussian = Normal
 
 
 def DefaultInitializer():
-    return SymmetricUniform(bound=0.05)
+    return Normal(mean=0., std=0.01)

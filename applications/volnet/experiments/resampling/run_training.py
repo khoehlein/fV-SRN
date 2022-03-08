@@ -15,7 +15,7 @@ from volnet.evaluation import EvaluateWorld, EvaluateScreen
 from volnet.experiments.profiling import build_profiler
 from volnet.lossnet import LossFactory
 from volnet.modules.datasets.input_data_emulator import InputDataEmulator
-from volnet.modules.datasets.position_sampler import PositionSampler
+from volnet.modules.datasets.sampling.position_sampler import PositionSampler
 from volnet.modules.datasets.resampling.resampler import DatasetResampler
 from volnet.modules.datasets.visualization_dataset import WorldSpaceVisualizationData
 from volnet.modules.datasets.volume_data_storage import VolumeDataStorage
