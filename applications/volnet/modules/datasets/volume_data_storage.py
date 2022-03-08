@@ -1,8 +1,6 @@
 import argparse
 import functools
-import io
 import os.path
-import sys
 
 import pyrenderer
 
@@ -12,7 +10,7 @@ from volnet.modules.helpers import parse_range_string, is_valid_index_position
 class VolumeDataStorage(object):
 
     FILE_PATTERN_TIME_KEY = 'time'
-    FILE_PATTERN_ENSEMBLE_KEY = 'ensemble'
+    FILE_PATTERN_ENSEMBLE_KEY = 'member'
 
     @staticmethod
     def init_parser(parser: argparse.ArgumentParser):

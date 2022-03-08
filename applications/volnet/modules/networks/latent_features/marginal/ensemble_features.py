@@ -27,7 +27,7 @@ class IEnsembleFeatures(IFeatureModule):
         if initializer is None:
             initializer = DefaultInitializer()
         self.initializer = initializer
-        self.member_index = KeyIndexer()
+        # self.member_index = KeyIndexer()
         self.key_mapping = {}
         self.feature_mapping = nn.ModuleDict({})
         self.device = device
@@ -43,12 +43,23 @@ class IEnsembleFeatures(IFeatureModule):
         return out
 
     def forward(self, positions: Tensor, member: Tensor) -> Tensor:
-        unique_members, segments = self.member_index.query(member)
-        out = torch.zeros(len(positions), self.num_channels(),device=self.device, dtype=self.dtype)
-        for member, segment in zip(unique_members, segments):
-            key = self.key_mapping[member.item()]
-            feature = self.feature_mapping[key]
-            out[segment] = feature.evaluate(positions[segment])
+        # unique_members, segments = self.member_index.query(member)
+        # if len(unique_members) == 1:
+        #     feature = self.feature_mapping[int(member[0].item())]
+        #     return feature.evaluate(positions)
+        # out = torch.empty(len(positions), self.num_channels(), device=positions.device, dtype=positions.dtype)
+        # for member, segment in zip(unique_members, segments):
+        #     feature = self.feature_mapping[int(member.item())]
+        #     out[segment] = feature.evaluate(positions[segment])
+        unique_members = torch.unique(member)
+        if len(unique_members) == 1:
+            feature = self.feature_mapping[int(unique_members[0].item())]
+            return feature.evaluate(positions)
+        out = torch.empty(len(positions), self.num_channels(), device=positions.device, dtype=positions.dtype)
+        for umem in unique_members:
+            feature = self.feature_mapping[int(umem.item())]
+            locations = torch.eq(umem, member)
+            out[locations] = feature.evaluate(positions[locations])
         return out
 
     def reset_member_features(self, *member_keys: Any) -> 'IEnsembleFeatures':
@@ -65,12 +76,12 @@ class EnsembleFeatureVector(IEnsembleFeatures):
 
     def reset_member_features(self, *member_keys: Any):
         self.key_mapping = {key: i for i, key in enumerate(member_keys)}
-        self.feature_mapping = nn.ModuleDict({
-            i: FeatureVector.from_initializer(
+        self.feature_mapping = nn.ModuleList([
+            FeatureVector.from_initializer(
                 self.initializer, self.num_channels(),
                 device=self.device, dtype=self.dtype, debug=False
-            ) for i in range(len(member_keys))
-        })
+            ) for _ in range(len(member_keys))
+        ])
         return self
 
     def uses_positions(self) -> bool:
@@ -96,12 +107,12 @@ class EnsembleFeatureGrid(IEnsembleFeatures):
 
     def reset_member_features(self, *member_keys: Any):
         self.key_mapping = {key: i for i, key in enumerate(member_keys)}
-        self.feature_mapping = nn.ModuleDict({
-            i: FeatureGrid.from_initializer(
+        self.feature_mapping = nn.ModuleList([
+            FeatureGrid.from_initializer(
                 self.initializer, self.grid_size(), self.num_channels(),
                 device=self.device, dtype=self.dtype, debug=False
             ) for i in range(len(member_keys))
-        })
+        ])
         return self
 
     def uses_positions(self) -> bool:

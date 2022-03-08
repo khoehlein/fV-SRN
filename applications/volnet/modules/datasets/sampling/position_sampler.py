@@ -4,7 +4,6 @@ import os.path
 from typing import Dict, Any, Optional
 
 import numpy as np
-import tqdm
 
 from volnet.modules.datasets.dataset_type import DatasetType
 from volnet.sampling import RandomSampler, HaltonSampler, PlasticSampler

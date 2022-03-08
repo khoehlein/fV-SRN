@@ -1,6 +1,7 @@
 import argparse
 from typing import Dict, Any, Optional, Union, Tuple, List
 
+import numpy as np
 import pyrenderer
 import torch
 
