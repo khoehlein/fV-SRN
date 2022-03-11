@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     execution_command = [interpreter, script_path] + [f'{arg}' for arg in chain.from_iterable(options.items())] + flags
 
-    log_file = None
+    log_file = './log_file.log'
     if log_file is not None:
         log_file = open(log_file, 'w')
         stdout = log_file

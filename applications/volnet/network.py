@@ -1093,7 +1093,6 @@ class SceneRepresentationNetwork(nn.Module):
                 latent_high = tmp[0, :, 0, 0, :].t()
                 # interpolate in time
                 latent_space.append((1 - ensemble_f) * latent_low + ensemble_f * latent_high)
-
         else:
             if self._ensemble_features > 0:
                 ensemble_latent_space = pyrenderer.interp1D(

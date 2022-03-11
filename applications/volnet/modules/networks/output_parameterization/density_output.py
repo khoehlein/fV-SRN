@@ -31,7 +31,7 @@ class SoftClampDensityOutput(_DensityOutput):
 class DirectDensityOutput(_DensityOutput):
 
     def rendering_parameterization(self, network_output: Tensor) -> Tensor:
-        return torch.clamp(network_output, min=0, max=1)
+        return network_output # torch.clamp(network_output, min=0, max=1)
 
     def training_parameterization(self, network_output: Tensor) -> Tensor:
         return network_output

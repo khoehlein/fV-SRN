@@ -9,8 +9,12 @@ class VolumeEvaluator(IFieldEvaluator):
     def __init__(self, interpolator: IVolumeInterpolation, device):
         super(VolumeEvaluator, self).__init__(3, 1, device)
         self.interpolator = interpolator
-        self._default_volume = interpolator.volume()
-        self._default_mipmap_level = interpolator.mipmap_level()
+        try:
+            self._default_volume = interpolator.volume()
+            self._default_mipmap_level = interpolator.mipmap_level()
+        except RuntimeError:
+            self._default_volume = None
+            self._default_mipmap_level = 0
 
     def forward(self, positions: Tensor) -> Tensor:
         return self.interpolator.evaluate(positions)

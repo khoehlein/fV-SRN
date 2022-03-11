@@ -1,9 +1,11 @@
 import argparse
 import io
+import json
 import os
 import shutil
 import subprocess
 import sys
+from enum import Enum
 
 import h5py
 import imageio
@@ -74,12 +76,12 @@ class StorageManager(object):
         os.makedirs(opt['output:hdf5_dir'], exist_ok=True)
 
     def store_script_info(self):
-        with open(os.path.join(self.checkpoint_dir, 'info.txt'), "w") as text_file:
-            text_file.write(self.opt_string())
-        with open(os.path.join(self.checkpoint_dir, 'cmd.txt'), "w") as text_file:
+        with open(os.path.join(self.checkpoint_dir, 'args.json'), "w") as f:
+            json.dump(self.opt, f, indent=4, sort_keys=True)
+        with open(os.path.join(self.checkpoint_dir, 'cmd.txt'), "w") as f:
             import shlex
-            text_file.write('cd "%s"\n' % os.getcwd())
-            text_file.write(' '.join(shlex.quote(x) for x in sys.argv) + "\n")
+            f.write('cd "%s"\n' % os.getcwd())
+            f.write(' '.join(shlex.quote(x) for x in sys.argv) + "\n")
 
     def opt_string(self):
         return str(self.opt)
@@ -95,13 +97,13 @@ class StorageManager(object):
             try:
                 hdf5_file.attrs[k] = v
             except TypeError as ex:
-                print("Exception", ex, "while saving attribute", k, "=", str(v))
+                print(f'[WARN] Exception {ex} while saving attribute {k} = {v}')
         try:
             git_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('ascii').strip()
             hdf5_file.attrs['git'] = git_commit
-            print("git commit", git_commit)
+            print("[INFO] Git commit:", git_commit)
         except:
-            print("unable to get git commit")
+            print("[WARN] Storage manager was unable to get git commit.")
         return hdf5_file
 
     @staticmethod
@@ -116,11 +118,14 @@ class StorageManager(object):
             (name, hdf5_file.create_dataset(name, (num_epochs,), dtype=np.float32))
             for name in loss_names
         ])
+        self.epochs = hdf5_file.create_dataset("epochs", (num_epochs,), dtype=int)
         self.weights = hdf5_file.create_dataset(
             "weights",
             (num_epochs_with_save, self.save_network(network).shape[0]),
             dtype=np.dtype('V1'))
         self.export_weights_counter = 0
+        self.export_stats_counter = 0
+        return self
 
     def _check_for_attribute(self, *attrs):
         for attr in attrs:
@@ -146,12 +151,14 @@ class StorageManager(object):
         self.writer.add_scalar('train/lr', lr, epoch)
 
     def update_validation_metrics(self, epoch, losses, num_batches, run_time):
-        self._check_for_attribute('writer', 'times', 'losses')
+        self._check_for_attribute('writer', 'times', 'losses', 'epochs')
         for k, v in losses.items():
             self.writer.add_scalar('val/%s' % k, v / num_batches, epoch)
-        self.times[epoch] = run_time
+        self.times[self.export_stats_counter] = run_time
         for k, v in losses.items():
-            self.losses[k][epoch] = v / num_batches
+            self.losses[k][self.export_stats_counter] = v / num_batches
+        self.epochs[self.export_stats_counter] = epoch
+        self.export_stats_counter += 1
 
     def store_image(self, epoch, image):
         self._check_for_attribute('writer')

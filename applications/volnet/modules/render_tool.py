@@ -55,9 +55,13 @@ class RenderTool(object):
     def __init__(self, image_evaluator: IImageEvaluator, device, tf_directory=None, settings_file=None):
         self.image_evaluator = image_evaluator
         self._tf_directory = tf_directory # currently not used
-        self._default_volume = self.image_evaluator.volume.volume()
+        try:
+            self._default_volume = self.image_evaluator.volume.volume()
+            self._default_mipmap_level = self.image_evaluator.volume.mipmap_level()
+        except RuntimeError:
+            self._default_volume = None
+            self._default_mipmap_level = 0
         self._default_camera_pitch_yaw_distance = utils.copy_double3(image_evaluator.camera.pitchYawDistance.value)
-        self._default_mipmap_level = self.image_evaluator.volume.mipmap_level()
         self._default_settings_file = settings_file
         self.device = device
 

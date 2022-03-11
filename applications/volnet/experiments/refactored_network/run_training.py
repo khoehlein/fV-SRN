@@ -180,13 +180,14 @@ def main():
     storage_manager.store_script_info()
     storage_manager.get_tensorboard_summary()
 
-    epochs = optimizer.num_epochs() + 1
-    epochs_with_save = set(list(range(0, epochs - 1, args['output:save_frequency'])) + [epochs - 1])
+    epochs_with_save = set(list(range(0, optimizer.num_epochs(), args['output:save_frequency'])) + [optimizer.num_epochs()])
+    num_epochs_total = optimizer.num_epochs() + 1
+    num_epochs_trained = 0
 
     # HDF5-output for summaries and export
     with storage_manager.get_hdf5_summary() as hdf5_file:
         storage_manager.initialize_hdf5_storage(
-            hdf5_file, epochs, len(epochs_with_save),
+            hdf5_file, num_epochs_total, len(epochs_with_save),
             evaluator_val.loss_names(), network
         )
 
@@ -194,48 +195,50 @@ def main():
 
         start_time = time.time()
         with ExitStack() as stack:
-            iteration_bar = stack.enter_context(tqdm.tqdm(total=epochs))
+            progress_bar = stack.enter_context(tqdm.tqdm(total=num_epochs_total))
             if profile:
                 profiler = build_profiler(stack)
-            for epoch in range(epochs):
+            while num_epochs_trained < num_epochs_total:
                 # update network
                 if network.start_epoch():
                     optimizer.reset(network.parameters())
 
-                # update training data
-                if resampler.requires_action(epoch + 1):
-                    network.eval()
-                    resampler.resample_dataset(training_data, volume_evaluator, network)
-
                 # TRAIN
                 partial_losses, num_batches = run_training()
-                storage_manager.update_training_metrics(epoch, partial_losses, num_batches, optimizer.get_lr()[0])
+                num_epochs_trained = num_epochs_trained + 1
+
+                storage_manager.update_training_metrics(num_epochs_trained, partial_losses, num_batches, optimizer.get_lr()[0])
 
                 # save checkpoint
-                if epoch in epochs_with_save:
-                    storage_manager.store_torch_checkpoint(epoch, network)
+                if num_epochs_trained in epochs_with_save:
+                    storage_manager.store_torch_checkpoint(num_epochs_trained, network)
                     storage_manager.store_hdf5_checkpoint(network)
 
                 # VALIDATE
                 partial_losses, num_batches = run_validation()
                 end_time = time.time()
-                storage_manager.update_validation_metrics(epoch, partial_losses, num_batches, end_time - start_time)
+                storage_manager.update_validation_metrics(num_epochs_trained, partial_losses, num_batches, end_time - start_time)
 
                 # VISUALIZE
-                if epoch in epochs_with_save:
+                if num_epochs_trained in epochs_with_save:
                     with torch.no_grad():
                         # the vis dataset contains one entry per tf-timestep-ensemble
                         # -> concatenate them into one big image
                         image = run_visualization()
-                        storage_manager.store_image(epoch, image)
+                        storage_manager.store_image(num_epochs_trained, image)
+
+                # update training data
+                if num_epochs_trained < num_epochs_total and resampler.requires_action(num_epochs_trained):
+                    network.eval()
+                    resampler.resample_dataset(training_data, volume_evaluator, network)
 
                 # done with this epoch
                 if profile:
                     profiler.step()
                 optimizer.post_epoch()
-                iteration_bar.update(1)
+                progress_bar.update(1)
                 final_loss = partial_losses['total'] / max(1, num_batches)
-                iteration_bar.set_description("Loss: %7.5f" % (final_loss))
+                progress_bar.set_description("Loss: %7.5f" % (final_loss))
                 if np.isnan(final_loss):
                     break
 

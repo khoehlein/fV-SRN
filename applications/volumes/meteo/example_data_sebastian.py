@@ -12,7 +12,7 @@ import common.utils as commut # required to properly find pyrenderer
 import pyrenderer
 
 
-RESCALING = 'normalize' # 'clamp'
+RESCALING = 'normalize_anomaly' # 'clamp'
 
 
 class Axis(Enum):
@@ -225,6 +225,9 @@ class EnsembleConverter(object):
                 norm_max = np.max(data)
             data = (data - norm_min) / (norm_max - norm_min)
         elif RESCALING == 'normalize':
+            data = (data - np.mean(data)) / np.std(data, ddof=1)
+        elif RESCALING == 'normalize_anomaly':
+            data = (data - np.mean(data.reshape((-1, data.shape[-1])), axis=0)[None, None, :]) / np.std(data.reshape((-1, data.shape[-1])), axis=0, ddof=1)[None, None, :]
             data = (data - np.mean(data)) / np.std(data, ddof=1)
         else:
             raise NotImplementedError()
