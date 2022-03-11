@@ -98,8 +98,6 @@ class MultiRunExperiment(object):
         print(f'[INFO] Time remaining: {mu}{std_text} seconds')
 
 
-
-
 if __name__ == '__main__':
     pass
     # experiment = MultiRunExperiment(
