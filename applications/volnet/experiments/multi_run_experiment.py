@@ -91,10 +91,10 @@ class MultiRunExperiment(object):
     def _print_time_remaining(durations, num_remaining):
         mu = np.mean(durations) * num_remaining
         if len(durations) > 1:
-            std_text = ''
-        else:
             std = math.sqrt(num_remaining) * np.std(durations, ddof=1)
             std_text = f' +- {std}'
+        else:
+            std_text = ''
         print(f'[INFO] Time remaining: {mu}{std_text} seconds')
 
 
