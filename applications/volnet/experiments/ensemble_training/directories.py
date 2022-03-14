@@ -34,7 +34,7 @@ def build_parser():
 
 def set_debug_mode(args):
     global DEBUG_MODE
-    DEBUG_MODE = DebugMode.DEBUG if args['mode'] else DebugMode.PRODUCTION
+    DEBUG_MODE = DebugMode.DEBUG if args['mode'] == 'debug' else DebugMode.PRODUCTION
     print(f'[INFO] Running scripts with path configurations for {DEBUG_MODE.value} mode.')
     return DEBUG_MODE
 
