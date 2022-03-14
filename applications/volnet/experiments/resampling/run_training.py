@@ -10,7 +10,7 @@ import torch
 import tqdm
 
 from common import utils
-from common.helpers.automation.devices import DeviceManager
+from helpers.automation import DeviceManager
 from volnet.evaluation import EvaluateWorld, EvaluateScreen
 from volnet.experiments.profiling import build_profiler
 from volnet.lossnet import LossFactory

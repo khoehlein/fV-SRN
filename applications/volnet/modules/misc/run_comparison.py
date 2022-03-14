@@ -112,7 +112,7 @@ class MultiRunComparison(object):
 
 
 def _test_comparison():
-    comparison = MultiRunComparison('/home/hoehlein/PycharmProjects/results/fvsrn/single_member_evaluation', ['total'])
+    comparison = MultiRunComparison('/home/hoehlein/PycharmProjects/results/fvsrn/multi_member_volumetric_ensemble_evaluation', ['total'])
     pcp_app = comparison.get_pcp_app(color_key='total:min_val', drop_constant_parameters=True)
     pcp_app.run(debug=True)
     print('[INFO] Finished')

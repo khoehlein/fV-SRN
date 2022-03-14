@@ -10,6 +10,7 @@ from volnet.modules.networks.input_parameterization import (
     IFourierFeatures, RandomFourierFeatures, NerfFourierFeatures
 )
 from volnet.modules.networks.input_parameterization import IInputParameterization
+from volnet.modules.networks.input_parameterization.trainable_fourier_features import TrainableFourierFeatures
 
 
 class PyrendererInputParameterization(IInputParameterization):
@@ -36,11 +37,11 @@ class PyrendererInputParameterization(IInputParameterization):
             help="""number of Fourier features on time input"""
         )
         group.add_argument(
-            prefix + 'fourier:time:method', type=str, default=None, choices=['nerf', 'random'],
+            prefix + 'fourier:time:method', type=str, default=None, choices=['nerf', 'random', 'parametric'],
             help="""method for constructing the Fourier matrices for time"""
         )
         group.add_argument(
-            prefix + 'fourier:method', type=str, default='nerf', choices=['nerf', 'random'],
+            prefix + 'fourier:method', type=str, default='nerf', choices=['nerf', 'random', 'parametric'],
             help="""method for constructing the Fourier matrices"""
         )
         group.add_argument(
@@ -67,6 +68,8 @@ class PyrendererInputParameterization(IInputParameterization):
                 return RandomFourierFeatures(in_channels, num_features, std=std)
             elif method == 'nerf':
                 return NerfFourierFeatures(in_channels, num_features)
+            elif method == 'parametric':
+                return TrainableFourierFeatures(in_channels, num_features)
 
         fourier_positions = build_fourier_processor('positions', 3)
         fourier_time = build_fourier_processor('time', 1)

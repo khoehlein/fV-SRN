@@ -48,7 +48,7 @@ def build_parser():
 
 def select_device(force_on_single=False):
     try:
-        from common.helpers.automation.devices import DeviceManager
+        from helpers.automation import DeviceManager
     except ImportError:
         return torch.device('cuda:0')
     else:

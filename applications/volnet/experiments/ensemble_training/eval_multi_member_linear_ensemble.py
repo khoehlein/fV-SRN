@@ -8,7 +8,7 @@ io.set_debug_mode(args)
 
 DATA_FILENAME_PATTERN = 'tk/member{member:04d}/t04.cvol'
 SETTINGS_FILE = 'config-files/meteo-ensemble-normalized-anomalies.json'
-EXPERIMENT_NAME = 'multi_member_volumetric_ensemble_evaluation'
+EXPERIMENT_NAME = 'multi_member_linear_ensemble_evaluation'
 
 PARAMETERS = {
     '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
@@ -17,13 +17,16 @@ PARAMETERS = {
     '--world-density-data:validation-share': 0.2,
     '--lossmode': 'density',
     '--network:core:layer-sizes': [
-        '64:64:64', '96:96:96', '128:128:128', '128:128',
+        '64:64:64', '128:128:128', '128:128',
     ],
     '--network:core:activation': 'SnakeAlt:2',
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',
     '--network:latent-features:ensemble:num-channels': [
-        4, 8, 16
+        8, 16, 32
+    ],
+    '--network:latent-features:volume:num-channels': [
+        8, 16, 32
     ],
     '--network:latent-features:volume:grid-size': [
         '4:44:32', '2:44:32', '4:88:64', '2:22:16'
@@ -34,7 +37,7 @@ PARAMETERS = {
     '--lr_step': 50,
     '--epochs': 200,
     '--output:save-frequency': 20,
-    '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
+    '--data-storage:filename-pattern': DATA_FILENAME_PATTERN,
     '--data-storage:ensemble:index-range': [
         '1:3', '1:5', '1:9'
     ],
@@ -53,10 +56,7 @@ if __name__ == '__main__':
         return_output_dir=False, return_log_dir=True, overwrite=True
     )
     experiment = MultiRunExperiment(
-        io.INTERPRETER_PATH,
-        io.get_script_path(),
-        io.get_project_base_path(),
-        log_directory
+        io.INTERPRETER_PATH, io.get_script_path(), io.get_project_base_path(), log_directory
     )
 
     print('[INFO] Processing vector-valued features...')

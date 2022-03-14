@@ -9,6 +9,8 @@ import numpy as np
 import torch
 import tqdm
 
+device = torch.device('cuda:0')
+
 from common import utils
 from volnet.evaluation import EvaluateWorld, EvaluateScreen
 from volnet.experiments.profiling import build_profiler
@@ -54,17 +56,6 @@ def build_parser():
     return parser
 
 
-def select_device(force_on_single=False):
-    try:
-        from common.helpers.automation.devices import DeviceManager
-    except ImportError:
-        return torch.device('cuda:0')
-    else:
-        device_manager = DeviceManager()
-        device_manager.set_free_devices_as_visible(num_devices=1, force_on_single=force_on_single)
-        return device_manager.get_torch_devices()[0]
-
-
 def build_dataset(mode: DatasetType, args: Dict[str, Any], volume_data_storage: VolumeDataStorage, volume_evaluator: VolumeEvaluator):
     sampler = PositionSampler.from_dict(args, mode=mode)
     data = WorldSpaceDensityData.from_dict(args, volume_data_storage, mode=mode, volume_evaluator=volume_evaluator, position_sampler=sampler)
@@ -83,7 +74,8 @@ def main():
     args = vars(parser.parse_args())
 
     dtype = torch.float32
-    device = select_device(force_on_single=True)
+
+    print(f'[INFO] Device-count: {torch.cuda.device_count()}')
 
     print('[INFO] Initializing volume data storage.')
     volume_data_storage = VolumeDataStorage.from_dict(args)

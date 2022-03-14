@@ -1,14 +1,15 @@
-import os
-
 from volnet.experiments.multi_run_experiment import MultiRunExperiment
-from volnet.experiments.ensemble_training import directories as io
+from volnet.experiments.ensemble_training.directories import (
+    INTERPRETER_PATH, SCRIPT_PATH, WORKING_DIRECTORY,
+    get_output_directory
+)
 
-EXPERIMENT_NAME = 'single_member_evaluation'
-DATA_FILENAME_PATTERN = 'tk/member0001/t04.cvol'
-SETTINGS_FILE = 'config-files/meteo-ensemble-normalized-anomalies.json'
+EXPERIMENT_NAME = 'single_member_fourier_parametric'
+DATA_FILENAME_PATTERN = '/home/hoehlein/data/1000_member_ensemble/normalized_anomalies/single_member/tk/member0001/t04.cvol'
+SETTINGS_FILE = '/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/applications/config-files/meteo-ensemble-normalized-anomalies.json'
 
 PARAMETERS = {
-    '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
+    '--renderer:settings-file': SETTINGS_FILE,
     '--world-density-data:num-samples-per-volume': '256**3',
     '--world-density-data:batch-size': '64*64*128',
     '--world-density-data:validation-share': 0.2,
@@ -18,7 +19,7 @@ PARAMETERS = {
     ],
     '--network:core:activation': 'SnakeAlt:2',
     '--network:input:fourier:positions:num-features': 14,
-    '--network:input:fourier:method': 'nerf',
+    '--network:input:fourier:method': 'parametric',
     '--network:latent-features:volume:num-channels': [
         0, 4, 8, 16, 32
     ],
@@ -28,7 +29,7 @@ PARAMETERS = {
     '--lr_step': 50,
     '--epochs': 200,
     '--output:save-frequency': 20,
-    '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
+    '--data-storage:filename-pattern': DATA_FILENAME_PATTERN,
     '--world-density-data:sub-batching': 8,
     '--dataset-resampling:method': 'importance:grid',
     '--dataset-resampling:loss': 'l1',
@@ -39,12 +40,12 @@ PARAMETERS = {
 
 if __name__ == '__main__':
 
-    output_directory, log_directory = io.get_output_directory(
+    output_directory, log_directory = get_output_directory(
         EXPERIMENT_NAME,
         return_output_dir=False, return_log_dir=True, overwrite=True
     )
     experiment = MultiRunExperiment(
-        io.INTERPRETER_PATH, io.get_script_path(), io.get_project_base_path(), log_directory
+        INTERPRETER_PATH, SCRIPT_PATH, WORKING_DIRECTORY, log_directory
     )
 
     print('[INFO] Processing vector-valued features...')
