@@ -1,15 +1,14 @@
+import os
+
 from volnet.experiments.multi_run_experiment import MultiRunExperiment
-from volnet.experiments.ensemble_training.directories import (
-    INTERPRETER_PATH, SCRIPT_PATH, WORKING_DIRECTORY,
-    get_output_directory
-)
+from volnet.experiments.ensemble_training import directories as io
 
 EXPERIMENT_NAME = 'multi_member_siren_volumetric'
-DATA_FILENAME_PATTERN = '/home/hoehlein/data/1000_member_ensemble/normalized_anomalies/single_member/tk/member{member:04d}/t04.cvol'
-SETTINGS_FILE = '/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/applications/config-files/meteo-ensemble-normalized-anomalies.json'
+DATA_FILENAME_PATTERN = 'tk/member{member:04d}/t04.cvol'
+SETTINGS_FILE = 'config-files/meteo-ensemble-normalized-anomalies.json'
 
 PARAMETERS = {
-    '--renderer:settings-file': SETTINGS_FILE,
+    '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
     '--world-density-data:num-samples-per-volume': '256**3',
     '--world-density-data:batch-size': '64*64*128',
     '--world-density-data:validation-share': 0.2,
@@ -23,11 +22,11 @@ PARAMETERS = {
     '--network:output:parameterization-method': 'direct',
     '-l1': 0.,
     '-l2': 1.,
-    '-lr': 0.01,
-    '--lr_step': 50,
+    '-lr': 5.e-5,
+    '--lr_step': 300,
     '--epochs': 200,
     '--output:save-frequency': 20,
-    '--data-storage:filename-pattern': DATA_FILENAME_PATTERN,
+    '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
     '--data-storage:ensemble:index-range': [
             '1:3', '1:5', '1:9'
     ],
@@ -41,12 +40,12 @@ PARAMETERS = {
 
 if __name__ == '__main__':
 
-    output_directory, log_directory = get_output_directory(
+    output_directory, log_directory = io.get_output_directory(
         EXPERIMENT_NAME,
         return_output_dir=False, return_log_dir=True, overwrite=True
     )
     experiment = MultiRunExperiment(
-        INTERPRETER_PATH, SCRIPT_PATH, WORKING_DIRECTORY, log_directory
+        io.INTERPRETER_PATH, io.get_script_path(), io.get_project_base_path(), log_directory
     )
 
     print('[INFO] Processing vector-valued features...')

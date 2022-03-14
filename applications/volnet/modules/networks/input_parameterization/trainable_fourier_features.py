@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 from numpy import pi as PI
 import torch
@@ -15,7 +13,7 @@ class TrainableFourierFeatures(IComponentProcessor):
     """
 
     def __init__(self, in_channels: int, num_fourier_features: int, dtype=None, device=None):
-        super(TrainableFourierFeatures, self).__init__(in_channels, 2 * in_channels * num_fourier_features)
+        super(TrainableFourierFeatures, self).__init__(in_channels, 2 * num_fourier_features)
         num_blocks = int(np.ceil(num_fourier_features / in_channels))
         scales = (2. * PI * torch.pow(2., torch.arange(num_blocks))[:, None]).repeat(1, 3).flatten()
         scales = scales[:num_fourier_features].unsqueeze(0).to(device=device, dtype=dtype)
