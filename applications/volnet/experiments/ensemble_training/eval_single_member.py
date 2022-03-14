@@ -3,9 +3,8 @@ import os
 from volnet.experiments.multi_run_experiment import MultiRunExperiment
 from volnet.experiments.ensemble_training.directories import (
     INTERPRETER_PATH, SCRIPT_PATH, WORKING_DIRECTORY,
-    get_output_directory
+    get_output_directory, get_data_base_path
 )
-from volnet.modules.datasets.base_paths import get_data_base_path
 
 EXPERIMENT_NAME = 'single_member_evaluation'
 DATA_FILENAME_PATTERN = os.path.join(get_data_base_path(), 'tk/member0001/t04.cvol')

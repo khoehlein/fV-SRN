@@ -9,6 +9,17 @@ OUTPUT_BASE_DIR = '/home/hoehlein/PycharmProjects/results/fvsrn'
 OUTPUT_DIR_NAME = 'runs'
 LOG_DIR_NAME = 'log'
 
+DATA_BASE_PATH = {
+    'tuini15-cg05-cg-in-tum-de': '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/converted_normal_anomaly',
+    'gpusrv01-cg-in-tum-de': '/home/hoehlein/data/1000_member_ensemble/normalized_anomalies/single_member'
+}
+
+
+def get_data_base_path():
+    import socket
+    host_name = socket.gethostname()
+    return DATA_BASE_PATH[host_name]
+
 
 def get_output_directory(experiment_name, overwrite=False, return_output_dir=False, return_log_dir=False):
     experiment_dir = os.path.join(OUTPUT_BASE_DIR, experiment_name)
