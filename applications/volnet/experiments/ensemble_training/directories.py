@@ -13,7 +13,7 @@ DEBUG_MODE: DebugMode = None
 
 PROJECT_BASE_PATH ={
     DebugMode.DEBUG: '/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/applications',
-    DebugMode.PRODUCTION: '/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/applications',
+    DebugMode.PRODUCTION: '/home/hoehlein/PycharmProjects/production/fvsrn/applications',
 }
 DATA_BASE_PATH = {
     'tuini15-cg05-cg-in-tum-de': '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/converted_normal_anomaly',
