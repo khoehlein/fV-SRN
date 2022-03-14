@@ -3,6 +3,10 @@ import os
 from volnet.experiments.multi_run_experiment import MultiRunExperiment
 from volnet.experiments.ensemble_training import directories as io
 
+parser = io.build_parser()
+args = vars(parser.parse_args())
+io.set_debug_mode(args)
+
 EXPERIMENT_NAME = 'multi_member_siren_volumetric'
 DATA_FILENAME_PATTERN = 'tk/member{member:04d}/t04.cvol'
 SETTINGS_FILE = 'config-files/meteo-ensemble-normalized-anomalies.json'

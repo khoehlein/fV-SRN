@@ -30,7 +30,7 @@ PARAMETERS = {
     '--lr_step': 300,
     '--epochs': 200,
     '--output:save-frequency': 20,
-    '--data-storage:filename-pattern': DATA_FILENAME_PATTERN,
+    '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
     '--world-density-data:sub-batching': 8,
     '--dataset-resampling:method': 'random',
     # '--dataset-resampling:loss': 'l1',
