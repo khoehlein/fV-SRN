@@ -39,11 +39,15 @@ class NvidiaSMIStateReader(object):
         return lines
 
     def _yield_available_devices(self):
+        if 'CUDA_VISIBLE_DEVICES' in os.environ.keys():
+            visible_devices = set([int(i) for i in os.environ['CUDA_VISIBLE_DEVICES'].split(',') if len(i) > 0])
+        else:
+            visible_devices = None
         for line in self.smi_str[self._start_gpu_block:self._start_process_block]:
             if len(line) == 0:
                 break
             entry = line.split()[0].strip()
-            if entry.isnumeric():
+            if entry.isnumeric() and (visible_devices is None or entry in visible_devices):
                 yield entry
             else:
                 continue
@@ -61,8 +65,13 @@ class NvidiaSMIStateReader(object):
 
 class DeviceManager(object):
 
+    CUDA_VISIBLE_DEVICES_KEY = 'CUDA_VISIBLE_DEVICES'
+
     def __init__(self):
-        self.visible_devices = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+        if DeviceManager.CUDA_VISIBLE_DEVICES_KEY in os.environ:
+            self.visible_devices = os.environ[DeviceManager.CUDA_VISIBLE_DEVICES_KEY].split(',')
+        else:
+            self.visible_devices = [f'{i}' for i in range(torch.cuda.device_count())]
         self.claimed_devices = {}
 
     def _query_device_states(self):
@@ -87,7 +96,7 @@ class DeviceManager(object):
         self._set_environment_variable()
         return self.visible_devices
 
-    def set_free_devices_as_visible(self, num_devices=1, force_on_single=False):
+    def find_free_devices(self, num_devices=1, force_on_single=False):
         device_states = self._query_device_states()
         num_available_devices = len(device_states)
         free_devices = [key for key, state in device_states.items() if state == DeviceState.FREE]
@@ -97,6 +106,10 @@ class DeviceManager(object):
             self._handle_single_gpu_setting(free_devices, force_on_single)
         else:
             self._handle_multi_gpu_setting(free_devices, num_devices)
+        return self.visible_devices
+
+    def set_free_devices_as_visible(self, num_devices=1, force_on_single=False):
+        self.find_free_devices(num_devices=num_devices, force_on_single=force_on_single)
         self._set_environment_variable()
         return self.visible_devices
 
@@ -110,7 +123,7 @@ class DeviceManager(object):
     def _handle_multi_gpu_setting(self, free_devices, num_devices):
         print('[INFO] Detected multi-GPU setting.')
         if len(free_devices) >= num_devices:
-            self.visible_devices = free_devices[:num_devices]
+            self.visible_devices = sorted(free_devices[:num_devices])
         else:
             raise RuntimeError('[ERROR] Not enough free CUDA devices available.')
 

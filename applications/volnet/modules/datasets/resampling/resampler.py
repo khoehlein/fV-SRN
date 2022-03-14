@@ -1,6 +1,7 @@
 import argparse
 from typing import Optional, Dict, Any, Union
 
+import torch
 from torch.nn import functional as F
 
 from volnet.modules.datasets.evaluation import VolumeEvaluator, LossEvaluator
@@ -81,7 +82,10 @@ class DatasetResampler(object):
         self.sampler = sampler
         self.frequency = frequency
         self.loss_mode = loss
-        self.device = sampler.device
+        if isinstance(sampler, IImportanceSampler):
+            self.device = sampler.device
+        else:
+            self.device = torch.device('cpu')
 
     def uses_importance_sampling(self):
         return isinstance(self.sampler, IImportanceSampler)

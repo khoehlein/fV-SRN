@@ -1,11 +1,14 @@
+import os
+
 from volnet.experiments.multi_run_experiment import MultiRunExperiment
 from volnet.experiments.ensemble_training.directories import (
     INTERPRETER_PATH, SCRIPT_PATH, WORKING_DIRECTORY,
     get_output_directory
 )
+from volnet.modules.datasets.base_paths import get_data_base_path
 
 EXPERIMENT_NAME = 'single_member_evaluation'
-DATA_FILENAME_PATTERN = '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/converted_normal_anomaly/tk/member0001/t04.cvol'
+DATA_FILENAME_PATTERN = os.path.join(get_data_base_path(), 'tk/member0001/t04.cvol')
 SETTINGS_FILE = '/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/applications/config-files/meteo-ensemble-normalized-anomalies.json'
 
 PARAMETERS = {

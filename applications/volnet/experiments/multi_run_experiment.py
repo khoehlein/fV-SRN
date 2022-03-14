@@ -9,6 +9,8 @@ from typing import Dict, Any, List
 
 import numpy as np
 
+from utils.automation.devices import DeviceManager
+
 
 class MultiRunExperiment(object):
 
@@ -25,7 +27,7 @@ class MultiRunExperiment(object):
         self.script_path = script_path
         self.working_dir = working_dir
         self.log_dir = log_dir
-        if not os.path.isdir(log_dir):
+        if (log_dir is not None) and (not os.path.isdir(log_dir)):
             if create_log_dir:
                 os.makedirs(log_dir)
             else:
@@ -60,9 +62,17 @@ class MultiRunExperiment(object):
                     self._print_time_remaining(durations, num_configs - i)
 
     def _run_config(self, config: Dict[str, Any], flags: List[str], timestamp: str):
+
+        device_manager = DeviceManager()
+        free_devices = device_manager.find_free_devices(num_devices=1)
+        print(f'[INFO] Free devices: {free_devices}')
+
         execution_command = [self.interpreter_path, self.script_path]
         execution_command += [f'{arg}' for arg in chain.from_iterable(config.items())]
         execution_command += flags
+
+        env = os.environ.copy()
+        env['CUDA_VISIBLE_DEVICES'] = free_devices[0]
 
         log_file = None
         if self.log_dir is not None:
@@ -81,7 +91,7 @@ class MultiRunExperiment(object):
             stderr = subprocess.PIPE
         process = subprocess.Popen(
             execution_command, cwd=self.working_dir,
-            stdout=stdout, stderr=stderr
+            stdout=stdout, stderr=stderr, env=env,
         )
         outputs, errors = process.communicate()
         if log_file is not None:

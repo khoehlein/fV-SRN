@@ -9,12 +9,7 @@ import numpy as np
 import torch
 import tqdm
 
-from utils.automation.devices import DeviceManager
-
-device_manager = DeviceManager()
-device_manager.set_free_devices_as_visible(num_devices=1, force_on_single=True)
-print(f'[INFO] {device_manager.visible_devices}')
-device = device_manager.get_torch_devices()[0]
+device = torch.device('cuda:0')
 
 from common import utils
 from volnet.evaluation import EvaluateWorld, EvaluateScreen

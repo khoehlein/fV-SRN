@@ -5,7 +5,7 @@ from volnet.experiments.ensemble_training.directories import (
 )
 
 EXPERIMENT_NAME = 'multi_member_volumetric_ensemble_evaluation'
-DATA_FILENAME_PATTERN = '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/converted_normal_anomaly/tk/member{member:04d}/t04.cvol'
+DATA_FILENAME_PATTERN = '/home/hoehlein/data/1000_member_ensemble/normalized_anomalies/single_member/tk/member{member:04d}/t04.cvol'
 SETTINGS_FILE = '/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/applications/config-files/meteo-ensemble-normalized-anomalies.json'
 
 PARAMETERS = {

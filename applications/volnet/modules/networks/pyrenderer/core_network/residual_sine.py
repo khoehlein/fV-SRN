@@ -66,7 +66,7 @@ class ResidualSineProcessor(ProcessorSequentialWrapper):
             current_channels = new_channels
         last_layer = nn.Linear(current_channels, output_channels)
         with torch.no_grad():
-            b = math.sqrt(6 / (current_channels)) / 30.0
+            b = math.sqrt(6 / current_channels) / 30.0
             last_layer.weight.uniform_(-b, b)
         layers.append((f'linear{len(layer_sizes)}', last_layer))
 
