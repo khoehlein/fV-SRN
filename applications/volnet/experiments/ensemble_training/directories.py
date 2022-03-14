@@ -17,7 +17,7 @@ PROJECT_BASE_PATH ={
 }
 DATA_BASE_PATH = {
     'tuini15-cg05-cg-in-tum-de': '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/converted_normal_anomaly',
-    'gpusrv01-cg-in-tum-de': '/home/hoehlein/data/1000_member_ensemble/normalized_anomalies/single_member'
+    'gpusrv01': '/home/hoehlein/data/1000_member_ensemble/normalized_anomalies/single_member'
 }
 INTERPRETER_PATH = '/home/hoehlein/anaconda3/envs/fvsrn2/bin/python'
 SCRIPT_PATH = 'volnet/experiments/refactored_network/run_training.py'
