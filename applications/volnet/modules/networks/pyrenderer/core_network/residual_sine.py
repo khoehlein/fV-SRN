@@ -21,8 +21,8 @@ class ResidualSineLayer(nn.Module):
         self.linear_1 = nn.Linear(num_channels, num_channels, bias=bias)
         self.linear_2 = nn.Linear(num_channels, num_channels, bias=bias)
 
-        self.weight_1 = .5 if ave_first else 1
-        self.weight_2 = .5 if ave_second else 1
+        self.weight_1 = .5 if ave_first else 1.
+        self.weight_2 = .5 if ave_second else 1.
 
         self.init_weights()
 
@@ -56,7 +56,7 @@ class ResidualSineProcessor(ProcessorSequentialWrapper):
             if i == 0:
                 current_layer = nn.Linear(current_channels, new_channels)
                 with torch.no_grad():
-                    current_layer.weight.uniform_(-1 / current_channels, 1 / current_channels)
+                    current_layer.weight.uniform_(-1. / current_channels, 1. / current_channels)
                 layers.append((f'linear{i}', current_layer))
                 layers.append((f'Sine{i}', Sine(omega=30)))
             else:
