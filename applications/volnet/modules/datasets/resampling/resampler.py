@@ -103,7 +103,7 @@ class DatasetResampler(object):
             network: Optional[SceneRepresentationNetwork] = None,
     ):
         if self.uses_importance_sampling():
-            assert network is not None, '[ERROR] Cannot do remportance sampling without scene representation network.'
+            assert network is not None, '[ERROR] Cannot do importance resampling without scene representation network.'
             loss_evaluator = LossEvaluator(self._get_loss_function(), volume=volume_evaluator)
             dataset.sample_data_with_loss_importance(network, volume_evaluator, loss_evaluator, self.sampler)
         else:
@@ -114,4 +114,3 @@ class DatasetResampler(object):
         return {
             'l1': F.l1_loss, 'l2': F.mse_loss, 'mse': F.mse_loss
         }[self.loss_mode]
-
