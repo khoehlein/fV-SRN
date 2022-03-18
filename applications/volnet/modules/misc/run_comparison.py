@@ -22,7 +22,7 @@ class MultiRunComparison(object):
         hdf5_directory = self._get_hdf5_directory()
         run_files = {
             os.path.splitext(f)[0]: os.path.join(hdf5_directory, f)
-            for f in sorted(os.listdir(hdf5_directory)) if f.endswith('.hdf5')
+            for f in sorted(os.listdir(hdf5_directory))[:-1] if f.endswith('.hdf5')
         }
         data = []
         for run_name, file_path in run_files.items():
@@ -112,7 +112,7 @@ class MultiRunComparison(object):
 
 
 def _test_comparison():
-    comparison = MultiRunComparison('/home/hoehlein/PycharmProjects/results/fvsrn/multi_member_volumetric_ensemble_evaluation', ['total'])
+    comparison = MultiRunComparison('/home/hoehlein/PycharmProjects/results/fvsrn/multi_member_siren_volumetric', ['total'])
     pcp_app = comparison.get_pcp_app(color_key='total:min_val', drop_constant_parameters=True)
     pcp_app.run(debug=True)
     print('[INFO] Finished')

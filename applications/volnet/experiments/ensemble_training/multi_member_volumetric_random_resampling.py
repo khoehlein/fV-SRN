@@ -9,7 +9,7 @@ io.set_debug_mode(args)
 
 DATA_FILENAME_PATTERN = 'tk/member{member:04d}/t04.cvol'
 SETTINGS_FILE = 'config-files/meteo-ensemble-normalized-anomalies.json'
-EXPERIMENT_NAME = 'multi_member_volumetric_ensemble_random_resampling'
+EXPERIMENT_NAME = 'multi_member_volumetric_random_resampling'
 
 PARAMETERS = {
     '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
@@ -19,7 +19,7 @@ PARAMETERS = {
     '--lossmode': 'density',
     '--network:core:layer-sizes': [
         #'64:64:64', '96:96:96', '128:128:128', '128:128',
-        '32:32:32',
+        '32:32:32', '64:64:64', '64:64'
     ],
     '--network:core:activation': 'SnakeAlt:2',
     '--network:input:fourier:positions:num-features': 14,

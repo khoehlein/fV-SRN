@@ -31,7 +31,7 @@ class ModularSRN(ISceneRepresentationNetwork):
 
     def forward(
             self,
-            positions: Tensor, transfer_functions: Tensor, time: Tensor, member:Tensor,
+            positions: Tensor, transfer_functions: Tensor, time: Tensor, member: Tensor,
             evaluation_mode: EvaluationMode
     ) -> Tensor:
         data_input = self.input_parameterization.forward(positions, transfer_functions, time, member)
