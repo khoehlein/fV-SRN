@@ -8,7 +8,7 @@ io.set_debug_mode(args)
 
 DATA_FILENAME_PATTERN = 'tk/member{member:04d}/t04.cvol'
 SETTINGS_FILE = 'config-files/meteo-ensemble-normalized-anomalies.json'
-EXPERIMENT_NAME = 'multi_member_linear_ensemble_evaluation'
+EXPERIMENT_NAME = 'multi_member_linear_random_resampling'
 
 PARAMETERS = {
     '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
@@ -42,10 +42,8 @@ PARAMETERS = {
         '1:3', '1:5', '1:9'
     ],
     '--world-density-data:sub-batching': 8,
-    '--dataset-resampling:method': 'importance:grid',
-    '--dataset-resampling:loss': 'l1',
+    '--dataset-resampling:method': 'random',
     '--dataset-resampling:frequency': 20,
-    '--importance-sampler:grid:sub-sampling': 4,
 }
 
 

@@ -17,7 +17,7 @@ PARAMETERS = {
     '--world-density-data:validation-share': 0.2,
     '--lossmode': 'density',
     '--network:core:layer-sizes': [
-        '64:64:64', '96:96:96', '128:128:128', '128:128',
+        '64:64:64', '32:32:32', '128:128',
     ],
     '--network:core:activation': 'SnakeAlt:2',
     '--network:input:fourier:positions:num-features': 14,
