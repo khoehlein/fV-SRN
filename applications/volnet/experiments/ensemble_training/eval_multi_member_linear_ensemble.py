@@ -37,7 +37,7 @@ PARAMETERS = {
     '--lr_step': 50,
     '--epochs': 200,
     '--output:save-frequency': 20,
-    '--data-storage:filename-pattern': DATA_FILENAME_PATTERN,
+    '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
     '--data-storage:ensemble:index-range': [
         '1:3', '1:5', '1:9'
     ],
