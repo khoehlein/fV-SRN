@@ -242,13 +242,13 @@ class WorldSpaceDensityData(Dataset):
             targets = targets.data.cpu().numpy()
             weights = np.ones_like(targets)
             print(f"[INFO] Targets: min={targets.min()}, max={targets.max()}, mean={targets.mean()}")
-            tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(0, ensemble_index, timestep_index, len(targets))
+            tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(0, timestep_index, ensemble_index, len(targets))
             self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
         self._finalize_data()
         return self
 
-    def _build_index_data(self, tf_index, timestep_idx, ensemble_idx, num_samples):
-        tf_index = np.full((num_samples,), tf_index, dtype=np.int32)  # dataset doesnt support tf
+    def _build_index_data(self, tf_idx, timestep_idx, ensemble_idx, num_samples):
+        tf_index = np.full((num_samples,), tf_idx, dtype=np.int32)  # dataset doesnt support tf
         timestep_index = np.full((num_samples,), timestep_idx, dtype=np.float32)
         ensemble_index = np.full((num_samples,), ensemble_idx, dtype=np.float32)
         return tf_index, timestep_index, ensemble_index
