@@ -213,7 +213,10 @@ class WorldSpaceDensityData(Dataset):
             positions = positions.data.cpu().numpy()
             targets = targets.data.cpu().numpy()
             weights = np.ones_like(targets)
-            tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(0, ensemble_index, timestep_index, self.num_samples_per_volume)
+            tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(
+                0, timestep_index, ensemble_index,
+                self.num_samples_per_volume
+            )
             self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
         self._finalize_data()
         volume_evaluator.restore_defaults()
