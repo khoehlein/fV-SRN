@@ -25,7 +25,7 @@ PARAMETERS = {
     '--network:latent-features:ensemble:num-channels': [
         4, 8, 16
     ],
-    '--network:latent-features:volume:grid-size': [
+    '--network:latent-features:ensemble:grid-size': [
         '4:44:32', '2:44:32', '4:88:64', '2:22:16'
     ],
     '--network:output:parameterization-method': 'direct',
