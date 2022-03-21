@@ -3,8 +3,9 @@ from typing import List, Any, Optional, Tuple
 import torch
 from torch import Tensor, nn
 
+
 from volnet.modules.networks.latent_features.marginal.features import FeatureVector, FeatureGrid
-from volnet.modules.networks.latent_features.indexing.key_indexer import KeyIndexer
+from volnet.modules.networks.latent_features.marginal.multi_res import MultiResolutionFeatures
 from volnet.modules.networks.latent_features.init import IInitializer, DefaultInitializer
 from volnet.modules.networks.latent_features.interface import IFeatureModule
 
@@ -110,6 +111,40 @@ class EnsembleFeatureGrid(IEnsembleFeatures):
         self.feature_mapping = nn.ModuleList([
             FeatureGrid.from_initializer(
                 self.initializer, self.grid_size(), self.num_channels(),
+                device=self.device, dtype=self.dtype, debug=False
+            ) for i in range(len(member_keys))
+        ])
+        return self
+
+    def uses_positions(self) -> bool:
+        return True
+
+
+class EnsembleMultiResolutionFeatures(IEnsembleFeatures):
+
+    def __init__(
+            self,
+            member_keys: List[Any], num_channels: int,
+            coarse_resolution: Tuple[int, int, int], fine_resolution: Tuple[int, int, int],
+            num_levels: int, num_nodes: int,
+            initializer: Optional[IInitializer] = None,
+            debug=False, device=None, dtype=None
+    ):
+        self._coarse_resolution = coarse_resolution
+        self._fine_resolution = fine_resolution
+        self._num_levels = num_levels
+        self._num_nodes = num_nodes
+        super(EnsembleMultiResolutionFeatures, self).__init__(
+            member_keys, num_channels, initializer=initializer,
+            debug=debug, device=device, dtype=dtype
+        )
+
+    def reset_member_features(self, *member_keys: Any):
+        self.key_mapping = {key: i for i, key in enumerate(member_keys)}
+        self.feature_mapping = nn.ModuleList([
+            MultiResolutionFeatures.from_initializer(
+                self.initializer, self._coarse_resolution, self._fine_resolution,
+                self._num_levels, self._num_nodes, self.num_channels(),
                 device=self.device, dtype=self.dtype, debug=False
             ) for i in range(len(member_keys))
         ])

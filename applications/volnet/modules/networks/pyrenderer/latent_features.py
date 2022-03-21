@@ -9,8 +9,8 @@ from volnet.modules.networks.latent_features.init import DefaultInitializer
 from volnet.modules.networks.latent_features.marginal import (
     MarginalLatentFeatures,
     TemporalFeatureGrid, TemporalFeatureVector,
-    EnsembleFeatureGrid, EnsembleFeatureVector,
-    FeatureVector, FeatureGrid
+    EnsembleFeatureGrid, EnsembleFeatureVector, EnsembleMultiResolutionFeatures,
+    FeatureVector, FeatureGrid, MultiResolutionFeatures
 )
 
 
@@ -27,10 +27,15 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             """
         )
         group.add_argument(
-            prefix + 'time:grid-size', type=str, default=None,
+            prefix + 'time:mode', type=str, default='vector', choices=['vector', 'grid'],
+            help="""
+            mode for handling spatial coordinates in time features
+            """
+        )
+        group.add_argument(
+            prefix + 'time:grid:resolution', type=str, default=None,
             help="""
             grid size for volumetric temporal features 
-            (Default: None, ie. don't use position in temporal features)
             """
         )
         group.add_argument(
@@ -47,10 +52,39 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             """
         )
         group.add_argument(
-            prefix + 'ensemble:grid-size', type=str, default=None,
+            prefix + 'ensemble:mode', type=str, default='vector', choices=['vector', 'grid', 'multi-res'],
+            help="""
+            mode for handling spatial coordinates in ensemble features
+            """
+        )
+        group.add_argument(
+            prefix + 'ensemble:grid:resolution', type=str, default=None,
             help="""
             grid size for volumetric ensemble features 
-            (Default: None, ie. don't use position in ensemble features)
+            """
+        )
+        group.add_argument(
+            prefix + 'ensemble:multi-res:coarsest', type=str, default=None,
+            help="""
+            grid size for coarsest grid in multi-resolution volumetric ensemble features 
+            """
+        )
+        group.add_argument(
+            prefix + 'ensemble:multi-res:finest', type=str, default=None,
+            help="""
+            grid size for finest grid in multi-resolution volumetric ensemble features 
+            """
+        )
+        group.add_argument(
+            prefix + 'ensemble:multi-res:num-levels', type=int, default=2,
+            help="""
+            number of levels for ensemble-related multi-resolution latent-features
+            """
+        )
+        group.add_argument(
+            prefix + 'ensemble:multi-res:table-size', type=int, default=None,
+            help="""
+            number of table entries for multi-resolution ensemble features
             """
         )
         group.add_argument(
@@ -60,10 +94,39 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             """
         )
         group.add_argument(
-            prefix + 'volume:grid-size', type=str, default=None,
+            prefix + 'volume:mode', type=str, default='vector', choices=['vector', 'grid', 'multi-res'],
+            help="""
+            mode for handling spatial coordinates in volume features
+            """
+        )
+        group.add_argument(
+            prefix + 'volume:grid:resolution', type=str, default=None,
             help="""
             grid size for purely volumetric features 
-            (Default: None, ie. use feature vector without position dependence)
+            """
+        )
+        group.add_argument(
+            prefix + 'volume:multi-res:coarsest', type=str, default=None,
+            help="""
+            grid size for coarsest grid in multi-resolution volumetric features 
+            """
+        )
+        group.add_argument(
+            prefix + 'volume:multi-res:finest', type=str, default=None,
+            help="""
+            grid size for finest grid in multi-resolution volumetric features 
+            """
+        )
+        group.add_argument(
+            prefix + 'volume:multi-res:num-levels', type=int, default=2,
+            help="""
+            number of levels for volumetric multi-resolution latent-features
+            """
+        )
+        group.add_argument(
+            prefix + 'volume:multi-res:table-size', type=int, default=None,
+            help="""
+            number of table entries for multi-resolution volumetric features
             """
         )
 
@@ -94,12 +157,16 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             else:
                 min_time, max_time, num_steps = key_time_specs.split(':')
                 key_times = torch.linspace(float(min_time), float(max_time), int(num_steps))
-            grid_specs = get_arg('time:grid_size')
-            if grid_specs is None:
+            mode = get_arg('time:mode')
+            if mode == 'vector':
                 temporal_features = TemporalFeatureVector(key_times, temporal_channels)
-            else:
+            elif mode == 'grid':
+                grid_specs = get_arg('time:grid:resolution')
+                assert grid_specs is not None
                 grid_size = read_grid_specs(grid_specs)
                 temporal_features = TemporalFeatureGrid(key_times, temporal_channels, grid_size)
+            else:
+                raise NotImplementedError()
         else:
             temporal_features = None
 
@@ -107,24 +174,57 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
         if ensemble_channels > 0:
             assert member_keys is not None, \
                 '[ERROR] member keys must be provided if ensemble features are to be used.'
-            grid_specs = get_arg('ensemble:grid_size')
-            if grid_specs is None:
+            mode = get_arg('ensemble:mode')
+            if mode == 'vector':
                 ensemble_features = EnsembleFeatureVector(member_keys, ensemble_channels)
-            else:
+            elif mode == 'grid':
+                grid_specs = get_arg('ensemble:grid:resolution')
+                assert grid_specs is not None
                 grid_size = read_grid_specs(grid_specs)
                 ensemble_features = EnsembleFeatureGrid(member_keys, ensemble_channels, grid_size)
+            elif mode == 'multi-res':
+                coarsest = get_arg('ensemble:multi_res:coarsest')
+                assert coarsest is not None
+                coarsest = read_grid_specs(coarsest)
+                finest = get_arg('ensemble:multi_res:finest')
+                assert finest is not None
+                finest = read_grid_specs(finest)
+                num_levels = get_arg('ensemble:multi_res:num_levels')
+                assert ensemble_channels % num_levels == 0
+                t = get_arg('ensemble:multi_res:table_size')
+                assert t is not None
+                ensemble_features = EnsembleMultiResolutionFeatures(member_keys, ensemble_channels, coarsest, finest, num_levels, t)
+            else:
+                raise NotImplementedError()
+
         else:
             ensemble_features = None
 
         volumetric_channels = get_arg('volume:num_channels')
         if volumetric_channels > 0:
-            grid_specs = get_arg('volume:grid_size')
+            mode = get_arg('volume:mode')
             initializer = DefaultInitializer()
-            if grid_specs is None:
+            if mode == 'vector':
                 volumetric_features = FeatureVector.from_initializer(initializer, volumetric_channels)
-            else:
+            elif mode == 'grid':
+                grid_specs = get_arg('volume:grid:resolution')
+                assert grid_specs is not None
                 grid_size = read_grid_specs(grid_specs)
                 volumetric_features = FeatureGrid.from_initializer(initializer, grid_size, volumetric_channels)
+            elif mode == 'multi-res':
+                coarsest = get_arg('ensemble:multi_res:coarsest')
+                assert coarsest is not None
+                coarsest = read_grid_specs(coarsest)
+                finest = get_arg('ensemble:multi_res:finest')
+                assert finest is not None
+                finest = read_grid_specs(finest)
+                num_levels = get_arg('volume:multi_res:num_levels')
+                assert volumetric_channels % num_levels == 0
+                t = get_arg('volume:multi_res:table_size')
+                assert t is not None
+                volumetric_features = MultiResolutionFeatures.from_initializer(initializer, coarsest, finest, num_levels, t, volumetric_channels)
+            else:
+                raise NotImplementedError()
         else:
             volumetric_features = None
         if temporal_features is not None or ensemble_features is not None or volumetric_features is not None:
