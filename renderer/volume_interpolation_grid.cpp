@@ -149,7 +149,7 @@ void renderer::VolumeInterpolationGrid::setSource(Volume_ptr v, const std::optio
 	//density features
 	if (v == nullptr)
 		return;
-	if (!extractDensityFeaturesFromVolume()) {
+	if (!extractDensityFeaturesFromVolume(feature)) {
 		return;
 	}
 	const auto& m = availableDensityFeatures_[selectedDensityFeatureIndex_];
