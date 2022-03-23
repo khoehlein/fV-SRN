@@ -125,9 +125,12 @@ public:
 	VolumeInterpolationGrid();
 
 	/**
-	 * Sets the source to the volume and mipmap level
+	 * Sets the source to the volume feature and mipmap level.
+	 * \param v the volume
+	 * \param feature the name of the feature to use. If not specified, use the first feature
+	 * \param mipmap the mipmap index. If not specified, use mipmap index 0
 	 */
-	void setSource(Volume_ptr v, int mipmap);
+	void setSource(Volume_ptr v, const std::optional<std::string>& feature, const std::optional<int>& mipmap);
 	/**
 	 * Sets the source to the given tensor of shape
 	 * (Batch, X, Y, Z)
@@ -215,7 +218,7 @@ private:
 	void loadEnsemble(const std::string& filename, float* progress);
 	void loadVolume(const std::string& filename, float* progress);
 	Volume_ptr loadVolumeImpl(const std::string& filename, float* progress);
-	bool extractDensityFeaturesFromVolume();
+	bool extractDensityFeaturesFromVolume(const std::optional<std::string>& requestedFeatureName);
 };
 
 END_RENDERER_NAMESPACE
