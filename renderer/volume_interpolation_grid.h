@@ -218,7 +218,7 @@ private:
 	void loadEnsemble(const std::string& filename, float* progress);
 	void loadVolume(const std::string& filename, float* progress);
 	Volume_ptr loadVolumeImpl(const std::string& filename, float* progress);
-	bool extractDensityFeaturesFromVolume(const std::optional<std::string>& requestedFeatureName);
+	bool extractDensityFeaturesFromVolume(const std::optional<std::string>& requestedFeatureName = {});
 };
 
 END_RENDERER_NAMESPACE

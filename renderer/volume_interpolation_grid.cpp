@@ -252,7 +252,7 @@ void renderer::VolumeInterpolationGrid::setEnsembleAndTime(int ensemble, int tim
 	}
 	currentEnsemble_ = ensemble;
 	currentTimestep_ = time;
-	setSource(ensembleFactory_->loadVolume(ensemble, time), mipmap);
+	setSource(ensembleFactory_->loadVolume(ensemble, time), {}, mipmap);
 }
 
 renderer::Volume_ptr renderer::VolumeInterpolationGrid::volume() const
@@ -489,7 +489,7 @@ bool renderer::VolumeInterpolationGrid::drawUI(UIStorage_t& storage)
 		{
 			mipmapLevel_ = MipLevelNames[i].first;
 			feature->createMipmapLevel(mipmapLevel_, Volume::MipmapFilterMode::AVERAGE);
-			setSource(volume_, mipmapLevel_);
+			setSource(volume_, feature->name(), mipmapLevel_);
 			changed = true;
 		}
 	}
@@ -600,7 +600,7 @@ void renderer::VolumeInterpolationGrid::loadVolume(const std::string& filename, 
 	ensembleFactory_ = nullptr;
 	Volume_ptr volume = loadVolumeImpl(filename, progress);
 	if (volume != nullptr) {
-		setSource(volume, 0);
+		setSource(volume, {}, {});
 		volumeFullFilename_ = filename;
 		std::cout << "Loaded" << std::endl;
 	}
@@ -688,7 +688,7 @@ void renderer::VolumeInterpolationGrid::load(const nlohmann::json& json, const I
 				mipmapLevel_ = json.value("mipmapLevel", 0);
 				if (volume_ && mipmapLevel_ != 0)
 				{
-					setSource(volume_, mipmapLevel_);
+					setSource(volume_, {}, mipmapLevel_);
 				}
 			}
 		}
@@ -775,7 +775,7 @@ Sets the source from the given volume with optional feature and mipmap selection
 :param volume: the volume instance
 :param feature: [optional] the name of the feature to select. If None, use the feature matching the previous selection
 :param mipmap: [optional] the mipmap index to use. If None, use mipmap level 0
-)doc"), py::arg("volume"), py::arg("feature"), py::arg("mipmap"))
+)doc"), py::arg("volume"), py::arg("feature")=std::optional<std::string>(), py::arg("mipmap")=std::optional<int>())
 		.def("setSource", static_cast<void (VolumeInterpolationGrid::*)(const torch::Tensor&)>(&VolumeInterpolationGrid::setSource))
 		.def("setSource", static_cast<void (VolumeInterpolationGrid::*)(VolumeEnsembleFactory_ptr)>(&VolumeInterpolationGrid::setSource))
 		.def("setEnsembleAndTime", &VolumeInterpolationGrid::setEnsembleAndTime,
