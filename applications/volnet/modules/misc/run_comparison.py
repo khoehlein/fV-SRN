@@ -112,11 +112,36 @@ class MultiRunComparison(object):
 
 
 def _test_comparison():
-    comparison = MultiRunComparison('/home/hoehlein/PycharmProjects/results/fvsrn/multi_member_siren_volumetric', ['total'])
+    comparison = MultiRunComparison('/home/hoehlein/PycharmProjects/results/fvsrn/multi_member_linear_ensemble_evaluation', ['total'])
     pcp_app = comparison.get_pcp_app(color_key='total:min_val', drop_constant_parameters=True)
     pcp_app.run(debug=True)
     print('[INFO] Finished')
 
 
+def run_comparison():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dir', type=str, help='base directory of the multi-run experiment', required=True)
+    parser.add_argument('--loss-keys', type=str, help='loss keys to show in visualization (for multiple, separate by :)', default='total')
+    parser.add_argument('--color-key', type=str, help='loss key to use for color coding', default=None)
+    parser.add_argument('--drop-const', action='store_true', dest='drop_const', help='drop parameters with only a single setting')
+    parser.add_argument('--show-const', action='store_false', dest='drop_const', help='show parameters with only a single setting')
+    parser.add_argument('--debug', action='stre_true', dest='debug')
+    parser.set_defaults(drop_const=True, debug=False)
+
+    args = vars(parser.parse_args())
+    loss_keys = args['loss_keys'].split(':')
+    color_key = args['color_key']
+    if color_key is None:
+        color_key = loss_keys[0] + ':min_val'
+
+    comparison = MultiRunComparison(args['dir'], loss_keys)
+    pcp_app = comparison.get_pcp_app(color_key=color_key, drop_constant_parameters=args['drop_const'])
+    pcp_app.run(debug=args['debug'])
+
+    print('[INFO] Finished')
+
+
 if __name__ == '__main__':
-    _test_comparison()
+    run_comparison()
