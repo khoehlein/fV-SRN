@@ -59,7 +59,7 @@ renderer::VolumeInterpolationGrid::VolumeInterpolationGrid()
    , gridResolutionNewBehavior_(false)
 {}
 
-bool renderer::VolumeInterpolationGrid::extractDensityFeaturesFromVolume()
+bool renderer::VolumeInterpolationGrid::extractDensityFeaturesFromVolume(const std::optional<std::string>& requestedFeatureName)
 {
 	FeatureDescriptorDensity oldFeature{ -1, Feature2Density::Identity };
 	if (selectedDensityFeatureIndex_ >= 0 & selectedDensityFeatureIndex_ < availableDensityFeatures_.size())
@@ -98,6 +98,32 @@ bool renderer::VolumeInterpolationGrid::extractDensityFeaturesFromVolume()
 		return false;
 	}
 
+	//search for the requested feature
+	if (requestedFeatureName.has_value())
+	{
+		int allMatch = -1;
+		int onlyFeatureMatch = -1;
+		const std::string name = requestedFeatureName.value();
+		for (int i = 0; i < availableDensityFeatures_.size(); ++i)
+		{
+			auto f = volume_->getFeature(availableDensityFeatures_[i].featureIndex);
+			if (f->name() != name) continue;
+			if (onlyFeatureMatch == -1) onlyFeatureMatch = i;
+			if (availableDensityFeatures_[i].mapping == oldFeature.mapping) allMatch = i;
+		}
+		if (allMatch >= 0)
+		{
+			selectedDensityFeatureIndex_ = allMatch;
+			return true;
+		}
+		if (onlyFeatureMatch >= 0)
+		{
+			selectedDensityFeatureIndex_ = onlyFeatureMatch;
+			return true;
+		}
+		std::cout << "Requested feature with name '" << name << "', but no such feature was found. Fallback to the feature best matching the previous volume" << std::endl;
+	}
+
 	//search if we have a match with one of the new features
 	for (int i=0; i<availableDensityFeatures_.size(); ++i)
 	{
@@ -111,13 +137,13 @@ bool renderer::VolumeInterpolationGrid::extractDensityFeaturesFromVolume()
 	return true;
 }
 
-void renderer::VolumeInterpolationGrid::setSource(Volume_ptr v, int mipmap)
+void renderer::VolumeInterpolationGrid::setSource(Volume_ptr v, const std::optional<std::string>& feature, const std::optional<int>& mipmap)
 {
 	static int previousDensityFeatureIndex = -1;
 	source_ = VolumeSource::VOLUME;
 	bool changed = volume_ != v;
 	volume_ = v;
-	mipmapLevel_ = mipmap;
+	mipmapLevel_ = mipmap.value_or(0);
 	tensor_ = Parameter<torch::Tensor>();
 
 	//density features
@@ -127,7 +153,7 @@ void renderer::VolumeInterpolationGrid::setSource(Volume_ptr v, int mipmap)
 		return;
 	}
 	const auto& m = availableDensityFeatures_[selectedDensityFeatureIndex_];
-	const auto& feature = volume_->getFeature(m.featureIndex);
+	const auto& volumeFeature = volume_->getFeature(m.featureIndex);
 	if (m.featureIndex != previousDensityFeatureIndex)
 	{
 		previousDensityFeatureIndex = m.featureIndex;
@@ -164,21 +190,21 @@ void renderer::VolumeInterpolationGrid::setSource(Volume_ptr v, int mipmap)
 		}
 	}
 
-	if (feature->getLevel(mipmap) == nullptr)
-		feature->createMipmapLevel(mipmap, Volume::MipmapFilterMode::AVERAGE);
-    feature->getLevel(mipmap)->copyCpuToGpu();
+	if (volumeFeature->getLevel(mipmapLevel_) == nullptr)
+		volumeFeature->createMipmapLevel(mipmapLevel_, Volume::MipmapFilterMode::AVERAGE);
+	volumeFeature->getLevel(mipmapLevel_)->copyCpuToGpu();
 
 	double3 worldSize = make_double3(
 		v->worldSizeX(), v->worldSizeY(), v->worldSizeZ()
 	);
-	setObjectResolution(feature->getLevel(mipmap)->size());
+	setObjectResolution(volumeFeature->getLevel(mipmapLevel_)->size());
 	setBoxMin(-worldSize / 2.0);
 	setBoxMax( worldSize / 2.0);
 
 	if (changed) {
 		//TODO: this is quite the bottleneck sometimes.
 		// Save the histogram in the volume file?
-		histogram_ = feature->extractHistogram();
+		histogram_ = volumeFeature->extractHistogram();
 		minDensity_ = histogram_->minDensity; //(minDensity_ < histogram_->maxDensity&& minDensity_ > histogram_->minDensity) ? minDensity_ : histogram_->minDensity;
 		maxDensity_ = histogram_->maxDensity; //(maxDensity_ < histogram_->maxDensity&& maxDensity_ > histogram_->minDensity) ? maxDensity_ : histogram_->maxDensity;
 	}
@@ -743,7 +769,13 @@ void renderer::VolumeInterpolationGrid::registerPybindModule(pybind11::module& m
 		.def("volume", &VolumeInterpolationGrid::volume)
 		.def("mipmap_level", &VolumeInterpolationGrid::mipmapLevel)
 		.def("tensor", &VolumeInterpolationGrid::tensor)
-		.def("setSource", static_cast<void (VolumeInterpolationGrid::*)(Volume_ptr, int)>(&VolumeInterpolationGrid::setSource))
+		.def("setSource", static_cast<void (VolumeInterpolationGrid::*)(Volume_ptr, const std::optional<std::string>&feature, const std::optional<int>&mipmap)>(&VolumeInterpolationGrid::setSource),
+			py::doc(R"doc(
+Sets the source from the given volume with optional feature and mipmap selection.
+:param volume: the volume instance
+:param feature: [optional] the name of the feature to select. If None, use the feature matching the previous selection
+:param mipmap: [optional] the mipmap index to use. If None, use mipmap level 0
+)doc"), py::arg("volume"), py::arg("feature"), py::arg("mipmap"))
 		.def("setSource", static_cast<void (VolumeInterpolationGrid::*)(const torch::Tensor&)>(&VolumeInterpolationGrid::setSource))
 		.def("setSource", static_cast<void (VolumeInterpolationGrid::*)(VolumeEnsembleFactory_ptr)>(&VolumeInterpolationGrid::setSource))
 		.def("setEnsembleAndTime", &VolumeInterpolationGrid::setEnsembleAndTime,
