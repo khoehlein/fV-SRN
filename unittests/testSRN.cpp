@@ -240,11 +240,12 @@ public:
 			n->setTimeAndEnsemble(0, 0);
 		}
 
+		auto n2 = n->networks()->addInnerNetwork();
 		for (size_t i = 0; i < hidden_.size(); ++i)
 		{
-			n->addLayerFromTorch(hidden_[i]->weight, hidden_[i]->bias, activation_, activationParameter_);
+			n2->addLayerFromTorch(n->input(), hidden_[i]->weight, hidden_[i]->bias, activation_, activationParameter_);
 		}
-		n->addLayerFromTorch(last_->weight, last_->bias, Layer::None);
+		n2->addLayerFromTorch(n->input(), last_->weight, last_->bias, Layer::None);
 
 		return n;
 	}
@@ -419,14 +420,14 @@ TEST_CASE("Scene-Representation-Networks", "[modules]")
 		REQUIRE(networkTC->input()->numFourierFeatures == networkTCCopy->input()->numFourierFeatures);
 		REQUIRE(networkTC->input()->fourierMatrix == networkTCCopy->input()->fourierMatrix);
 		REQUIRE(networkTC->output()->outputMode == networkTCCopy->output()->outputMode);
-		REQUIRE(networkTC->numLayers() == networkTCCopy->numLayers());
-		for (int i = 0; i < networkTC->numLayers(); ++i) {
+		REQUIRE(networkTC->networks()->getInnerNetwork(0)->numLayers() == networkTCCopy->networks()->getInnerNetwork(0)->numLayers());
+		for (int i = 0; i < networkTC->networks()->getInnerNetwork(0)->numLayers(); ++i) {
 			INFO("hidden: " << i);
-			REQUIRE(networkTC->getHidden(i)->channelsIn == networkTCCopy->getHidden(i)->channelsIn);
-			REQUIRE(networkTC->getHidden(i)->channelsOut == networkTCCopy->getHidden(i)->channelsOut);
-			REQUIRE(networkTC->getHidden(i)->activation == networkTCCopy->getHidden(i)->activation);
-			REQUIRE(networkTC->getHidden(i)->weights == networkTCCopy->getHidden(i)->weights);
-			REQUIRE(networkTC->getHidden(i)->bias == networkTCCopy->getHidden(i)->bias);
+			REQUIRE(networkTC->networks()->getInnerNetwork(0)->getHidden(i)->channelsIn == networkTCCopy->networks()->getInnerNetwork(0)->getHidden(i)->channelsIn);
+			REQUIRE(networkTC->networks()->getInnerNetwork(0)->getHidden(i)->channelsOut == networkTCCopy->networks()->getInnerNetwork(0)->getHidden(i)->channelsOut);
+			REQUIRE(networkTC->networks()->getInnerNetwork(0)->getHidden(i)->activation == networkTCCopy->networks()->getInnerNetwork(0)->getHidden(i)->activation);
+			REQUIRE(networkTC->networks()->getInnerNetwork(0)->getHidden(i)->weights == networkTCCopy->networks()->getInnerNetwork(0)->getHidden(i)->weights);
+			REQUIRE(networkTC->networks()->getInnerNetwork(0)->getHidden(i)->bias == networkTCCopy->networks()->getInnerNetwork(0)->getHidden(i)->bias);
 		}
 	}
 }
