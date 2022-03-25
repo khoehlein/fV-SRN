@@ -7,3 +7,4 @@ class BackendOutputMode(Enum):
     RGBO = 'rgbo'
     RGBO_DIRECT = 'rgbo:direct'
     RGBO_EXP = 'rgbo:exp'
+    MULTIVARIATE = 'multivariate'

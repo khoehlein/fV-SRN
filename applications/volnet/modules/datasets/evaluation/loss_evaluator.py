@@ -12,10 +12,10 @@ class LossEvaluator(IFieldEvaluator):
         self.volume_evaluator = None
         network, volume = self._verify_sources(network=network, volume=volume)
         if volume is not None:
-            in_dimension = volume.in_dimension
+            in_dimension = volume.in_channels()
             device_ = volume.device
         elif network is not None:
-            in_dimension = network.in_dimension
+            in_dimension = network.in_channels()
             device_ = network.device
         else:
             in_dimension = dimension
@@ -40,8 +40,8 @@ class LossEvaluator(IFieldEvaluator):
         if volume is None:
             volume = self.volume_evaluator
         if volume is not None and network is not None:
-            assert volume.in_dimension == network.in_dimension
-            assert volume.out_dimension == network.out_dimension
+            assert volume.in_channels() == network.in_channels()
+            assert volume.out_channels() == network.out_channels()
             assert volume.device == network.device
         return network, volume
 

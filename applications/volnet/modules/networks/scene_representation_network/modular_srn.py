@@ -39,7 +39,7 @@ class ModularSRN(ISceneRepresentationNetwork):
             latent_inputs = self.latent_features.evaluate(positions, time, member)
         else:
             latent_inputs = None
-        network_output = self.core_network.forward(data_input, latent_inputs)
+        network_output = self.core_network.forward(data_input, latent_inputs, positions, transfer_functions, time, member)
         prediction = self.output_parameterization.forward(network_output, evaluation_mode)
         return prediction
 

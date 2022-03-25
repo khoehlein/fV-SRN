@@ -38,7 +38,10 @@ class ProcessorSequentialWrapper(ICoreNetwork):
         self._activation_params = activation_params
         self.layers = nn.Sequential(collections.OrderedDict(layers))
 
-    def forward(self, data_input: Tensor, latent_input: Union[Tensor, None]) -> Tensor:
+    def forward(
+            self, data_input: Tensor, latent_input: Union[Tensor, None],
+            positions: Tensor, transfer_functions: Tensor, time: Tensor, member:Tensor
+    ) -> Tensor:
         if latent_input is None:
             assert self.latent_input_channels() == 0
             joint_input = data_input

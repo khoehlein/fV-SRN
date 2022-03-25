@@ -36,7 +36,7 @@ from volnet.modules.visualizer import Visualizer
 
 # align model output with dataset output
 PyrendererOutputParameterization.set_output_mode(
-    WorldSpaceDensityData.output_mode()
+    VolumeEvaluator.output_mode()
 )
 
 

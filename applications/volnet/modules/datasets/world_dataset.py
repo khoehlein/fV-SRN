@@ -1,5 +1,6 @@
 import argparse
 from itertools import product
+from typing import Optional
 
 import numpy as np
 import torch
@@ -163,6 +164,7 @@ class WorldSpaceDensityData(Dataset):
             dtype = torch.float32
         self.dtype = dtype
         self.return_weights = return_weights
+        self._output_mode = None
         self._reset_data()
         if volume_evaluator is not None and position_sampler is not None:
             self.sample_data(volume_evaluator, position_sampler)
@@ -195,17 +197,22 @@ class WorldSpaceDensityData(Dataset):
             ]
 
     @staticmethod
-    def _read_resolution_from_volume(feature):
-        return tuple(feature.get_level(0).to_tensor().shape[1:])
+    def _read_resolution_from_volume(volume_data):
+        shapes = []
+        for i in range(volume_data.num_features()):
+            feature = volume_data.get_feature(i)
+            shapes.append(list(feature.get_level(0).to_tensor().shape[1:]))
+        resolution = np.amax(np.array(shapes), axis=0)
+        return tuple([int(i) for i in resolution])
 
-    def sample_data(self, volume_evaluator: VolumeEvaluator, position_sampler: PositionSampler):
+    def sample_data(self, volume_evaluator: VolumeEvaluator, position_sampler: PositionSampler, feature: Optional[str] = None):
         assert volume_evaluator.interpolator.grid_resolution_new_behavior, \
             '[ERROR] Data should only be sampled with new resolution behavior in volume interpolation.'
         position_sampler.reset()
         self._reset_data()
         for (timestep_index, timestep), (ensemble_index, ensemble) in product(enumerate(self.timestep_index), enumerate(self.ensemble_index)):
             volume_data = self.volume_data_storage.load_volume(timestep=timestep, ensemble=ensemble, index_access=False)
-            volume_evaluator.set_source(volume_data)
+            volume_evaluator.set_source(volume_data, feature=feature)
             positions = position_sampler.sample(self.num_samples_per_volume)
             positions = torch.from_numpy(positions).to(dtype=self.dtype, device=volume_evaluator.device)
             targets = volume_evaluator.evaluate(positions)
@@ -222,12 +229,12 @@ class WorldSpaceDensityData(Dataset):
         volume_evaluator.restore_defaults()
         return self
 
-    def sample_original_grid(self, volume_evaluator: VolumeEvaluator, feature=0, new_behavior=True, _clamp_for_old_behavior=None):
+    def sample_original_grid(self, volume_evaluator: VolumeEvaluator, feature=None, new_behavior=True, _clamp_for_old_behavior=None):
         assert volume_evaluator.interpolator.grid_resolution_new_behavior == new_behavior
         self._reset_data()
         for (timestep_index, timestep), (ensemble_index, ensemble) in product(enumerate(self.timestep_index), enumerate(self.ensemble_index)):
             volume_data = self.volume_data_storage.load_volume(timestep=timestep, ensemble=ensemble, index_access=False)
-            resolution = self._read_resolution_from_volume(volume_data.get_feature(feature))
+            resolution = self._read_resolution_from_volume(volume_data)
             if new_behavior:
                 positions = np.meshgrid(*[(np.arange(r) + 0.5) / r for r in resolution], indexing='ij')
             else:
@@ -240,7 +247,7 @@ class WorldSpaceDensityData(Dataset):
                     return p
                 positions = np.meshgrid(*[get_normalized_positions(r) for r in resolution], indexing='ij')
             positions = np.stack([p.astype(np.float32).ravel() for p in positions], axis=-1)
-            volume_evaluator.set_source(volume_data)
+            volume_evaluator.set_source(volume_data, feature=feature)
             targets = volume_evaluator.evaluate(torch.from_numpy(positions).to(volume_evaluator.device))
             targets = targets.data.cpu().numpy()
             weights = np.ones_like(targets)
@@ -259,16 +266,17 @@ class WorldSpaceDensityData(Dataset):
     def sample_data_with_loss_importance(
             self,
             network, volume_evaluator: VolumeEvaluator,
-            loss_evaluator: LossEvaluator, importance_sampler:IImportanceSampler
+            loss_evaluator: LossEvaluator, importance_sampler:IImportanceSampler,
+            feature=None,
     ):
         loss_evaluator.set_source(volume=volume_evaluator)
         self._reset_data()
         for (timestep_index, timestep), (ensemble_index, ensemble) in product(enumerate(self.timestep_index), enumerate(self.ensemble_index)):
             volume_data = self.volume_data_storage.load_volume(timestep=timestep, ensemble=ensemble, index_access=False)
-            resolution = self._read_resolution_from_volume(volume_data.get_feature(0))
+            resolution = self._read_resolution_from_volume(volume_data)
             network_evaluator = WorldSpaceDensityEvaluator(network, 0, timestep_index, ensemble_index)
-            volume_evaluator.set_source(volume_data)
-            loss_evaluator.set_source(network=network_evaluator)
+            volume_evaluator.set_source(volume_data, feature=feature)
+            loss_evaluator.set_source(network=network_evaluator, volume=volume_evaluator)
             positions, weights = importance_sampler.generate_samples(self.num_samples_per_volume, loss_evaluator, grid_size=resolution)
             targets = volume_evaluator.evaluate(positions)
             positions = positions.cpu().numpy()
@@ -311,7 +319,7 @@ class WorldSpaceDensityData(Dataset):
 
     @staticmethod
     def output_mode():
-        return OutputMode.DENSITY
+        return OutputMode.MULTIVARIATE
 
 
 class WorldSpaceDensityEvaluator(NetworkEvaluator):

@@ -22,19 +22,41 @@ class PyrendererCoreNetwork(ICoreNetwork):
         group = parser.add_argument_group('CoreNetwork')
         prefix = '--network:core:'
         group.add_argument(prefix + 'layer-sizes', default='32:32:32', type=str,
-                                  help="The size of the hidden layers, separated by colons ':'")
+                           help="The size of the hidden layers, separated by colons ':'")
         group.add_argument(prefix + 'activation', default="ReLU", type=str, help="""
                                 The activation function for the hidden layers.
                                 This is the class name for activations in torch.nn.** .
                                 The activation for the last layer is fixed by the output mode.
                                 To pass extra arguments, separate them by colons, e.g. 'Snake:2'""")
+        group.add_argument(prefix + 'split-members', action='store_true', dest='network_core_split_members')
+        group.set_defaults(network_core_split_members=False)
+
 
     @classmethod
     def from_dict(
             cls, args: Dict[str, Any],
             input_parameterization: IInputParameterization,
             latent_features: ILatentFeatures,
-            output_parameterization: IOutputParameterization):
+            output_parameterization: IOutputParameterization,
+            member_keys=None
+    ):
+        if args['network_core_split_members']:
+            assert member_keys is not None
+            return PyrendererMultiCoreNetwork.from_dict(args, input_parameterization, latent_features, output_parameterization, member_keys)
+        else:
+            return PyrendererSingleCoreNetwork.from_dict(args, input_parameterization, latent_features, output_parameterization)
+
+
+class PyrendererSingleCoreNetwork(PyrendererCoreNetwork):
+
+    @classmethod
+    def from_dict(
+            cls, args: Dict[str, Any],
+            input_parameterization: IInputParameterization,
+            latent_features: ILatentFeatures,
+            output_parameterization: IOutputParameterization,
+            member_keys=None,
+    ):
         prefix = 'network:core:'
         layer_sizes = list(map(int, args[prefix + 'layer_sizes'].split(':')))
         activation, *activation_params = args[prefix + 'activation'].split(':')
@@ -71,11 +93,14 @@ class PyrendererCoreNetwork(ICoreNetwork):
         :param activation: activation function, torch.nn.**
         :param latent_input_channels: the size of the latent vector (for modulated sine)
         """
-        super(PyrendererCoreNetwork, self).__init__()
+        super(PyrendererSingleCoreNetwork, self).__init__()
         self.processor = processor
 
-    def forward(self, data_input: Tensor, latent_input: Union[Tensor, None]) -> Tensor:
-        return self.processor(data_input, latent_input)
+    def forward(
+            self, data_input: Tensor, latent_input: Union[Tensor, None],
+            positions: Tensor, transfer_functions: Tensor, time: Tensor, member: Tensor
+    ) -> Tensor:
+        return self.processor(data_input, latent_input, positions, transfer_functions, time, member)
 
     def data_input_channels(self) -> int:
         return self.processor.data_input_channels()
@@ -91,3 +116,16 @@ class PyrendererCoreNetwork(ICoreNetwork):
 
     def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None) -> pyrenderer.SceneNetwork:
         return self.processor.export_to_pyrenderer(network=network)
+
+
+class PyrendererMultiCoreNetwork(PyrendererCoreNetwork):
+
+    @classmethod
+    def from_dict(
+            cls, args: Dict[str, Any],
+            input_parameterization: IInputParameterization,
+            latent_features: ILatentFeatures,
+            output_parameterization: IOutputParameterization,
+            member_keys=None
+    ):
+        return PyrendererCoreNetwork._single_model_from_dict(args, input_parameterization, latent_features, output_parameterization)

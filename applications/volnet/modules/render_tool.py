@@ -68,14 +68,16 @@ class RenderTool(object):
     def default_camera_pitch_yaw_distance(self):
         return self._default_camera_pitch_yaw_distance
 
-    def set_source(self, volume_data, mip_map_level=None):
+    def set_source(self, volume_data, mip_map_level=None, feature=None):
         if mip_map_level is None:
             mip_map_level = self._default_mipmap_level
-        self.image_evaluator.volume.setSource(volume_data, mip_map_level)
+        if feature is None:
+            feature = volume_data.get_feature(0).name()
+        self.image_evaluator.volume.setSource(volume_data, feature, mip_map_level)
         return self
 
     def restore_defaults(self):
-        self.image_evaluator.volume.setSource(self._default_volume, self._default_mipmap_level)
+        self.image_evaluator.volume.setSource(self._default_volume, None, self._default_mipmap_level)
         self.image_evaluator.camera.pitchYawDistance.value = self._default_camera_pitch_yaw_distance
         return self
 
