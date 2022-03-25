@@ -24,7 +24,7 @@ PARAMETERS = {
     '--network:latent-features:ensemble:num-channels': [
         4, 16, 64
     ],
-    '--network:latent-features:volume:mode': 'vector',
+    '--network:latent-features:volume:mode': 'grid',
     '--network:latent-features:volume:num-channels': [
         8, 16, 32
     ],
@@ -33,8 +33,8 @@ PARAMETERS = {
     '-l1': 1.,
     '-lr': 0.01,
     '--lr_step': 50,
-    '--epochs': 200,
-    '--output:save-frequency': 20,
+    '--epochs': 400,
+    '--output:save-frequency': 40,
     '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
     '--data-storage:ensemble:index-range': '1:129',
     '--world-density-data:sub-batching': 8,
