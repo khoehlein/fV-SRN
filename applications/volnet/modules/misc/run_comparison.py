@@ -1,6 +1,6 @@
 import os
 from typing import List, Optional
-
+import argparse
 import h5py
 import numpy as np
 import pandas as pd
@@ -22,21 +22,25 @@ class MultiRunComparison(object):
         hdf5_directory = self._get_hdf5_directory()
         run_files = {
             os.path.splitext(f)[0]: os.path.join(hdf5_directory, f)
-            for f in sorted(os.listdir(hdf5_directory))[:-1] if f.endswith('.hdf5')
+            for f in sorted(os.listdir(hdf5_directory)) if f.endswith('.hdf5')
         }
         data = []
         for run_name, file_path in run_files.items():
-            with h5py.File(file_path) as current_file:
-                loss_summary = {}
-                for loss_key in self.loss_keys:
-                    min_loss, min_loss_idx, final_loss = self._summarize_loss_data(current_file[loss_key][...])
-                    loss_summary.update({
-                        f'{loss_key}:min_val': min_loss,
-                        f'{loss_key}:min_idx': min_loss_idx,
-                        f'{loss_key}:final_val': final_loss,
-                    })
-                file_data = {'run_name': run_name, **current_file.attrs, **loss_summary}
-            data.append(file_data)
+            try:
+                with h5py.File(file_path) as current_file:
+                    loss_summary = {}
+                    for loss_key in self.loss_keys:
+                        min_loss, min_loss_idx, final_loss = self._summarize_loss_data(current_file[loss_key][...])
+                        loss_summary.update({
+                            f'{loss_key}:min_val': min_loss,
+                            f'{loss_key}:min_idx': min_loss_idx,
+                            f'{loss_key}:final_val': final_loss,
+                        })
+                    file_data = {'run_name': run_name, **current_file.attrs, **loss_summary}
+            except Exception:
+                pass
+            else:
+                data.append(file_data)
         self.data = pd.DataFrame(data)
 
     def _get_hdf5_directory(self):
@@ -119,15 +123,13 @@ def _test_comparison():
 
 
 def run_comparison():
-    import argparse
-
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dir', type=str, help='base directory of the multi-run experiment', required=True)
+    parser.add_argument('dir', type=str, help='base directory of the multi-run experiment')
     parser.add_argument('--loss-keys', type=str, help='loss keys to show in visualization (for multiple, separate by :)', default='total')
     parser.add_argument('--color-key', type=str, help='loss key to use for color coding', default=None)
     parser.add_argument('--drop-const', action='store_true', dest='drop_const', help='drop parameters with only a single setting')
     parser.add_argument('--show-const', action='store_false', dest='drop_const', help='show parameters with only a single setting')
-    parser.add_argument('--debug', action='stre_true', dest='debug')
+    parser.add_argument('--debug', action='store_true', dest='debug')
     parser.set_defaults(drop_const=True, debug=False)
 
     args = vars(parser.parse_args())
