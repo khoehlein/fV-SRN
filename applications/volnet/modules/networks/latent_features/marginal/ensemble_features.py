@@ -3,7 +3,6 @@ from typing import List, Any, Optional, Tuple
 import torch
 from torch import Tensor, nn
 
-
 from volnet.modules.networks.latent_features.marginal.features import FeatureVector, FeatureGrid
 from volnet.modules.networks.latent_features.marginal.multi_res import MultiResolutionFeatures
 from volnet.modules.networks.latent_features.init import IInitializer, DefaultInitializer
@@ -30,7 +29,7 @@ class IEnsembleFeatures(IFeatureModule):
         self.initializer = initializer
         # self.member_index = KeyIndexer()
         self.key_mapping = {}
-        self.feature_mapping = nn.ModuleDict({})
+        self.feature_mapping = nn.ModuleList([])
         self.device = device
         self.dtype = dtype
         self.reset_member_features(*member_keys)
@@ -44,14 +43,6 @@ class IEnsembleFeatures(IFeatureModule):
         return out
 
     def forward(self, positions: Tensor, member: Tensor) -> Tensor:
-        # unique_members, segments = self.member_index.query(member)
-        # if len(unique_members) == 1:
-        #     feature = self.feature_mapping[int(member[0].item())]
-        #     return feature.evaluate(positions)
-        # out = torch.empty(len(positions), self.num_channels(), device=positions.device, dtype=positions.dtype)
-        # for member, segment in zip(unique_members, segments):
-        #     feature = self.feature_mapping[int(member.item())]
-        #     out[segment] = feature.evaluate(positions[segment])
         unique_members = torch.unique(member)
         if len(unique_members) == 1:
             feature = self.feature_mapping[int(unique_members[0].item())]
@@ -152,3 +143,61 @@ class EnsembleMultiResolutionFeatures(IEnsembleFeatures):
 
     def uses_positions(self) -> bool:
         return True
+
+
+class EnsembleMultiGridFeatures(IEnsembleFeatures):
+
+    def __init__(
+            self,
+            member_keys: List[Any], num_channels: int, grid_size: Tuple[int, int, int], num_grids: int,
+            initializer: Optional[IInitializer] = None,
+            debug=False, device=None, dtype=None
+    ):
+        self._grid_size = grid_size
+        self._num_grids = num_grids
+        self.feature_grid: FeatureGrid = None
+        super(EnsembleMultiGridFeatures, self).__init__(
+            member_keys, num_channels, initializer=initializer,
+            debug=debug, device=device, dtype=dtype
+        )
+
+    def grid_size(self):
+        return self._grid_size
+
+    def num_grids(self):
+        return self._num_grids
+
+    def reset_member_features(self, *member_keys: Any):
+        self.key_mapping = {key: i for i, key in enumerate(member_keys)}
+        mixing_features = self.initializer.get_tensor(
+            self.num_members(), self.num_grids(),
+            device=self.device, dtype=self.dtype
+        )
+        self.mixing_features = nn.Parameter(mixing_features, requires_grad=True)
+        self.feature_grid = FeatureGrid.from_initializer(
+            self.initializer, self.grid_size(), self.num_grids() * self.num_channels(),
+            device=self.device, dtype=self.dtype, debug=False
+        )
+        return self
+
+    def forward(self, positions: Tensor, member: Tensor) -> Tensor:
+        features = self.feature_grid.evaluate(positions)
+        mixing_features = self.mixing_features[member.to(dtype=torch.long), ...]
+        norm = torch.norm(mixing_features, p=2, dim=-1, keepdim=True)
+        mixing_features = mixing_features / norm
+        out = torch.bmm(features.view(-1, self.num_channels(), self.num_grids()), mixing_features[..., None])
+        return out[..., 0]
+
+
+def _test():
+    features = EnsembleMultiGridFeatures(
+        [1, 2, 3, 4], 4, (4, 8, 16), 3
+    )
+    positions = torch.rand(100, 3)
+    member = torch.randint(4, size=(100,))
+    out = features.evaluate(positions, member)
+    print('Finished')
+
+
+if __name__ == '__main__':
+    _test()

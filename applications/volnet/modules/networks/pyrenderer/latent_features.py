@@ -10,7 +10,7 @@ from volnet.modules.networks.latent_features.marginal import (
     MarginalLatentFeatures,
     TemporalFeatureGrid, TemporalFeatureVector,
     EnsembleFeatureGrid, EnsembleFeatureVector, EnsembleMultiResolutionFeatures,
-    FeatureVector, FeatureGrid, MultiResolutionFeatures
+    FeatureVector, FeatureGrid, MultiResolutionFeatures, EnsembleMultiGridFeatures
 )
 
 
@@ -52,7 +52,8 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             """
         )
         group.add_argument(
-            prefix + 'ensemble:mode', type=str, default='vector', choices=['vector', 'grid', 'multi-res'],
+            prefix + 'ensemble:mode', type=str, default='vector',
+            choices=['vector', 'grid', 'multi-res', 'multi-grid'],
             help="""
             mode for handling spatial coordinates in ensemble features
             """
@@ -61,6 +62,18 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             prefix + 'ensemble:grid:resolution', type=str, default=None,
             help="""
             grid size for volumetric ensemble features 
+            """
+        )
+        group.add_argument(
+            prefix + 'ensemble:multi-grid:resolution', type=str, default=None,
+            help="""
+            grid size for volumetric multi-grid ensemble features 
+            """
+        )
+        group.add_argument(
+            prefix + 'ensemble:multi-grid:num-grids', type=int, default=None,
+            help="""
+            number of grids for volumetric multi-grid ensemble features 
             """
         )
         group.add_argument(
@@ -194,6 +207,12 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
                 t = get_arg('ensemble:multi_res:table_size')
                 assert t is not None
                 ensemble_features = EnsembleMultiResolutionFeatures(member_keys, ensemble_channels, coarsest, finest, num_levels, t)
+            elif mode == 'multi-grid':
+                grid_specs = get_arg('ensemble:multi_grid:resolution')
+                assert grid_specs is not None
+                grid_size = read_grid_specs(grid_specs)
+                num_grids = get_arg('ensemble:multi_grid:num_grids')
+                ensemble_features = EnsembleMultiGridFeatures(member_keys, ensemble_channels, grid_size, num_grids)
             else:
                 raise NotImplementedError()
 
