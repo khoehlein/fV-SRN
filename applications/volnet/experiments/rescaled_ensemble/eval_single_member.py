@@ -1,7 +1,7 @@
 import os
 
 from volnet.experiments.multi_run_experiment import MultiRunExperiment
-from volnet.experiments.ensemble_training import directories as io
+from volnet.experiments.rescaled_ensemble import directories as io
 
 parser = io.build_parser()
 args = vars(parser.parse_args())
