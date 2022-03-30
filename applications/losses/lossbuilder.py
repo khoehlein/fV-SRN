@@ -253,8 +253,9 @@ class LossBuilder:
 
     class DSSIMLoss(nn.Module):
         def __init__(self, channels):
-            super().__init__();
+            super().__init__()
             self._m = SSIM()
+
         def forward(self, gt, pred):
             return (1-self._m(pred, gt))/2
 
