@@ -16,8 +16,8 @@ PROJECT_BASE_PATH ={
     DebugMode.PRODUCTION: '/home/hoehlein/PycharmProjects/production/fvsrn/applications',
 }
 DATA_BASE_PATH = {
-    'tuini15-cg05-cg-in-tum-de': '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/cvol/single_variable/global_scaling', #'/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/converted_normal_anomaly',
-    'gpusrv01': '/home/hoehlein/data/1000_member_ensemble/normalized_anomalies/single_member'
+    'tuini15-cg05-cg-in-tum-de': '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/cvol/single_variable/local-min-max_scaling', #'/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/converted_normal_anomaly',
+    'gpusrv01': '/home/hoehlein/data/1000_member_ensemble/cvol/single_variable/local-min-max_scaling'
 }
 INTERPRETER_PATH = '/home/hoehlein/anaconda3/envs/fvsrn2/bin/python'
 SCRIPT_PATH = 'volnet/experiments/refactored_network/run_training.py'

@@ -9,14 +9,10 @@ import xarray as xr
 
 import common.utils as commut # required to properly find pyrenderer
 
+
 import pyrenderer
 
-
-class Axis(Enum):
-    TIME = 'time'
-    LEVEL = 'lev'
-    LATITUDE = 'lat'
-    LONGITUDE = 'lon'
+from volumes.meteo.data_specs import Axis
 
 
 class EnsembleConverter(object):

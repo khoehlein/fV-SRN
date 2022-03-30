@@ -11,15 +11,9 @@ import common.utils as commut # required to properly find pyrenderer
 
 import pyrenderer
 
+from volumes.meteo.data_specs import Axis
 
 RESCALING = 'normalize_anomaly' # 'clamp'
-
-
-class Axis(Enum):
-    TIME = 'time'
-    LEVEL = 'lev'
-    LATITUDE = 'lat'
-    LONGITUDE = 'lon'
 
 
 class EnsembleConverter(object):
