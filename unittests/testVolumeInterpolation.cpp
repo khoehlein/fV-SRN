@@ -18,7 +18,7 @@ TEST_CASE("VolumeInterpolation-Evaluate", "[modules]")
 
 	//create interpolation
 	auto interpolation = std::make_shared<renderer::VolumeInterpolationGrid>();
-	interpolation->setSource(volume, 0);
+	interpolation->setSource(volume, {}, 0);
 
 	//create position tensor
 	int N = 1024;
