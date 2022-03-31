@@ -7,7 +7,6 @@
 #include "helper_math.cuh"
 #include "pytorch_utils.h"
 #include "renderer_tensor.cuh"
-#include "volume_interpolation_grid.h"
 
 renderer::TransferFunctionGaussian::TransferFunctionGaussian()
 	: points_{
@@ -48,27 +47,7 @@ bool renderer::TransferFunctionGaussian::drawUI(UIStorage_t& storage)
 	const ImRect tfEditorOpacityRect(pos, ImVec2(pos.x + tfEditorOpacityWidth, pos.y + tfEditorOpacityHeight));
 
 	//histogram
-	Volume::Histogram_ptr histogram;
-	if (const auto& it = storage.find(VolumeInterpolationGrid::UI_KEY_HISTOGRAM);
-		it != storage.end())
-	{
-		histogram = std::any_cast<Volume::Histogram_ptr>(it->second);
-	}
-	if (histogram) {
-		double minDensity = get_or(storage, IRayEvaluation::UI_KEY_SELECTED_MIN_DENSITY, 0.0);
-		double maxDensity = get_or(storage, IRayEvaluation::UI_KEY_SELECTED_MAX_DENSITY, 1.0);
-		auto histogramRes = (histogram->maxDensity - histogram->minDensity) / histogram->getNumOfBins();
-		int histogramBeginOffset = (minDensity - histogram->minDensity) / histogramRes;
-		int histogramEndOffset = (histogram->maxDensity - maxDensity) / histogramRes;
-		auto maxFractionVal = *std::max_element(std::begin(histogram->bins) + histogramBeginOffset, std::end(histogram->bins) - histogramEndOffset);
-		ImGui::PlotHistogram("", histogram->bins + histogramBeginOffset, histogram->getNumOfBins() - histogramEndOffset - histogramBeginOffset,
-			0, NULL, 0.0f, maxFractionVal, ImVec2(tfEditorOpacityWidth, tfEditorOpacityHeight));
-	}
-	else
-	{
-		ImGui::ItemSize(tfEditorOpacityRect, style.FramePadding.y);
-		ImGui::ItemAdd(tfEditorOpacityRect, window->GetID("TF Editor Histogram Dummy"));
-	}
+	drawUIHistogram(storage, tfEditorOpacityRect);
 
 	if (renderAndIO(tfEditorOpacityRect))
 		changed = true;
@@ -97,6 +76,7 @@ bool renderer::TransferFunctionGaussian::renderAndIO(const ImRect& rect)
 	//draw lines
 	static const int Samples = 100;
 	const int numPoints = points_.size();
+	if (numPoints == 0) selectedPoint_ = -1;
 	//mixture
 	const auto eval = [this, numPoints](float x)
 	{
@@ -375,8 +355,8 @@ void renderer::TransferFunctionGaussian::computeTensor()
 	}
 
 	textureTensor_.value = t.to(c10::kCUDA);
-	textureTensor_.forwardIndex = torch::Tensor();
-	textureTensor_.grad = torch::Tensor();
+	textureTensor_.forwardIndex = {};
+	textureTensor_.grad = {};
 }
 
 ImVec2 renderer::TransferFunctionGaussian::screenToEditor(const ImVec2& screenPosition, const ImRect& rect)

@@ -50,6 +50,7 @@ set(LIBRARY_HEADER_FILES
 
     ../third-party/tinyformat/tinyformat.h
 	../third-party/nlohmann/json.hpp
+	../third-party/lodepng/lodepng.h
 	)
 set(LIBRARY_CUDA_HEADER_FILES
     # Helper, also used outside of kernels
@@ -72,6 +73,10 @@ set(LIBRARY_CUDA_HEADER_FILES
     renderer_volume_kernels1.cuh
     renderer_volume_kernels2.cuh
     renderer_volume_kernels3.cuh
+    renderer_volume_kernels4.cuh
+    renderer_volume_kernels5.cuh
+    renderer_histogram.cuh
+    renderer_volume_kernels6.cuh
     renderer_blending.cuh
     renderer_camera.cuh
     renderer_camera_kernels.cuh
@@ -130,6 +135,7 @@ set(LIBRARY_SOURCE_FILES
 	opengl_oit.cpp
 	opengl_shader.cpp
     opengl_framebuffer.cpp
+    ../third-party/lodepng/lodepng.cpp
 	)
 set(LIBRARY_RESOURCES
 	shaders/PassThrough.vs

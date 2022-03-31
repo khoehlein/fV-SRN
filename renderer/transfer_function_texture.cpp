@@ -10,7 +10,6 @@
 #include "renderer_tensor.cuh"
 #include "pytorch_utils.h"
 #include "ray_evaluation_stepping.h"
-#include "volume_interpolation_grid.h"
 
 renderer::TransferFunctionTexture::TransferFunctionTexture()
 	: useTensor_(false)
@@ -65,16 +64,16 @@ renderer::TransferFunctionTexture::TransferFunctionTexture()
 
 renderer::TransferFunctionTexture::~TransferFunctionTexture()
 {
-    CUMAT_SAFE_CALL(cudaDestroyTextureObject(textureObject_));
-	CUMAT_SAFE_CALL(cudaFreeArray(textureArray_));
+    CUMAT_SAFE_CALL_NO_THROW(cudaDestroyTextureObject(textureObject_));
+	CUMAT_SAFE_CALL_NO_THROW(cudaFreeArray(textureArray_));
 
-	CUMAT_SAFE_CALL(cudaDestroyTextureObject(preintegrationCudaTexture1D_));
-	CUMAT_SAFE_CALL(cudaDestroySurfaceObject(preintegrationCudaSurface1D_));
-	CUMAT_SAFE_CALL(cudaFreeArray(preintegrationCudaArray1D_));
+	CUMAT_SAFE_CALL_NO_THROW(cudaDestroyTextureObject(preintegrationCudaTexture1D_));
+	CUMAT_SAFE_CALL_NO_THROW(cudaDestroySurfaceObject(preintegrationCudaSurface1D_));
+	CUMAT_SAFE_CALL_NO_THROW(cudaFreeArray(preintegrationCudaArray1D_));
 
-	CUMAT_SAFE_CALL(cudaDestroyTextureObject(preintegrationCudaTexture2D_));
-	CUMAT_SAFE_CALL(cudaDestroySurfaceObject(preintegrationCudaSurface2D_));
-	CUMAT_SAFE_CALL(cudaFreeArray(preintegrationCudaArray2D_));
+	CUMAT_SAFE_CALL_NO_THROW(cudaDestroyTextureObject(preintegrationCudaTexture2D_));
+	CUMAT_SAFE_CALL_NO_THROW(cudaDestroySurfaceObject(preintegrationCudaSurface2D_));
+	CUMAT_SAFE_CALL_NO_THROW(cudaFreeArray(preintegrationCudaArray2D_));
 }
 
 std::string renderer::TransferFunctionTexture::Name()
@@ -119,27 +118,7 @@ bool renderer::TransferFunctionTexture::drawUI(UIStorage_t& storage)
 	const ImRect tfEditorOpacityRect(pos, ImVec2(pos.x + tfEditorOpacityWidth, pos.y + tfEditorOpacityHeight));
 
 	//histogram
-	Volume::Histogram_ptr histogram;
-	if (const auto& it = storage.find(VolumeInterpolationGrid::UI_KEY_HISTOGRAM);
-		it != storage.end())
-	{
-		histogram = std::any_cast<Volume::Histogram_ptr>(it->second);
-	}
-	if (histogram) {
-		double minDensity = get_or(storage, IRayEvaluation::UI_KEY_SELECTED_MIN_DENSITY, 0.0);
-		double maxDensity = get_or(storage, IRayEvaluation::UI_KEY_SELECTED_MAX_DENSITY, 1.0);
-		auto histogramRes = (histogram->maxDensity - histogram->minDensity) / histogram->getNumOfBins();
-		int histogramBeginOffset = (minDensity - histogram->minDensity) / histogramRes;
-		int histogramEndOffset = (histogram->maxDensity - maxDensity) / histogramRes;
-		auto maxFractionVal = *std::max_element(std::begin(histogram->bins) + histogramBeginOffset, std::end(histogram->bins) - histogramEndOffset);
-		ImGui::PlotHistogram("", histogram->bins + histogramBeginOffset, histogram->getNumOfBins() - histogramEndOffset - histogramBeginOffset,
-			0, NULL, 0.0f, maxFractionVal, ImVec2(tfEditorOpacityWidth, tfEditorOpacityHeight));
-	}
-	else
-	{
-		ImGui::ItemSize(tfEditorOpacityRect, style.FramePadding.y);
-		ImGui::ItemAdd(tfEditorOpacityRect, window->GetID("TF Editor Histogram Dummy"));
-	}
+	drawUIHistogram(storage, tfEditorOpacityRect);
 
 	//color
 	if (colorEditor_.drawUI(tfEditorColorRect, showColorControlPoints))

@@ -60,6 +60,11 @@ namespace kernel
 		{
 			return volumeInterpolationGridParameters.boxSize;
 		}
+		__host__ __device__ __forceinline__
+	    int3 getResolution() const
+		{
+			return volumeInterpolationGridParameters.resolutionMinusOne + make_int3(1);
+		}
 		using density_t = real_t;
 
 		//Component accessors
