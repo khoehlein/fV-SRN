@@ -36,7 +36,7 @@ class MultiResolutionFeatures(IFeatureModule):
     def from_initializer(
             cls,
             initializer,
-            coarse_resolution: Tuple[int, ...], fine_resolution: Tuple[int, int, int],
+            coarse_resolution: Tuple[int, ...], fine_resolution: Tuple[int, ...],
             num_levels: int, num_nodes: int, num_channels: int,
             grid_width=None, grid_offset=None, hash_primes=None,
             debug=False, device=None, dtype=None

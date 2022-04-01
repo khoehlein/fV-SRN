@@ -46,7 +46,7 @@ class MultiRunComparison(object):
     def _get_hdf5_directory(self):
         path = os.path.join(self.base_directory, 'results', 'hdf5')
         if not os.path.isdir(path):
-            raise RuntimeError('[ERROR] Expected HDF5 directory at path {path}, but path is not a valid directory.')
+            raise RuntimeError(f'[ERROR] Expected HDF5 directory at path {path}, but path is not a valid directory.')
         return path
 
     def get_pcp_app(self, color_key: str, drop_constant_parameters: bool = True):
