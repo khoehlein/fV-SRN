@@ -128,7 +128,10 @@ class WorldSpaceDensityData(Dataset):
                 ensemble_index_slice=ensemble_index_slice, timestep_index_slice=timestep_index_slice,
                 dtype=dtype
             )
-            return data.sample_original_grid(volume_evaluator)
+            if volume_evaluator is not None:
+                return data.sample_original_grid(volume_evaluator)
+            else:
+                return data
         return cls(
             volume_data_storage, num_samples_per_volume, batch_size,
             sub_batching=args[prefix + 'sub_batching'],
