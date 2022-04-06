@@ -60,6 +60,7 @@ class PyrendererSingleCoreNetwork(PyrendererCoreNetwork):
         prefix = 'network:core:'
         layer_sizes = list(map(int, args[prefix + 'layer_sizes'].split(':')))
         activation, *activation_params = args[prefix + 'activation'].split(':')
+        activation_params = [float(p) for p in activation_params]
         data_input_channels = input_parameterization.output_channels()
         latent_input_channels = latent_features.output_channels() if latent_features is not None else 0
         output_channels = output_parameterization.output_channels()
