@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 
 from volnet.modules.networks.latent_features.marginal.features import FeatureGrid
-from volnet.modules.networks.latent_features.interface import ILatentFeatures
+from volnet.modules.networks.latent_features.interface import ILatentFeatures, IFeatureModule
 from volnet.modules.networks.latent_features.marginal.ensemble_features import IEnsembleFeatures
 from volnet.modules.networks.latent_features.marginal.temporal_features import ITemporalFeatures
 
@@ -21,7 +21,7 @@ class MarginalLatentFeatures(ILatentFeatures):
             self,
             temporal_features: Optional[ITemporalFeatures] = None,
             ensemble_features: Optional[IEnsembleFeatures] = None,
-            volumetric_features: Optional[FeatureGrid] = None,
+            volumetric_features: Optional[IFeatureModule] = None,
     ):
         dimension = None
         if dimension is None and temporal_features is not None:
@@ -59,11 +59,11 @@ class MarginalLatentFeatures(ILatentFeatures):
     def forward(self, positions: Tensor, time: Tensor, member: Tensor) -> Tensor:
         features = []
         if self.temporal_features is not None:
-            features.append(self.temporal_features.evaluate(positions, time))
+            features.append(self.temporal_features.evaluate(positions, time, member))
         if self.ensemble_features is not None:
-            features.append(self.ensemble_features.evaluate(positions, member))
+            features.append(self.ensemble_features.evaluate(positions, time, member))
         if self.volumetric_features is not None:
-            features.append(self.volumetric_features.evaluate(positions))
+            features.append(self.volumetric_features.evaluate(positions, time, member))
         out = torch.cat(features, dim=-1)
         return out
 

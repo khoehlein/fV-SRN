@@ -31,7 +31,7 @@ class PyrendererSRN(ModularSRN):
         input_parameterization = PyrendererInputParameterization.from_dict(args)
         latent_features = PyrendererLatentFeatures.from_dict(args, member_keys=member_keys, dataset_key_times=dataset_key_times)
         output_parameterization = PyrendererOutputParameterization.from_dict(args, output_mode=output_mode)
-        core_network = PyrendererCoreNetwork.from_dict(args, input_parameterization, latent_features, output_parameterization)
+        core_network = PyrendererCoreNetwork.from_dict(args, input_parameterization, latent_features, output_parameterization, member_keys=member_keys)
         return cls(input_parameterization, core_network, output_parameterization, latent_features=latent_features)
 
     def export_to_pyrenderer(

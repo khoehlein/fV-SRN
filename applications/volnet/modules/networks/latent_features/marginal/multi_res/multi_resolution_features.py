@@ -12,8 +12,8 @@ from volnet.modules.networks.latent_features.marginal.features import FeatureGri
 
 class MultiResolutionFeatures(IFeatureModule):
 
-    def evaluate(self, positions: Tensor) -> Tensor:
-        features = [f.evaluate(positions) for f in self.features]
+    def evaluate(self,  positions: Tensor, time: Tensor, member: Tensor) -> Tensor:
+        features = [f.evaluate(positions, time, member) for f in self.features]
         return torch.cat(features, dim=-1)
 
     def uses_positions(self) -> bool:

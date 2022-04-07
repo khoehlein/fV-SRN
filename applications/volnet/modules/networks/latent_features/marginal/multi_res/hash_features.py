@@ -16,7 +16,7 @@ class HashedFeatureGrid(IFeatureModule):
     Hashed features by Müller et al. (2022): http://arxiv.org/abs/2201.05989
     """
 
-    def evaluate(self, positions: Tensor) -> Tensor:
+    def evaluate(self, positions: Tensor, time: Tensor, member: Tensor) -> Tensor:
         batch_size = positions.shape[0]
         corners, residuals = self.grid.get_corners(positions, return_residuals=True)
         hashes = self._compute_hashes(corners)

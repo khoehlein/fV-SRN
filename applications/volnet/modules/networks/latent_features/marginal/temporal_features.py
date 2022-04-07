@@ -23,7 +23,7 @@ class ITemporalFeatures(IFeatureModule):
     def num_key_times(self):
         return self.key_time_index.num_key_times()
 
-    def evaluate(self, positions: Tensor, time: Tensor) -> Tensor:
+    def evaluate(self, positions: Tensor, time: Tensor, member: Tensor) -> Tensor:
         if self.is_debug():
             self._verify_inputs(positions, time)
         out = self.forward(positions, time)

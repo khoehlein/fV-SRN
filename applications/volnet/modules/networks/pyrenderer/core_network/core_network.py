@@ -1,9 +1,9 @@
 import argparse
-from typing import Union, Optional, Dict, Any
+from typing import Union, Optional, Dict, Any, List
 
 import pyrenderer
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 
 from volnet.modules.datasets.output_mode import OutputMode
 from volnet.modules.networks.core_network import ICoreNetwork
@@ -31,31 +31,12 @@ class PyrendererCoreNetwork(ICoreNetwork):
         group.add_argument(prefix + 'split-members', action='store_true', dest='network_core_split_members')
         group.set_defaults(network_core_split_members=False)
 
-
-    @classmethod
-    def from_dict(
-            cls, args: Dict[str, Any],
+    @staticmethod
+    def _build_processor(
+            args: Dict[str, Any],
             input_parameterization: IInputParameterization,
             latent_features: ILatentFeatures,
             output_parameterization: IOutputParameterization,
-            member_keys=None
-    ):
-        if args['network_core_split_members']:
-            assert member_keys is not None
-            return PyrendererMultiCoreNetwork.from_dict(args, input_parameterization, latent_features, output_parameterization, member_keys)
-        else:
-            return PyrendererSingleCoreNetwork.from_dict(args, input_parameterization, latent_features, output_parameterization)
-
-
-class PyrendererSingleCoreNetwork(PyrendererCoreNetwork):
-
-    @classmethod
-    def from_dict(
-            cls, args: Dict[str, Any],
-            input_parameterization: IInputParameterization,
-            latent_features: ILatentFeatures,
-            output_parameterization: IOutputParameterization,
-            member_keys=None,
     ):
         prefix = 'network:core:'
         layer_sizes = list(map(int, args[prefix + 'layer_sizes'].split(':')))
@@ -82,18 +63,37 @@ class PyrendererSingleCoreNetwork(PyrendererCoreNetwork):
         if output_parameterization.output_mode() == OutputMode.RGBO: #rgba
             last_layer = processor.last_layer()
             last_layer.bias.sample_summary = torch.abs(last_layer.bias.sample_summary) + 1.0 # positive output to see something
-        #else:
-        #    last_layer.weight.data = 100 * last_layer.weight.data
+        return processor
+
+    @classmethod
+    def from_dict(
+            cls, args: Dict[str, Any],
+            input_parameterization: IInputParameterization,
+            latent_features: ILatentFeatures,
+            output_parameterization: IOutputParameterization,
+            member_keys=None
+    ):
+        if args['network_core_split_members']:
+            assert member_keys is not None
+            return PyrendererMultiCoreNetwork.from_dict(args, input_parameterization, latent_features, output_parameterization, member_keys)
+        else:
+            return PyrendererSingleCoreNetwork.from_dict(args, input_parameterization, latent_features, output_parameterization)
+
+
+class PyrendererSingleCoreNetwork(PyrendererCoreNetwork):
+
+    @classmethod
+    def from_dict(
+            cls, args: Dict[str, Any],
+            input_parameterization: IInputParameterization,
+            latent_features: ILatentFeatures,
+            output_parameterization: IOutputParameterization,
+            member_keys=None,
+    ):
+        processor = cls._build_processor(args, input_parameterization, latent_features, output_parameterization)
         return cls(processor)
 
     def __init__(self, processor: ICoreNetwork):
-        """
-        :param data_input_channels: InputParametrization.num_output_channels()
-        :param output_channels: OutputParametrization.num_input_channels()
-        :param layers: colon-separated list of hidden layer sizes
-        :param activation: activation function, torch.nn.**
-        :param latent_input_channels: the size of the latent vector (for modulated sine)
-        """
         super(PyrendererSingleCoreNetwork, self).__init__()
         self.processor = processor
 
@@ -110,7 +110,7 @@ class PyrendererSingleCoreNetwork(PyrendererCoreNetwork):
         return self.processor.latent_input_channels()
 
     def output_channels(self) -> int:
-        return self.processor.data_input_channels()
+        return self.processor.output_channels()
 
     def last_layer(self):
         return self.processor.last_layer()
@@ -129,4 +129,48 @@ class PyrendererMultiCoreNetwork(PyrendererCoreNetwork):
             output_parameterization: IOutputParameterization,
             member_keys=None
     ):
-        return PyrendererCoreNetwork._single_model_from_dict(args, input_parameterization, latent_features, output_parameterization)
+        processors = [
+            cls._build_processor(args, input_parameterization, latent_features, output_parameterization)
+            for _ in member_keys
+        ]
+        return cls(processors, member_keys)
+
+    def __init__(self, processors: List[ICoreNetwork], member_keys: List[Any]):
+        super(PyrendererMultiCoreNetwork, self).__init__()
+        self.key_mapping = {key: i for i, key in enumerate(member_keys)}
+        self.processors = nn.ModuleList(processors)
+        print(self.processors)
+
+    def forward(
+            self, data_input: Tensor, latent_input: Union[Tensor, None],
+            positions: Tensor, transfer_functions: Tensor, time: Tensor, member: Tensor
+    ) -> Tensor:
+        unique_members = torch.unique(member)
+        if len(unique_members) == 1:
+            processor = self.processors[int(unique_members[0].item())]
+            return processor.forward(data_input, latent_input, positions, transfer_functions, time, member)
+        out = torch.empty(len(positions), self.output_channels(), device=positions.device, dtype=positions.dtype)
+        for umem in unique_members:
+            processor = self.processors[int(umem.item())]
+            locations = torch.eq(umem, member)
+            out[locations] = processor.forward(
+                data_input[locations], latent_input[locations],
+                positions[locations], transfer_functions[locations], time[locations], member[locations]
+            )
+        return out
+
+    def data_input_channels(self) -> int:
+        return self.processors[0].data_input_channels()
+
+    def latent_input_channels(self) -> int:
+        return self.processors[0].latent_input_channels()
+
+    def output_channels(self) -> int:
+        return self.processors[0].output_channels()
+
+    def last_layer(self):
+        raise NotImplementedError()
+
+    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None) -> pyrenderer.SceneNetwork:
+        raise NotImplementedError()
+        # return self.processor.export_to_pyrenderer(network=network)

@@ -34,7 +34,7 @@ class IEnsembleFeatures(IFeatureModule):
         self.dtype = dtype
         self.reset_member_features(*member_keys)
 
-    def evaluate(self, positions: Tensor, member: Tensor) -> Tensor:
+    def evaluate(self, positions: Tensor, time: Tensor, member: Tensor) -> Tensor:
         if self.is_debug():
             self._verify_inputs(positions, member)
         out = self.forward(positions, member)
@@ -46,12 +46,12 @@ class IEnsembleFeatures(IFeatureModule):
         unique_members = torch.unique(member)
         if len(unique_members) == 1:
             feature = self.feature_mapping[int(unique_members[0].item())]
-            return feature.evaluate(positions)
+            return feature.evaluate(positions, None, None)
         out = torch.empty(len(positions), self.num_channels(), device=positions.device, dtype=positions.dtype)
         for umem in unique_members:
             feature = self.feature_mapping[int(umem.item())]
             locations = torch.eq(umem, member)
-            out[locations] = feature.evaluate(positions[locations])
+            out[locations] = feature.evaluate(positions[locations], None, None)
         return out
 
     def reset_member_features(self, *member_keys: Any) -> 'IEnsembleFeatures':
@@ -155,7 +155,6 @@ class EnsembleMultiGridFeatures(IEnsembleFeatures):
     ):
         self._grid_size = grid_size
         self._num_grids = num_grids
-        self.feature_grid: FeatureGrid = None
         super(EnsembleMultiGridFeatures, self).__init__(
             member_keys, num_channels, initializer=initializer,
             debug=debug, device=device, dtype=dtype
@@ -181,7 +180,7 @@ class EnsembleMultiGridFeatures(IEnsembleFeatures):
         return self
 
     def forward(self, positions: Tensor, member: Tensor) -> Tensor:
-        features = self.feature_grid.evaluate(positions)
+        features = self.feature_grid.evaluate(positions, None, None)
         mixing_features = self.mixing_features[member.to(dtype=torch.long), ...]
         norm = torch.norm(mixing_features, p=2, dim=-1, keepdim=True)
         mixing_features = mixing_features / norm
@@ -195,7 +194,7 @@ def _test():
     )
     positions = torch.rand(100, 3)
     member = torch.randint(4, size=(100,))
-    out = features.evaluate(positions, member)
+    out = features.evaluate(positions, None, member)
     print('Finished')
 
 

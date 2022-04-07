@@ -33,7 +33,7 @@ class FeatureVector(IFeatureModule):
         super(FeatureVector, self).__init__(3, shape[0], debug)
         self.register_parameter('data', nn.Parameter(data, requires_grad=True))
 
-    def evaluate(self, positions: Tensor):
+    def evaluate(self, positions: Tensor, time: Tensor, member: Tensor):
         return torch.tile(self.data[None, :], (len(positions), 1))
 
 
@@ -66,7 +66,7 @@ class FeatureGrid(IFeatureModule):
     def grid_size(self):
         return tuple(self.data.shape[-3:])
 
-    def evaluate(self, positions: Tensor):
+    def evaluate(self, positions: Tensor, time: Tensor, member: Tensor):
         grid = 2. * positions - 1.
         grid = grid.view(*[1 for _ in self.grid_size()], *positions.shape)
         samples = F.grid_sample(self.data[None, ...], grid, mode='bilinear', align_corners=False, padding_mode='border')

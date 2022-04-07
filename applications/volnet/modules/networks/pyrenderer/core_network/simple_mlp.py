@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 
 from torch import nn
 
@@ -11,7 +11,7 @@ class SimpleMLP(ProcessorSequentialWrapper):
     def __init__(
             self,
             data_input_channels: int, latent_input_channels: int, output_channels: int,
-            layer_sizes: List[int], activation: str, activation_params: List[str]
+            layer_sizes: List[int], activation: str, activation_params: List[Any]
     ):
         activ_class = getattr(nn, activation, None)
         if activ_class is None:
