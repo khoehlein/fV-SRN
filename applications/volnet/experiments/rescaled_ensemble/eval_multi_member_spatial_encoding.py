@@ -27,7 +27,7 @@ PARAMETERS = {
     '--network:latent-features:ensemble:num-channels': [
         2, 4
     ],
-    '--network:latent-features:ensemble:grid:resolution': '2:22:16',
+    '--network:latent-features:ensemble:grid:resolution': '3:44:32',
     '--network:latent-features:volume:mode': 'grid',
     '--network:latent-features:volume:num-channels': [
         2, 4, 8
