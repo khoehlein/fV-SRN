@@ -13,37 +13,35 @@ SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 PARAMETERS = {
     '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
-    '--world-density-data:num-samples-per-volume': '64**3',
-    '--world-density-data:batch-size': '64*64*128',
+    '--world-density-data:num-samples-per-volume': '12*352*250',
+    '--world-density-data:batch-size': '12*352*250',
     '--world-density-data:validation-share': 0.2,
+    '--world-density-data:sub-batching': 12,
+    '--dataset-resampling:method': 'random',
+    '--dataset-resampling:frequency': 10,
     '--lossmode': 'density',
-    '--network:core:layer-sizes': [
-        '32:32:32:32', '64:64:64', '128:128',
-    ],
-    '--network:core:activation': 'SnakeAlt:2',
+    '--network:core:layer-sizes': '64:64:64',
+    '--network:core:activation': ['SnakeAlt:2', 'LeakyReLU'],
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',
-    '--network:latent-features:ensemble:mode': 'multi-grid',
-    '--network:latent-features:ensemble:num-channels': [
-        4, 8, 16
-    ],
-    '--network:latent-features:ensemble:multi-grid:resolution': [
-        '2:22:16', '2:44:32', '4:44:32', '4:88:64'
-    ],
-    '--network:latent-features:ensemble:multi-grid:num-grids': [
-        4, 8, 16
-    ],
+    '--network:latent-features:ensemble:mode': 'grid',
+    '--network:latent-features:ensemble:num-channels': [4, 8],
+    '--network:latent-features:ensemble:grid:resolution': ['2:2:2', '2:11:8', '2:22:16', '2:44:32', '3:44:32'],
+    '--network:latent-features:volume:mode': 'multi-grid',
+    '--network:latent-features:volume:num-channels': [8, 12, 16],
+    '--network:latent-features:volume:multi-grid:resolution': ['6:176:125', '3:88:64'],
+    '--network:latent-features:volume:multi-grid:num-grids': [1, 4, 16],
     '--network:output:parameterization-method': 'direct',
     '-l1': 1.,
-    '-lr': 0.01,
-    '--lr_step': 50,
+    '--optimizer:lr': 0.001,
+    '--optimizer:scheduler:mode': 'plateau',
+    '--optimizer:scheduler:gamma': 0.5,
+    '--optimizer:scheduler:plateau:patience': 12,
+    '--optimizer:gradient-clipping:max-norm': 10.,
     '--epochs': 400,
-    '--output:save-frequency': 40,
+    '--output:save-frequency': 20,
     '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
-    '--data-storage:ensemble:index-range': '1:129',
-    '--world-density-data:sub-batching': 8,
-    '--dataset-resampling:method': 'random',
-    '--dataset-resampling:frequency': 20,
+    '--data-storage:ensemble:index-range': '1:65',
 }
 
 

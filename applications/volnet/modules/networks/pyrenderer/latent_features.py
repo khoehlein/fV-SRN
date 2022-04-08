@@ -107,7 +107,7 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             """
         )
         group.add_argument(
-            prefix + 'volume:mode', type=str, default='vector', choices=['vector', 'grid', 'multi-res'],
+            prefix + 'volume:mode', type=str, default='vector', choices=['vector', 'grid', 'multi-res', 'multi-grid'],
             help="""
             mode for handling spatial coordinates in volume features
             """
@@ -141,6 +141,18 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             help="""
             number of table entries for multi-resolution volumetric features
             """
+        )
+        group.add_argument(
+            prefix + 'volume:multi-grid:resolution', type=str, default=None,
+            help="""
+             grid size for volumetric multi-grid features 
+             """
+        )
+        group.add_argument(
+            prefix + 'volume:multi-grid:num-grids', type=int, default=None,
+            help="""
+             number of grids for volumetric multi-grid features 
+             """
         )
 
     @classmethod
@@ -242,6 +254,12 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
                 t = get_arg('volume:multi_res:table_size')
                 assert t is not None
                 volumetric_features = MultiResolutionFeatures.from_initializer(initializer, coarsest, finest, num_levels, t, volumetric_channels)
+            elif mode == 'multi-grid':
+                grid_specs = get_arg('volume:multi_grid:resolution')
+                assert grid_specs is not None
+                grid_size = read_grid_specs(grid_specs)
+                num_grids = get_arg('volume:multi_grid:num_grids')
+                volumetric_features = EnsembleMultiGridFeatures(member_keys, volumetric_channels, grid_size, num_grids)
             else:
                 raise NotImplementedError()
         else:
