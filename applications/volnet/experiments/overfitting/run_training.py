@@ -129,6 +129,7 @@ def main():
                 total.backward()
                 # print("Grad latent:", torch.sum(network._time_latent_space.grad.detach()).item())
                 # print("Batch, loss:", total.item())
+                optimizer.clip_grads()
                 return total
 
             optimizer.step(optim_closure)
@@ -216,9 +217,9 @@ def main():
                 # done with this epoch
                 if profile:
                     profiler.step()
-                optimizer.post_epoch()
-                progress_bar.update(1)
                 final_loss = partial_losses['total'] / max(1, num_batches)
+                optimizer.post_epoch(final_loss)
+                progress_bar.update(1)
                 progress_bar.set_description("Loss: %7.5f" % (final_loss))
                 if np.isnan(final_loss):
                     break

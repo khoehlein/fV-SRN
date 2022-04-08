@@ -191,11 +191,11 @@ class WorldSpaceDensityData(Dataset):
         else:
             sub_batch_size = np.ceil(self.batch_size / self.sub_batching)
             num_samples = len(self.data[self.OUTPUT_KEYS[0]])
-            num_sections = np.ceil(num_samples / sub_batch_size)
-            self.weights = np.array_split(self.weights, int(num_sections))
+            num_sections = int(np.ceil(num_samples / sub_batch_size))
+            self.weights = np.array_split(self.weights, num_sections)
             self.data = [
                 values for values in zip(
-                    *[np.array_split(self.data[key], int(num_sections)) for key in WorldSpaceDensityData.OUTPUT_KEYS]
+                    *[np.array_split(self.data[key], num_sections) for key in WorldSpaceDensityData.OUTPUT_KEYS]
                 )
             ]
 
