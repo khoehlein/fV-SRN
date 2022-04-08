@@ -7,7 +7,7 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = 'rescaled_ensemble/overfitting/multi_member_multi_core'
+EXPERIMENT_NAME = 'rescaled_ensemble/overfitting/multi_member_multi_core_h'
 DATA_FILENAME_PATTERN = 'tk/member{member:04d}/t04.cvol'
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 SCRIPT_PATH = 'volnet/experiments/overfitting/run_training.py'
@@ -34,7 +34,7 @@ PARAMETERS = {
     '--optimizer:hyper-params': '{"weight_decay": 0.00001}',
     '--optimizer:scheduler:mode': 'plateau',
     '--optimizer:scheduler:gamma': 0.5,
-    '--optimizer:scheduler:plateau:patience': 12,
+    '--optimizer:scheduler:plateau:patience': 15,
     '--optimizer:gradient-clipping:max-norm': 10.,
     '--epochs': 400,
     '--output:save-frequency': 20,
