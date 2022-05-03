@@ -232,6 +232,17 @@ class WorldSpaceDensityData(Dataset):
         volume_evaluator.restore_defaults()
         return self
 
+    def get_volumes(self):
+        all_volumes = []
+        for (timestep_index, timestep) in enumerate(self.timestep_index):
+            current_volumes = []
+            for (ensemble_index, ensemble) in enumerate(self.ensemble_index):
+                volume_data = self.volume_data_storage.load_volume(timestep=timestep, ensemble=ensemble, index_access=False)
+                current_volumes.append(volume_data.get_feature(0).get_level(0).to_tensor().cpu())
+            all_volumes.append(torch.stack(current_volumes, dim=0))
+        all_volumes = torch.stack(all_volumes, dim=0)
+        return all_volumes
+
     def sample_original_grid(self, volume_evaluator: VolumeEvaluator, feature=None, new_behavior=True, _clamp_for_old_behavior=None):
         assert volume_evaluator.interpolator.grid_resolution_new_behavior == new_behavior
         self._reset_data()
