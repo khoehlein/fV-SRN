@@ -32,6 +32,7 @@ PARAMETERS = {
     '--network:latent-features:volume:num-channels': [8, 12, 16],
     '--network:latent-features:volume:multi-grid:resolution': ['6:176:125', '3:88:64'],
     '--network:latent-features:volume:multi-grid:num-grids': [1, 4, 16],
+    '--network:latent-features:volume:multi-grid:mixing-mode': ['softmax', 'normalize'],
     '--network:output:parameterization-method': 'direct',
     '-l1': 1.,
     '--optimizer:lr': 0.001,
