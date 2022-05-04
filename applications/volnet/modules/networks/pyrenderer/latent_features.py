@@ -71,6 +71,13 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             """
         )
         group.add_argument(
+            prefix + 'ensemble:multi-grid:mixing-mode', type=str, default='normalize',
+            choices=['normalize', 'softmax'],
+            help="""
+            postprocessing method for transforming the mixing features 
+            """
+        )
+        group.add_argument(
             prefix + 'ensemble:multi-grid:num-grids', type=int, default=None,
             help="""
             number of grids for volumetric multi-grid ensemble features 
@@ -154,6 +161,13 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
              number of grids for volumetric multi-grid features 
              """
         )
+        group.add_argument(
+            prefix + 'volume:multi-grid:mixing-mode', type=str, default='normalize',
+            choices=['normalize', 'softmax'],
+            help="""
+            postprocessing method for transforming the mixing features 
+            """
+        )
 
     @classmethod
     def from_dict(
@@ -224,7 +238,10 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
                 assert grid_specs is not None
                 grid_size = read_grid_specs(grid_specs)
                 num_grids = get_arg('ensemble:multi_grid:num_grids')
-                ensemble_features = EnsembleMultiGridFeatures(member_keys, ensemble_channels, grid_size, num_grids)
+                ensemble_features = EnsembleMultiGridFeatures(
+                    member_keys, ensemble_channels, grid_size, num_grids,
+                    mixing_mode=get_arg('ensemble:multi_grid:mixing_mode')
+                )
             else:
                 raise NotImplementedError()
 
@@ -259,7 +276,10 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
                 assert grid_specs is not None
                 grid_size = read_grid_specs(grid_specs)
                 num_grids = get_arg('volume:multi_grid:num_grids')
-                volumetric_features = EnsembleMultiGridFeatures(member_keys, volumetric_channels, grid_size, num_grids)
+                volumetric_features = EnsembleMultiGridFeatures(
+                    member_keys, volumetric_channels, grid_size, num_grids,
+                    mixing_mode=get_arg('volume:multi_grid:mixing_mode')
+                )
             else:
                 raise NotImplementedError()
         else:

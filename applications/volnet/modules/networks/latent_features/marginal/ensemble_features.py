@@ -151,10 +151,12 @@ class EnsembleMultiGridFeatures(IEnsembleFeatures):
             self,
             member_keys: List[Any], num_channels: int, grid_size: Tuple[int, int, int], num_grids: int,
             initializer: Optional[IInitializer] = None,
-            debug=False, device=None, dtype=None
+            debug=False, device=None, dtype=None,
+            mixing_mode='normalize'
     ):
         self._grid_size = grid_size
         self._num_grids = num_grids
+        self._mixing_mode = mixing_mode
         super(EnsembleMultiGridFeatures, self).__init__(
             member_keys, num_channels, initializer=initializer,
             debug=debug, device=device, dtype=dtype
@@ -182,15 +184,21 @@ class EnsembleMultiGridFeatures(IEnsembleFeatures):
     def forward(self, positions: Tensor, member: Tensor) -> Tensor:
         features = self.feature_grid.evaluate(positions, None, None)
         mixing_features = self.mixing_features[member.to(dtype=torch.long), ...]
-        norm = torch.norm(mixing_features, p=2, dim=-1, keepdim=True)
-        mixing_features = mixing_features / norm
+        if not hasattr(self, '_mixing_mode') or self._mixing_mode == 'normalize':
+            norm = torch.norm(mixing_features, p=2, dim=-1, keepdim=True)
+            mixing_features = mixing_features / norm
+        elif self._mixing_mode == 'softmax':
+            mixing_features = torch.softmax(mixing_features, dim=-1)
+        else:
+            raise RuntimeError('[ERROR] Mixing mode must be normalize or softmax.')
         out = torch.bmm(features.view(-1, self.num_channels(), self.num_grids()), mixing_features[..., None])
         return out[..., 0]
 
 
 def _test():
     features = EnsembleMultiGridFeatures(
-        [1, 2, 3, 4], 4, (4, 8, 16), 3
+        [1, 2, 3, 4], 4, (4, 8, 16), 3,
+        mixing_mode='softmax'
     )
     positions = torch.rand(100, 3)
     member = torch.randint(4, size=(100,))
