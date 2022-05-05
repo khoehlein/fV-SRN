@@ -7,40 +7,43 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = 'rescaled_ensemble/single_member_evaluation'
-DATA_FILENAME_PATTERN = 'tk/member0001/t04.cvol'
+EXPERIMENT_NAME = 'rescaled_ensemble/single_member'
+DATA_FILENAME_PATTERN = ['tk/member{:04d}/t04.cvol'.format(i) for i in range(1, 4)]
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 PARAMETERS = {
     '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
-    '--world-density-data:num-samples-per-volume': '256**3',
-    '--world-density-data:batch-size': '64*64*128',
+    '--world-density-data:num-samples-per-volume': '12*352*250',
+    '--world-density-data:batch-size': '12*352*250',
     '--world-density-data:validation-share': 0.2,
+    '--world-density-data:sub-batching': 12,
     '--lossmode': 'density',
     '--network:core:layer-sizes': [
         '32:32:32:32', '64:64:64', '128:128',
     ],
-    '--network:core:activation': 'SnakeAlt:2',
+    '--network:core:activation': ['SnakeAlt:2', 'LeakyReLU'],
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',
     '--network:latent-features:volume:mode': 'grid',
     '--network:latent-features:volume:num-channels': [
-        4, 8, 16
+        2, 4, 8, 16
     ],
     '--network:latent-features:volume:grid:resolution': [
-        '2:22:16', '2:44:32', '4:44:32', '4:88:64'
+        '2:22:16', '2:44:32', '4:44:32', '4:88:64', '6:176:125'
     ],
     '--network:output:parameterization-method': 'direct',
     '-l1': 1.,
-    '-lr': 0.01,
-    '--lr_step': 50,
-    '--epochs': 200,
+    '--optimizer:lr': 0.001,
+    '--optimizer:hyper-params': '{"weight_decay": 0.00001}',
+    '--optimizer:scheduler:mode': 'plateau',
+    '--optimizer:scheduler:gamma': 0.5,
+    '--optimizer:scheduler:plateau:patience': 15,
+    '--optimizer:gradient-clipping:max-norm': 10.,
+    '--epochs': 400,
     '--output:save-frequency': 20,
-    '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
-    '--world-density-data:sub-batching': 8,
+    '--data-storage:filename-pattern': [os.path.join(io.get_data_base_path(), dfp) for dfp in DATA_FILENAME_PATTERN],
     '--dataset-resampling:method': 'random',
-    '--dataset-resampling:loss': 'l1',
-    '--dataset-resampling:frequency': 20,
+    '--dataset-resampling:frequency': 10,
 }
 
 
