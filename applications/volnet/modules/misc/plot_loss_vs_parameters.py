@@ -67,6 +67,24 @@ def plot_data(data: pd.DataFrame, normalization=1.):
     plt.show()
 
 
+def plot_data_pretty(data: pd.DataFrame, normalization=1.):
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 6))
+    fig.suptitle(f'Model complexity vs. reconstruction accuracy')
+
+    abscissa = data['num_params'].values / normalization
+    x = np.logspace(np.log(np.min(abscissa)), np.log(np.max(abscissa)), 100, base=np.exp(1.))
+    loss_key = 'l1'
+    ax.plot(x[:75], .003 / x[:75] ** 0.4, color='k')
+    ax.plot(x[60:], .0045 / x[60:], color='k')
+    ax.scatter(abscissa, data[f'best_loss_{loss_key}'].values, c=np.log(abscissa))
+    ax.set(xscale='log', yscale='log', xlabel='Compression ratio', ylabel=f'Reconstruction accuracy')
+    plt.text(6.e-2, 6e-3, '$\propto r^{\,0.4}$')
+    plt.text(7.e-2, 7e-2, '$\propto r}$')
+    plt.tight_layout()
+    plt.show()
+
+
 def main():
     data = read_data()
     plot_data(data, normalization=64*12*250*352)

@@ -28,3 +28,4 @@ cmake-build-debug/
 /applications/volnet/results/
 *mc-cache.hdf5
 /applications/test-*.png
+*.png
