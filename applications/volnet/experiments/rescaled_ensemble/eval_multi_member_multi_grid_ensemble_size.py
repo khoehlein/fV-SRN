@@ -30,7 +30,7 @@ PARAMETERS = {
     '--network:latent-features:volume:mode': 'multi-grid',
     '--network:latent-features:volume:num-channels': 4,
     '--network:latent-features:volume:multi-grid:resolution': '4:88:64',
-    '--network:latent-features:volume:multi-grid:num-grids': 4,
+    '--network:latent-features:volume:multi-grid:num-grids': 8,
     '--network:latent-features:volume:multi-grid:mixing-mode': 'normalize',
     '--network:output:parameterization-method': 'hard-clamp',
     '-l1': 1.,
@@ -44,7 +44,7 @@ PARAMETERS = {
     '--output:save-frequency': 50,
     '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
     '--data-storage:ensemble:index-range': ['1:5', '1:9', '1:17', '1:33', '1:65'],
-    '--global-seed': 42,
+    '--global-seed': [42, 1234],
 }
 
 
