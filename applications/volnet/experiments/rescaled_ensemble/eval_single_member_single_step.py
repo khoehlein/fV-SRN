@@ -7,7 +7,7 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = 'rescaled_ensemble/single_member_fixed_step'
+EXPERIMENT_NAME = 'rescaled_ensemble/single_member_single_step'
 DATA_FILENAME_PATTERN = ['tk/member{:04d}/t04.cvol'.format(i) for i in range(1, 5)]
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
