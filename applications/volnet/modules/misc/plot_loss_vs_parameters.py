@@ -7,7 +7,7 @@ import torch
 from matplotlib import pyplot as plt
 from torch import nn
 
-experiment_name = 'rescaled_ensemble/single_member_fixed_step'
+experiment_name = 'rescaled_ensemble/single_member_single_step'
 loss_keys = ['l1', 'l2', 'total']
 base_directory = f'/home/hoehlein/PycharmProjects/results/fvsrn/{experiment_name}'
 
