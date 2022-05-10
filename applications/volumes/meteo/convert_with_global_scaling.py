@@ -44,6 +44,13 @@ def load_data(variable_name: str, min_member: int, max_member: int, level_slice=
     return all_data
 
 
+def get_global_min_max_normalization(all_data: xr.DataArray):
+    summation_dims = [MEMBER_DIM_NAME, Axis.LEVEL.value, Axis.LATITUDE.value, Axis.LONGITUDE.value]
+    local_min = all_data.min(dim=summation_dims)
+    local_max = all_data.max(dim=summation_dims)
+    return local_min, (local_max - local_min)
+
+
 def get_global_normalization(all_data: xr.DataArray):
     summation_dims = [MEMBER_DIM_NAME, Axis.LEVEL.value, Axis.LATITUDE.value, Axis.LONGITUDE.value]
     mu = all_data.mean(dim=summation_dims)
@@ -73,6 +80,8 @@ def convert_variable(variable_name: str, min_member: int, max_member: int, norm=
         mu, sigma = get_level_normalization(data)
     elif norm == 'local-min-max':
         mu, sigma = get_local_min_max_normalization(data)
+    elif norm == 'global-min-max':
+        mu, sigma = get_global_min_max_normalization(data)
     else:
         raise NotImplementedError()
 
@@ -112,10 +121,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--min-member', type=int, default=1)
     parser.add_argument('--max-member', type=int, default=128)
-    parser.add_argument('--norm', type=str, default='global',choices=['level', 'global', 'local-min-max'])
+    parser.add_argument('--norm', type=str, default='global-min-max',choices=['level', 'global', 'local-min-max', 'global-min-max'])
     args = vars(parser.parse_args())
     convert_ensemble(args['min_member'], args['max_member'], norm=args['norm'])
 
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main()
