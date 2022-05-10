@@ -43,6 +43,8 @@ class PyrendererOutputParameterization(IOutputParameterization):
             The possible outputs of the network:
             - density: a scalar density is produced that is then mapped to color via the TF.
                 * soft-clamp: Sigmoid clamp to [0, 1]
+                * hard-clamp: Hard clamp to [0, 1]
+                * mixed: Clamp hard for rendering
                 * direct: noop during training, clamp to [0,1] during rendering
             - rgbo: the network directly estimates red, green, blue, opacity/absorption. The TF is fixed during training and inference.                      
                 * soft-clamp: Sigmoid clamp to [0, 1] for color, softplus clamping to [0, infty] for absorption

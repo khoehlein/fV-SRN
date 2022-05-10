@@ -40,6 +40,18 @@ class DirectDensityOutput(_DensityOutput):
         return BackendOutputMode.DENSITY_DIRECT
 
 
+class MixedClampDensityOutput(_DensityOutput):
+
+    def rendering_parameterization(self, network_output: Tensor) -> Tensor:
+        return torch.clamp(network_output, min=0, max=1)
+
+    def training_parameterization(self, network_output: Tensor) -> Tensor:
+        return network_output
+
+    def backend_output_mode(self) -> BackendOutputMode:
+        return BackendOutputMode.DENSITY_DIRECT
+
+
 class HardClampDensityOutput(_DensityOutput):
 
     @staticmethod
@@ -60,5 +72,6 @@ CHOICES = {
     '': SoftClampDensityOutput,
     'soft-clamp': SoftClampDensityOutput,
     'hard-clamp': HardClampDensityOutput,
+    'mixed': MixedClampDensityOutput,
     'direct': DirectDensityOutput,
 }

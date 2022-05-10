@@ -80,7 +80,6 @@ class PositionSampler(object):
             samples = self._generate_samples(num_samples)
             if self.cache is not None:
                 self._store_samples_in_cache(samples)
-        self.sample_count = self.sample_count + num_samples
         return samples
 
     def _cache_prefix(self):
@@ -118,6 +117,7 @@ class PositionSampler(object):
             end = min(num_samples, start + batch_size)
             indices = np.arange(start, end, dtype=np.int32) + self.sample_count
             content[start:end, :] = self.sampler.sample(indices)
+        self.sample_count = self.sample_count + num_samples
         return content
 
     def _store_samples_in_cache(self, samples):

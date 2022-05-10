@@ -7,43 +7,37 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = 'rescaled_ensemble/single_member_single_step_global_mixed-clamp'
-DATA_FILENAME_PATTERN = ['../global-min-max_scaling/tk/member{:04d}/t04.cvol'.format(i) for i in range(1, 2)]
+EXPERIMENT_NAME = 'rescaled_ensemble/single_member_sebastian_comparison'
+DATA_FILENAME_PATTERN = ['tk/member{:04d}/t04.cvol'.format(i) for i in range(1, 2)]
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 PARAMETERS = {
     '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
-    '--world-density-data:num-samples-per-volume': '12*352*250',
-    '--world-density-data:batch-size': '12*352*250',
+    '--world-density-data:num-samples-per-volume': '8*12*352*250',
+    '--world-density-data:batch-size': '3*352*250',
     '--world-density-data:validation-share': 0.2,
-    '--world-density-data:sub-batching': 12,
+    '--world-density-data:sub-batching': 8,
     '--lossmode': 'density',
-    '--network:core:layer-sizes': '32:32:32:32',
-    '--network:core:activation': 'SnakeAlt:2',
+    '--network:core:layer-sizes': '32:32:32',
+    '--network:core:activation': 'SnakeAlt:1',
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',
     '--network:latent-features:volume:mode': 'grid',
-    '--network:latent-features:volume:num-channels': 4,
-    #              [
-    #     2, 4, 8, 12
-    # ],
-    '--network:latent-features:volume:grid:resolution': ['4:44:32', '8:44:32', '16:44:32'],
-    #              [
-    #     '2:22:16', '2:44:32', '4:44:32', '4:88:64', '6:176:125'
-    # ],
+    '--network:latent-features:volume:num-channels': 16,
+    '--network:latent-features:volume:grid:resolution': ['32:32:32'],
     '--network:output:parameterization-method': 'mixed',
     '-l1': 1.,
     '--optimizer:lr': 0.01,
-    '--optimizer:hyper-params': '{"weight_decay": 0.00001}',
+    '--optimizer:hyper-params': '{}',
     '--optimizer:scheduler:mode': 'step-lr',
-    '--optimizer:scheduler:gamma': 0.1,
-    '--optimizer:scheduler:step-lr:step-size': 200,
-    '--optimizer:gradient-clipping:max-norm': 10.,
-    '--epochs': 600,
-    '--output:save-frequency': 20,
+    '--optimizer:scheduler:gamma': 0.5,
+    '--optimizer:scheduler:step-lr:step-size': 100,
+    '--optimizer:gradient-clipping:max-norm': 1000.,
+    '--epochs': 200,
+    '--output:save-frequency': 40,
     '--data-storage:filename-pattern': [os.path.join(io.get_data_base_path(), dfp) for dfp in DATA_FILENAME_PATTERN],
     '--dataset-resampling:method': 'random',
-    '--dataset-resampling:frequency': 20,
+    '--dataset-resampling:frequency': 50,
 }
 
 
