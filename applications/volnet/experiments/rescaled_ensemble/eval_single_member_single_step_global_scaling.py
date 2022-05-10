@@ -8,7 +8,7 @@ args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
 EXPERIMENT_NAME = 'rescaled_ensemble/single_member_single_step_global'
-DATA_FILENAME_PATTERN = ['../global_scaling/tk/member{:04d}/t04.cvol'.format(i) for i in range(1, 5)]
+DATA_FILENAME_PATTERN = ['../global_scaling/tk/member{:04d}/t04.cvol'.format(i) for i in range(1, 3)]
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 PARAMETERS = {
