@@ -29,7 +29,7 @@ PARAMETERS = {
     '--network:input:fourier:method': 'nerf',
     '--network:latent-features:volume:mode': 'grid',
     '--network:latent-features:volume:num-channels': [4, 8],
-    '--network:latent-features:volume:grid:resolution': '32:32:32',
+    '--network:latent-features:volume:grid:resolution': grid_sizes,
     '--network:output:parameterization-method': 'mixed',
     '-l1': 1.,
     '--optimizer:lr': 0.01,
