@@ -18,8 +18,8 @@ grid_sizes = ['{}:{}:{}'.format(h, int(w), int(d)) for h, (w, d) in product([4, 
 
 PARAMETERS = {
     '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
-    '--world-density-data:num-samples-per-volume': '8*12*352*250',
-    '--world-density-data:batch-size': '3*352*250',
+    '--world-density-data:num-samples-per-volume': '16*12*352*250',
+    '--world-density-data:batch-size': '6*352*250',
     '--world-density-data:validation-share': 0.2,
     '--world-density-data:sub-batching': 8,
     '--lossmode': 'density',
