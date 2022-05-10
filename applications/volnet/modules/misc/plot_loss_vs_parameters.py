@@ -7,7 +7,7 @@ import torch
 from matplotlib import pyplot as plt
 from torch import nn
 
-experiment_name = 'rescaled_ensemble/overfitting/multi_member_multi_grid_h'
+experiment_name = 'rescaled_ensemble/single_member_fixed_step'
 loss_keys = ['l1', 'l2', 'total']
 base_directory = f'/home/hoehlein/PycharmProjects/results/fvsrn/{experiment_name}'
 
@@ -87,7 +87,7 @@ def plot_data_pretty(data: pd.DataFrame, normalization=1.):
 
 def main():
     data = read_data()
-    plot_data(data, normalization=64*12*250*352)
+    plot_data(data, normalization=12*250*352)
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
 EXPERIMENT_NAME = 'rescaled_ensemble/single_member_fixed_step'
-DATA_FILENAME_PATTERN = ['tk/member{:04d}/t04.cvol'.format(i) for i in range(1, 4)]
+DATA_FILENAME_PATTERN = ['tk/member{:04d}/t04.cvol'.format(i) for i in range(1, 5)]
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 PARAMETERS = {
@@ -18,10 +18,8 @@ PARAMETERS = {
     '--world-density-data:validation-share': 0.2,
     '--world-density-data:sub-batching': 12,
     '--lossmode': 'density',
-    '--network:core:layer-sizes': [
-        '32:32:32:32', '64:64:64', '128:128',
-    ],
-    '--network:core:activation': ['SnakeAlt:2', 'LeakyReLU'],
+    '--network:core:layer-sizes': '32:32:32:32',
+    '--network:core:activation': 'SnakeAlt:2',
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',
     '--network:latent-features:volume:mode': 'grid',
@@ -43,7 +41,7 @@ PARAMETERS = {
     '--output:save-frequency': 20,
     '--data-storage:filename-pattern': [os.path.join(io.get_data_base_path(), dfp) for dfp in DATA_FILENAME_PATTERN],
     '--dataset-resampling:method': 'random',
-    '--dataset-resampling:frequency': 10,
+    '--dataset-resampling:frequency': 20,
 }
 
 
