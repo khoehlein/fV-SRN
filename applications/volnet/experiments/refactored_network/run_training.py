@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import tqdm
 
+torch.set_num_threads(12)
 device = torch.device('cuda:0')
 
 from common import utils
