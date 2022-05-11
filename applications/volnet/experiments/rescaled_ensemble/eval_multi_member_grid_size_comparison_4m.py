@@ -8,8 +8,8 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = 'rescaled_ensemble/single_member_grid_size_comparison'
-DATA_FILENAME_PATTERN = ['tk/member{:04d}/t04.cvol'.format(i) for i in range(1, 2)]
+EXPERIMENT_NAME = 'rescaled_ensemble/multi_member_grid_size_comparison/4m'
+DATA_FILENAME_PATTERN = 'tk/member{member:04d}/t04.cvol'
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 
@@ -24,15 +24,15 @@ PARAMETERS = {
     '--world-density-data:num-samples-per-volume': '16*12*352*250',
     '--world-density-data:batch-size': '6*352*250',
     '--world-density-data:validation-share': 0.2,
-    '--world-density-data:sub-batching': 8,
+    '--world-density-data:sub-batching': 24,
     '--lossmode': 'density',
     '--network:core:layer-sizes': '32:32:32',
     '--network:core:activation': 'SnakeAlt:1',
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',
-    '--network:latent-features:volume:mode': 'grid',
-    '--network:latent-features:volume:num-channels': [4, 8],
-    '--network:latent-features:volume:grid:resolution': grid_sizes,
+    '--network:latent-features:ensemble:mode': 'grid',
+    '--network:latent-features:ensemble:num-channels': [4, 8],
+    '--network:latent-features:ensemble:grid:resolution': grid_sizes,
     '--network:output:parameterization-method': 'mixed',
     '-l1': 1.,
     '--optimizer:lr': 0.01,
@@ -43,7 +43,8 @@ PARAMETERS = {
     '--optimizer:gradient-clipping:max-norm': 1000.,
     '--epochs': 200,
     '--output:save-frequency': 40,
-    '--data-storage:filename-pattern': [os.path.join(io.get_data_base_path(), dfp) for dfp in DATA_FILENAME_PATTERN],
+    '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
+    '--data-storage:ensemble:index-range': '1:5',
     '--dataset-resampling:method': 'random',
     '--dataset-resampling:frequency': 50,
 }
