@@ -13,7 +13,7 @@ torch.set_num_threads(12)
 device = torch.device('cuda:0')
 
 from common import utils
-from volnet.evaluation import EvaluateWorld, EvaluateScreen, EvaluateWorldAndRegularization
+from volnet.evaluation import EvaluateScreen, EvaluateWorldAndRegularization
 from volnet.experiments.profiling import build_profiler
 from volnet.modules.datasets.resampling.resampler import DatasetResampler
 
@@ -64,8 +64,8 @@ def build_dataset(mode: DatasetType, args: Dict[str, Any], volume_data_storage: 
 
 
 def build_evaluation_helpers(device, dtype, image_evaluator, loss_screen, loss_world, network, visualization_image_size):
-    evaluator_train = EvaluateWorld(network, image_evaluator, loss_world, dtype, device)
-    evaluator_val = EvaluateWorld(network, image_evaluator, loss_world, dtype, device)
+    evaluator_train = EvaluateWorldAndRegularization(network, image_evaluator, loss_world, dtype, device)
+    evaluator_val = EvaluateWorldAndRegularization(network, image_evaluator, loss_world, dtype, device)
     evaluator_vis = EvaluateScreen(network, image_evaluator, loss_screen, *visualization_image_size, False, False, dtype, device)
     return evaluator_train, evaluator_val, evaluator_vis
 

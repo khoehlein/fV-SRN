@@ -12,6 +12,7 @@ from volnet.modules.networks.latent_features.marginal import (
     EnsembleFeatureGrid, EnsembleFeatureVector, EnsembleMultiResolutionFeatures,
     FeatureVector, FeatureGrid, MultiResolutionFeatures, EnsembleMultiGridFeatures
 )
+from volnet.modules.networks.latent_features.marginal.regularized_features import RegularizedFeatures
 
 
 class PyrendererLatentFeatures(MarginalLatentFeatures):
@@ -56,6 +57,12 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             choices=['vector', 'grid', 'multi-res', 'multi-grid'],
             help="""
             mode for handling spatial coordinates in ensemble features
+            """
+        )
+        group.add_argument(
+            prefix + 'ensemble:sparsity-regularization', type=float, default=0.,
+            help="""
+            weight for sparsity regularization
             """
         )
         group.add_argument(
@@ -117,6 +124,12 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             prefix + 'volume:mode', type=str, default='vector', choices=['vector', 'grid', 'multi-res', 'multi-grid'],
             help="""
             mode for handling spatial coordinates in volume features
+            """
+        )
+        group.add_argument(
+            prefix + 'volume:sparsity-regularization', type=float, default=0.,
+            help="""
+            weight for sparsity regularization
             """
         )
         group.add_argument(
@@ -220,7 +233,9 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
                 grid_specs = get_arg('ensemble:grid:resolution')
                 assert grid_specs is not None
                 grid_size = read_grid_specs(grid_specs)
-                ensemble_features = EnsembleFeatureGrid(member_keys, ensemble_channels, grid_size)
+                ensemble_features = EnsembleFeatureGrid(
+                    member_keys, ensemble_channels, grid_size,
+                )
             elif mode == 'multi-res':
                 coarsest = get_arg('ensemble:multi_res:coarsest')
                 assert coarsest is not None
@@ -240,11 +255,13 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
                 num_grids = get_arg('ensemble:multi_grid:num_grids')
                 ensemble_features = EnsembleMultiGridFeatures(
                     member_keys, ensemble_channels, grid_size, num_grids,
-                    mixing_mode=get_arg('ensemble:multi_grid:mixing_mode')
+                    mixing_mode=get_arg('ensemble:multi_grid:mixing_mode'),
                 )
             else:
                 raise NotImplementedError()
-
+            sparsity_weight = get_arg('ensemble:sparsity_regularization')
+            if sparsity_weight > 0.:
+                ensemble_features = RegularizedFeatures(ensemble_features, sparsity_weight)
         else:
             ensemble_features = None
 
@@ -282,6 +299,9 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
                 )
             else:
                 raise NotImplementedError()
+            sparsity_weight = get_arg('volume:sparsity_regularization')
+            if sparsity_weight > 0.:
+                volumetric_features = RegularizedFeatures(volumetric_features, sparsity_weight)
         else:
             volumetric_features = None
         if temporal_features is not None or ensemble_features is not None or volumetric_features is not None:

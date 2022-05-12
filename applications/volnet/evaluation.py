@@ -4,6 +4,8 @@ Input: Network and the current batch from the dataloader
 """
 
 from typing import Optional, Union
+
+import numpy as np
 import torch
 
 from volnet.modules.networks.pyrenderer import PyrendererSRN
@@ -110,3 +112,43 @@ class EvaluateWorld:
 
     def loss_names(self):
         return self._loss.loss_names()
+
+
+class EvaluateWorldAndRegularization(EvaluateWorld):
+
+    def __call__(self, dataloader_batch):
+        predictions, total_loss, partial_losses = super(EvaluateWorldAndRegularization, self).__call__(dataloader_batch)
+        try:
+            reg_loss = self._network.latent_features.volumetric_features.compute_regularization()
+        except Exception as err:
+            partial_losses.update({
+                'volumetric_features:regularization': 0.,
+                'volumetric_features:num_active_channels': np.nan,
+            })
+        else:
+            total_loss = total_loss + reg_loss
+            num_active_channels = self._network.latent_features.volumetric_features.num_active_channels()
+            partial_losses.update({
+                'volumetric_features:regularization': reg_loss.item(),
+                'volumetric_features:num_active_channels': num_active_channels,
+            })
+        try:
+            reg_loss = self._network.latent_features.ensemble_features.compute_regularization()
+        except Exception as err:
+            partial_losses.update({
+                'ensemble_features:regularization': 0,
+                'ensemble_features:num_active_channels': np.nan,
+            })
+        else:
+            total_loss = total_loss + reg_loss
+            num_active_channels = self._network.latent_features.ensemble_features.num_active_channels()
+            partial_losses.update({
+                'ensemble_features:regularization': reg_loss.item(),
+                'ensemble_features:num_active_channels': num_active_channels,
+            })
+        return predictions, total_loss, partial_losses
+
+    def loss_names(self):
+        return [l for l in self._loss.loss_names()] + [
+            'ensemble_features:regularization', 'ensemble_features:num_active_channels',
+            'volumetric_features:regularization', 'volumetric_features:num_active_channels']

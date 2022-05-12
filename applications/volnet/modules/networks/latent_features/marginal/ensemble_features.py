@@ -193,18 +193,3 @@ class EnsembleMultiGridFeatures(IEnsembleFeatures):
             raise RuntimeError('[ERROR] Mixing mode must be normalize or softmax.')
         out = torch.bmm(features.view(-1, self.num_channels(), self.num_grids()), mixing_features[..., None])
         return out[..., 0]
-
-
-def _test():
-    features = EnsembleMultiGridFeatures(
-        [1, 2, 3, 4], 4, (4, 8, 16), 3,
-        mixing_mode='softmax'
-    )
-    positions = torch.rand(100, 3)
-    member = torch.randint(4, size=(100,))
-    out = features.evaluate(positions, None, member)
-    print('Finished')
-
-
-if __name__ == '__main__':
-    _test()

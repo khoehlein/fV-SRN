@@ -75,3 +75,6 @@ class FeatureGrid(IFeatureModule):
 
     def get_grid(self):
         return self.data
+
+    def num_channels(self):
+        return self.data.shape[0]

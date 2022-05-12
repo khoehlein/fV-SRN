@@ -185,7 +185,7 @@ def draw_data_to_axes(data, axs, resolution_key, num_channels_key, normalization
 
 
 def plot_ensemble_progression(normalization=1.):
-    fig, axs = plt.subplots(1, 3, figsize=(5 * len(loss_keys), 4), sharex='all')
+    fig, axs = plt.subplots(1, 3, figsize=(5 * len(loss_keys), 4), sharex='all', dpi=300)
 
     experiment_name = 'rescaled_ensemble/single_member_grid_size_comparison'
     data = load_experiment_data(experiment_name)
@@ -195,7 +195,7 @@ def plot_ensemble_progression(normalization=1.):
         normalization=normalization
     )
 
-    for ensemble_size in [2, 4]:
+    for ensemble_size in [2, 4, 8]:
         for ax in axs:
             ax.set_prop_cycle(None)
         experiment_name = f'rescaled_ensemble/multi_member_grid_size_comparison/{ensemble_size}m'
