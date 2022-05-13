@@ -16,7 +16,7 @@ class RegularizedFeatures(ILatentFeatures):
 
     def forward(self, positions: Tensor, time: Tensor, member: Tensor) -> Tensor:
         out = self.feature_module.evaluate(positions, time, member)
-        return self.regularization[None, :] * out
+        return self.regularization[None, :] * torch.tanh(out)
 
     def reset_member_features(self, *member_keys: Any) -> 'ILatentFeatures':
         self.feature_module.reset_member_features(*member_keys)

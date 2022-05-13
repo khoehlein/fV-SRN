@@ -60,7 +60,7 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             """
         )
         group.add_argument(
-            prefix + 'ensemble:sparsity-regularization', type=float, default=0.,
+            prefix + 'ensemble:sparsity-regularization', type=float, default=None,
             help="""
             weight for sparsity regularization
             """
@@ -127,7 +127,7 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             """
         )
         group.add_argument(
-            prefix + 'volume:sparsity-regularization', type=float, default=0.,
+            prefix + 'volume:sparsity-regularization', type=float, default=None,
             help="""
             weight for sparsity regularization
             """
@@ -260,7 +260,7 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             else:
                 raise NotImplementedError()
             sparsity_weight = get_arg('ensemble:sparsity_regularization')
-            if sparsity_weight > 0.:
+            if sparsity_weight is not None:
                 ensemble_features = RegularizedFeatures(ensemble_features, sparsity_weight)
         else:
             ensemble_features = None
@@ -300,7 +300,7 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             else:
                 raise NotImplementedError()
             sparsity_weight = get_arg('volume:sparsity_regularization')
-            if sparsity_weight > 0.:
+            if sparsity_weight is not None:
                 volumetric_features = RegularizedFeatures(volumetric_features, sparsity_weight)
         else:
             volumetric_features = None
