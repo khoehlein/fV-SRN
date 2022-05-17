@@ -138,13 +138,13 @@ def plot_ensemble_experiment(experiment_name):
     )
 
 
-def plot_singleton_experiment(experiment_name):
+def plot_singleton_experiment(experiment_name, num_members=1):
     data = load_experiment_data(experiment_name=experiment_name)
     plot_data(
         data,
         'network:latent_features:volume:grid:resolution', 'network:latent_features:volume:num_channels',
         experiment_name,
-        normalization=12*250*352
+        normalization=12*250*352*num_members
     )
 
 
@@ -213,9 +213,10 @@ def plot_ensemble_progression(normalization=1.):
 
 
 def main():
+    plot_singleton_experiment('/home/hoehlein/PycharmProjects/results/fvsrn/rescaled_ensemble/multi_member_multi_core/32c/16m', num_members=16)
     # plot_ensemble_experiment('rescaled_ensemble/multi_member_grid_size_comparison/2m')
     # plot_singleton_experiment('rescaled_ensemble/single_member_grid_size_comparison')
-    plot_ensemble_progression(normalization=12*352*250)
+    # plot_ensemble_progression(normalization=12*352*250)
 
 
 if __name__ == '__main__':
