@@ -67,7 +67,7 @@ def compute_measures(data: np.ndarray):
 
 
 def main():
-    for variable_name in ['dbz', 'qhydro']:
+    for variable_name in ['tk', 'rh', 'qv', 'z', 'dbz', 'qhydro', 'u', 'v', 'w']:
         for norm in ['global', 'level', 'local']:
             all_data = []
             for member in range(1, 129):
