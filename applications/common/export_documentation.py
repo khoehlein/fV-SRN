@@ -4,6 +4,7 @@ import inspect
 import common.utils as utils
 import pyrenderer
 
+
 def _print_indented_docs(lines, prefix:str, out):
     # remove empty lines at the start
     num_empty_lines = 0
