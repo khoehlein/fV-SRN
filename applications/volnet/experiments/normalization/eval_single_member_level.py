@@ -8,17 +8,15 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = 'normalization/single_member_impact_of_normalization'
-DATA_FILENAME_PATTERN = ['../{}-min-max_scaling/tk/member0001/t04.cvol'.format(l) for l in ['global', 'level', 'local']]
+EXPERIMENT_NAME = 'normalization/single_member/level'
+DATA_FILENAME_PATTERN = ['../level-min-max_scaling/tk/member{:04d}/t04.cvol'.format(l) for l in range(1, 5)]
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 
-grid_sizes = ['12:44:31']
-
-# grid_sizes = [
-#     '{}:{}:{}'.format(h, int(w), int(d))
-#     for h, (w, d) in product([4, 8, 12], zip([176, 44, 11], [125, 31, 8]))
-# ]
+grid_sizes = [
+    '{}:{}:{}'.format(h, int(w), int(d))
+    for h, (w, d) in product([4, 8, 12], zip([176, 44, 11], [125, 31, 8]))
+]
 
 
 PARAMETERS = {
@@ -28,12 +26,12 @@ PARAMETERS = {
     '--world-density-data:validation-share': 0.2,
     '--world-density-data:sub-batching': 8,
     '--lossmode': 'density',
-    '--network:core:layer-sizes': '32:32:32',
+    '--network:core:layer-sizes': ['32:32:32'],
     '--network:core:activation': 'SnakeAlt:1',
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',
     '--network:latent-features:volume:mode': 'grid',
-    '--network:latent-features:volume:num-channels': [4,],
+    '--network:latent-features:volume:num-channels': [4, 8],
     '--network:latent-features:volume:grid:resolution': grid_sizes,
     '--network:output:parameterization-method': 'mixed',
     '-l1': 1.,
