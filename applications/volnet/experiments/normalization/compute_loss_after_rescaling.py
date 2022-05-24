@@ -11,7 +11,7 @@ from volnet.modules.datasets.world_dataset import WorldSpaceDensityEvaluator
 from volnet.modules.render_tool import RenderTool
 
 results_root_path = '/home/hoehlein/PycharmProjects/results/fvsrn'
-variable_name = 'rh'
+variable_name = 'tk'
 device = torch.device('cuda:0')
 
 data = []
@@ -67,6 +67,7 @@ for normalization in ['global', 'level', 'local']:
                 'l2': torch.mean(deviation ** 2.).item(),
                 'l1r': torch.mean(deviation * torch.abs(scale)).item(),
                 'l2r': torch.mean((deviation * torch.abs(scale)) ** 2.).item(),
+                'num_parameters': sum([p.numel() for p in network.parameters()])
             })
 
 data = pd.DataFrame(data)
