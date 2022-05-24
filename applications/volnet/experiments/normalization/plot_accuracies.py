@@ -1,19 +1,28 @@
 import os
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 results_root_path = '/home/hoehlein/PycharmProjects/results/fvsrn'
-data = pd.read_csv(os.path.join(results_root_path, 'normalization', 'single_member', 'accuracies.csv'))
+variable_names = ['tk', 'rh']
+fig, ax = plt.subplots(2, 2, figsize=(8, 8), sharex='col', sharey='row')
 
-fig, ax = plt.subplots(1, 2, figsize=(10,5))
-for normalization in ['level', 'local', 'global']:
-    norm_data = data.loc[data['normalization'] == normalization, :]
-    ax[0].scatter(norm_data['l1'], norm_data['l1r'], label=f'{normalization} scaling')
-    ax[1].scatter(norm_data['l2'], norm_data['l2r'], label=f'{normalization} scaling')
-ax[0].legend()
-ax[0].set(xlabel='L1', ylabel='L1 rescaled', xscale='log', yscale='log')
-ax[1].legend()
-ax[1].set(xlabel='L2', ylabel='L2 rescaled', xscale='log', yscale='log')
+for i, variable_name in enumerate(variable_names):
+    data = pd.read_csv(
+        os.path.join(results_root_path, 'normalization', 'single_member', variable_name, 'accuracies.csv'))
+    for normalization in ['level', 'local', 'global']:
+        norm_data = data.loc[data['normalization'] == normalization, :]
+        ax[i, 0].scatter(norm_data['l1'], norm_data['l1r'], label=f'{normalization} scaling')
+        ax[i, 1].scatter(np.sqrt(norm_data['l2']), np.sqrt(norm_data['l2r']), label=f'{normalization} scaling')
+    ax[i, 0].legend()
+    ax[i, 1].legend()
+    ax[i, 0].set(ylabel='MAE (rescaled)', xscale='log', yscale='log', title=f'Variable {variable_name}')
+    ax[i, 1].set(ylabel='RMSE (rescaled)', xscale='log', yscale='log', title=f'Variable {variable_name}')
+
+ax[-1, 0].set(xlabel='MAE')
+ax[-1, 1].set(xlabel='RMSE')
+
+
 plt.tight_layout()
 plt.show()

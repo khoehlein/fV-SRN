@@ -11,12 +11,13 @@ from volnet.modules.datasets.world_dataset import WorldSpaceDensityEvaluator
 from volnet.modules.render_tool import RenderTool
 
 results_root_path = '/home/hoehlein/PycharmProjects/results/fvsrn'
+variable_name = 'rh'
 device = torch.device('cuda:0')
 
 data = []
 for normalization in ['global', 'level', 'local']:
 
-    experiment_directory = os.path.join(results_root_path, 'normalization', 'single_member', normalization)
+    experiment_directory = os.path.join(results_root_path, 'normalization', 'single_member', variable_name,normalization)
     checkpoint_directory = os.path.join(experiment_directory, 'results', 'model')
     run_names = list(sorted(f for f in os.listdir(checkpoint_directory) if f.startswith('run')))
     scale_data = SingleVariableData('tk', f'{normalization}-min-max').load_scales(return_volume=True)
@@ -69,4 +70,4 @@ for normalization in ['global', 'level', 'local']:
             })
 
 data = pd.DataFrame(data)
-data.to_csv(os.path.join(results_root_path, 'normalization', 'single_member', 'accuracies.csv'))
+data.to_csv(os.path.join(results_root_path, 'normalization', 'single_member', variable_name, 'accuracies.csv'))

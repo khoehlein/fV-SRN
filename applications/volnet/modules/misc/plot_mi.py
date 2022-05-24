@@ -43,5 +43,5 @@ def plot_measures_for_variable(variable_name: str):
 
 
 if __name__ == '__main__':
-    for variable_name in ['tk', 'rh', 'qv', 'z', 'dbz', 'qhydro']:
+    for variable_name in ['tk', 'rh', 'qv', 'z', 'dbz', 'qhydro', 'u', 'v', 'w']:
         plot_measures_for_variable(variable_name)
