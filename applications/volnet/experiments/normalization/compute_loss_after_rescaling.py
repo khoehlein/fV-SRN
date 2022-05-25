@@ -20,8 +20,8 @@ for normalization in ['global', 'level', 'local']:
     experiment_directory = os.path.join(results_root_path, 'normalization', 'single_member', variable_name,normalization)
     checkpoint_directory = os.path.join(experiment_directory, 'results', 'model')
     run_names = list(sorted(f for f in os.listdir(checkpoint_directory) if f.startswith('run')))
-    scale_data = SingleVariableData('tk', f'{normalization}-min-max').load_scales(return_volume=True)
 
+    scale_data = SingleVariableData('tk', f'{normalization}-min-max').load_scales(return_volume=True)
     for run_name in run_names:
         checkpoint = torch.load(
             os.path.join(checkpoint_directory, run_name, 'model_epoch_200.pth'),
