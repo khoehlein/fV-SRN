@@ -11,7 +11,7 @@ from volnet.modules.render_tool import RenderTool
 
 ROOT_DIRECTORY = '/home/hoehlein/PycharmProjects/results/fvsrn'
 EXPERIMENT_NAME = 'paper/single_member/grid_params'
-PARAMETER_NAME = 'tk/num_channels'
+PARAMETER_NAME = 'qv/vres'
 CHECKPOINT_NAME = 'model_epoch_250.pth'
 
 directory = os.path.join(ROOT_DIRECTORY, EXPERIMENT_NAME, PARAMETER_NAME)

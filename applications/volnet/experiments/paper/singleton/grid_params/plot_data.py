@@ -10,7 +10,7 @@ EXPERIMENT_NAME = 'paper/single_member/grid_params'
 CHECKPOINT_NAME = 'model_epoch_250.pth'
 
 directory = os.path.join(ROOT_DIRECTORY, EXPERIMENT_NAME)
-variable_names = ['tk/hres', 'rh/hres']
+variable_names = ['tk/num_channels', 'rh/num_channels']
 pn = 12 * 352 * 250
 fig, ax = plt.subplots(len(variable_names), 2, figsize=(8, 6), sharex='all', gridspec_kw={'hspace': 0.})
 
