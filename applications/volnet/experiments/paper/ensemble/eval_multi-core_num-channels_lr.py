@@ -10,7 +10,7 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = 'paper/ensemble/multi_core/num_channels'
+EXPERIMENT_NAME = 'paper/ensemble/multi_core/num_channels/lr'
 DATA_FILENAME_PATTERN = '../level-min-max_scaling/tk/member{member:04d}/t04.cvol'
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
