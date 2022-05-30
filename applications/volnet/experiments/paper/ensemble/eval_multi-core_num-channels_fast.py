@@ -5,7 +5,7 @@ from volnet.experiments.rescaled_ensemble import directories as io
 
 parser = io.build_parser()
 parser.add_argument('--grid-resolution', type=str, required=True)
-parser.add_argument('--num-members', type=int, required=True)
+parser.add_argument('--members', type=str, required=True)
 parser.add_argument('--core-channels', type=int, default=32)
 
 args = vars(parser.parse_args())
@@ -13,10 +13,9 @@ io.set_debug_mode(args)
 
 resolution = args['grid_resolution']
 core_channels = args['core_channels']
-num_members = args['num_members']
 
 
-folder = resolution.replace(':', '-') + f'_{core_channels}_' + args['num_members'].replace(':', '-') + '_fast'
+folder = resolution.replace(':', '-') + f'_{core_channels}_' + args['members'].replace(':', '-') + '_fast'
 
 EXPERIMENT_NAME = 'paper/ensemble/multi_core/num_channels/' + folder
 DATA_FILENAME_PATTERN = '../level-min-max_scaling/tk/member{member:04d}/t04.cvol'
@@ -51,7 +50,7 @@ PARAMETERS = {
     '--data-storage:filename-pattern': os.path.join(io.get_data_base_path(), DATA_FILENAME_PATTERN),
     '--dataset-resampling:method': 'random',
     '--dataset-resampling:frequency': 10,
-    '--data-storage:ensemble:index-range': f'1:{num_members + 1}',
+    '--data-storage:ensemble:index-range': args['members'],
 }
 FLAGS = ['--network:core:split-members']
 
