@@ -5,7 +5,7 @@ from volnet.experiments.rescaled_ensemble import directories as io
 
 parser = io.build_parser()
 parser.add_argument('--grid-resolution', type=str, required=True)
-parser.add_argument('--num-members', type=str, required=True)
+parser.add_argument('--num-members', type=int, required=True)
 parser.add_argument('--core-channels', type=int, default=32)
 
 args = vars(parser.parse_args())
