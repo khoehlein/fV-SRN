@@ -27,7 +27,7 @@ PARAMETERS = {
     '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
     '--world-density-data:num-samples-per-volume': '16*12*352*250',
     '--world-density-data:batch-size': '6*352*250',
-    '--world-density-data:validation-share': 0.2,
+    '--world-density-data:validation-share': 0.25,
     '--world-density-data:sub-batching': 1,
     '--lossmode': 'density',
     '--network:core:layer-sizes': f'{core_channels}:{core_channels}:{core_channels}',
