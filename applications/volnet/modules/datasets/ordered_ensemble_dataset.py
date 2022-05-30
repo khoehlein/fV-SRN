@@ -13,6 +13,7 @@ from volnet.modules.datasets.evaluation import LossEvaluator
 from volnet.modules.datasets.evaluation.network_evaluator import NetworkEvaluator
 from volnet.modules.datasets.output_mode import OutputMode
 from volnet.modules.datasets.resampling.interface import IImportanceSampler
+from volnet.modules.datasets.world_dataset import WorldSpaceDensityEvaluator
 from volnet.modules.helpers import parse_slice_string
 from volnet.modules.datasets.sampling.position_sampler import PositionSampler
 from volnet.modules.datasets.evaluation.volume_evaluator import VolumeEvaluator
@@ -31,7 +32,7 @@ def _plot_3d(positions):
     plt.close()
 
 
-class WorldSpaceDensityData(Dataset):
+class OrderedWorldSpaceDensityData(Dataset):
 
     OUTPUT_KEYS = ['positions', 'targets', 'tf', 'timestep', 'ensemble']
 
@@ -90,7 +91,7 @@ class WorldSpaceDensityData(Dataset):
         - grid if validation data is to be taken from the original feature grid  
         """, choices=['sample', 'grid'])
         group.add_argument('--world-density-data:sub-batching', type=int, default=None, help="""
-        number of sub-batches
+        fraction of sample points to use for validation
         """)
 
     @classmethod
@@ -119,7 +120,7 @@ class WorldSpaceDensityData(Dataset):
         assert 0 <= validation_share < 1, '[ERROR] Validation share must satisfy 0 <= x < 1'
         num_samples_per_volume = int(total_samples_per_volume * validation_share)
         if mode == DatasetType.TRAINING:
-            num_samples_per_volume = total_samples_per_volume - num_samples_per_volume
+            num_samples_per_volume = total_samples_per_volume
         if mode == DatasetType.VALIDATION and args[prefix + 'validation_mode'] == 'grid':
             data = cls(
                 volume_data_storage, num_samples_per_volume, batch_size,
@@ -149,7 +150,7 @@ class WorldSpaceDensityData(Dataset):
             ensemble_index_slice=None, timestep_index_slice=None,
             dtype=None, return_weights=False
     ):
-        super(WorldSpaceDensityData, self).__init__()
+        super(OrderedWorldSpaceDensityData, self).__init__()
         self.volume_data_storage = volume_data_storage
         self.num_samples_per_volume = num_samples_per_volume
         if ensemble_index_slice is None:
@@ -158,11 +159,19 @@ class WorldSpaceDensityData(Dataset):
         if timestep_index_slice is None:
             timestep_index_slice = ':'
         self.timestep_index = volume_data_storage.timestep_index[slice(*parse_slice_string(timestep_index_slice))]
+        assert batch_size % (self.num_members() * self.num_timesteps()) == 0, \
+            f'[ERROR] Batch size ({batch_size}) must be divisible by (num_members * num_timesteps) ({self.num_members() * self.num_timesteps()})'
         self.batch_size = batch_size
-        self.sub_batching = sub_batching
+        bseff = batch_size // (self.num_members() * self.num_timesteps())
+        assert self.num_samples_per_volume % bseff == 0, \
+            f'[ERROR] Effective batch size ({bseff}) must divide number of samples per volume ({self.num_samples_per_volume})'
         if sub_batching is not None:
-            assert batch_size % sub_batching == 0, \
-                f'[ERROR] Number of sub-batches ({sub_batching}) does not divide batch size ({batch_size})'
+            assert bseff % sub_batching == 0, \
+                f'[ERROR] Subbatching ({sub_batching}) must divide effective batch_size ({bseff})'
+        else:
+            sub_batching = 1
+        self.sub_batching = sub_batching
+        self.num_sections = int((self.num_samples_per_volume / bseff) * sub_batching)
         if dtype is None:
             dtype = torch.float32
         self.dtype = dtype
@@ -173,31 +182,31 @@ class WorldSpaceDensityData(Dataset):
             self.sample_data(volume_evaluator, position_sampler)
 
     def _reset_data(self):
-        self.weights = []
-        self.data = {key: [] for key in WorldSpaceDensityData.OUTPUT_KEYS}
+        self.weights = {}
+        self.data = {}
 
-    def _add_samples_to_data(self, positions, targets, tf_index, timestep_index, ensemble_index, weights):
-        self.weights.append(weights)
-        for key, data in zip(WorldSpaceDensityData.OUTPUT_KEYS,
-                             [positions, targets, tf_index, timestep_index, ensemble_index]):
-            self.data[key].append(data)
-
-    def _finalize_data(self):
-        self.weights = np.concatenate(self.weights, axis=0)
-        self.data = {key: np.concatenate(self.data[key], axis=0) for key in WorldSpaceDensityData.OUTPUT_KEYS}
-        if self.sub_batching is None:
-            self.weights = self.weights.tolist()
-            self.data = [values for values in zip(*[self.data[key] for key in WorldSpaceDensityData.OUTPUT_KEYS])]
-        else:
-            sub_batch_size = np.ceil(self.batch_size / self.sub_batching)
-            num_samples = len(self.data[self.OUTPUT_KEYS[0]])
-            num_sections = int(np.ceil(num_samples / sub_batch_size))
-            self.weights = np.array_split(self.weights, num_sections)
-            self.data = [
-                values for values in zip(
-                    *[np.array_split(self.data[key], num_sections) for key in WorldSpaceDensityData.OUTPUT_KEYS]
-                )
-            ]
+    # def _add_samples_to_data(self, positions, targets, tf_index, timestep_index, ensemble_index, weights):
+    #     self.weights.append(weights)
+    #     for key, data in zip(OrderedWorldSpaceDensityData.OUTPUT_KEYS,
+    #                          [positions, targets, tf_index, timestep_index, ensemble_index]):
+    #         self.data[key].append(data)
+    #
+    # def _finalize_data(self):
+    #     self.weights = np.concatenate(self.weights, axis=0)
+    #     self.data = {key: np.concatenate(self.data[key], axis=0) for key in OrderedWorldSpaceDensityData.OUTPUT_KEYS}
+    #     if self.sub_batching is None:
+    #         self.weights = self.weights.tolist()
+    #         self.data = [values for values in zip(*[self.data[key] for key in OrderedWorldSpaceDensityData.OUTPUT_KEYS])]
+    #     else:
+    #         sub_batch_size = np.ceil(self.batch_size / self.sub_batching)
+    #         num_samples = len(self.data[self.OUTPUT_KEYS[0]])
+    #         num_sections = int(np.ceil(num_samples / sub_batch_size))
+    #         self.weights = np.array_split(self.weights, num_sections)
+    #         self.data = [
+    #             values for values in zip(
+    #                 *[np.array_split(self.data[key], num_sections) for key in OrderedWorldSpaceDensityData.OUTPUT_KEYS]
+    #             )
+    #         ]
 
     @staticmethod
     def _read_resolution_from_volume(volume_data):
@@ -216,6 +225,7 @@ class WorldSpaceDensityData(Dataset):
         for (timestep_index, timestep), (ensemble_index, ensemble) in product(enumerate(self.timestep_index), enumerate(self.ensemble_index)):
             volume_data = self.volume_data_storage.load_volume(timestep=timestep, ensemble=ensemble, index_access=False)
             volume_evaluator.set_source(volume_data, feature=feature)
+            print(self.num_samples_per_volume)
             positions = position_sampler.sample(self.num_samples_per_volume)
             positions = torch.from_numpy(positions).to(dtype=self.dtype, device=volume_evaluator.device)
             targets = volume_evaluator.evaluate(positions)
@@ -223,12 +233,15 @@ class WorldSpaceDensityData(Dataset):
             positions = positions.data.cpu().numpy()
             targets = targets.data.cpu().numpy()
             weights = np.ones_like(targets)
-            tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(
-                0, timestep_index, ensemble_index,
-                self.num_samples_per_volume
-            )
-            self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
-        self._finalize_data()
+            self.data[(timestep_index, ensemble_index)] = {
+                key: np.array_split(data, self.num_sections, axis=0)
+                for key, data in zip(
+                    OrderedWorldSpaceDensityData.OUTPUT_KEYS[:2] + ['weights'],
+                    [positions, targets, weights]
+                )
+            }
+            # self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
+        # self._finalize_data()
         volume_evaluator.restore_defaults()
         return self
 
@@ -266,9 +279,15 @@ class WorldSpaceDensityData(Dataset):
             targets = targets.data.cpu().numpy()
             weights = np.ones_like(targets)
             print(f"[INFO] Targets: min={targets.min()}, max={targets.max()}, mean={targets.mean()}")
-            tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(0, timestep_index, ensemble_index, len(targets))
-            self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
-        self._finalize_data()
+            self.data[(timestep_index, ensemble_index)] = {
+                key: np.array_split(data, self.num_sections, axis=0)
+                for key, data in zip(
+                    OrderedWorldSpaceDensityData.OUTPUT_KEYS[:2] + ['weights'],
+                    [positions, targets, weights]
+                )
+            }
+            # self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
+        # self._finalize_data()
         return self
 
     def _build_index_data(self, tf_idx, timestep_idx, ensemble_idx, num_samples):
@@ -285,6 +304,7 @@ class WorldSpaceDensityData(Dataset):
     ):
         loss_evaluator.set_source(volume=volume_evaluator)
         self._reset_data()
+
         for (timestep_index, timestep), (ensemble_index, ensemble) in product(enumerate(self.timestep_index), enumerate(self.ensemble_index)):
             volume_data = self.volume_data_storage.load_volume(timestep=timestep, ensemble=ensemble, index_access=False)
             resolution = self._read_resolution_from_volume(volume_data)
@@ -297,9 +317,15 @@ class WorldSpaceDensityData(Dataset):
             # _plot_3d(positions)
             targets = targets.data.cpu().numpy()
             weights = weights.data.cpu().numpy()
-            tf_index_data, timestep_index_data, ensemble_index_data = self._build_index_data(0, timestep_index, ensemble_index, self.num_samples_per_volume)
-            self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
-        self._finalize_data()
+            self.data[(timestep_index, ensemble_index)] = {
+                key: np.array_split(data, self.num_sections, axis=0)
+                for key, data in zip(
+                    OrderedWorldSpaceDensityData.OUTPUT_KEYS[:2]  + ['weights'],
+                    [positions, targets, weights]
+                )
+            }
+            # self._add_samples_to_data(positions, targets, tf_index_data, timestep_index_data, ensemble_index_data, weights)
+        # self._finalize_data()
         return self
 
     def num_timesteps(self):
@@ -314,47 +340,54 @@ class WorldSpaceDensityData(Dataset):
     def get_dataloader(self, batch_size=None, shuffle=False, drop_last=False, num_workers=0):
         if batch_size is None:
             batch_size = self.batch_size
-        collate_fn = None
-        if self.sub_batching is not None:
-            sub_batch_size = np.ceil(self.batch_size / self.sub_batching)
-            assert batch_size % sub_batch_size == 0, \
-                f'[ERROR] Batch size {batch_size} is inconsistent with pre-processed sub-batch size ({sub_batch_size})'
-            batch_size = self.sub_batching
-            collate_fn = cat_collate
-        return DataLoader(self, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last, num_workers=num_workers, collate_fn=collate_fn)
+        section_size = self.num_samples_per_volume // self.num_sections
+        assert batch_size % section_size == 0, \
+            f'[ERROR] Batch size {batch_size} must be divisible by section size {section_size}'
+        super_batch_size = int(
+            (batch_size / section_size) / (self.num_members() * self.num_timesteps()))
+        collate_fn = cat_collate
+        return DataLoader(self, batch_size=super_batch_size, shuffle=shuffle, drop_last=drop_last, num_workers=num_workers, collate_fn=collate_fn)
 
     def __len__(self):
-        return len(self.data)
+        return self.num_sections
 
     def __getitem__(self, item):
-        if self.return_weights:
-            return self.data[item], self.weights[item]
-        return self.data[item]
+        data = []
+        for (timestep_index, timestep), (ensemble_index, ensemble) in product(enumerate(self.timestep_index), enumerate(self.ensemble_index)):
+            current_samples = self.data[(timestep_index, ensemble_index)]
+            current_samples = [current_samples[key][item] for key in OrderedWorldSpaceDensityData.OUTPUT_KEYS[:2]]
+            num_samples = len(current_samples[0])
+            index_data = self._build_index_data(0, timestep_index, ensemble_index, num_samples)
+            data.append(current_samples + list(index_data))
+        return data
 
     @staticmethod
     def output_mode():
         return OutputMode.MULTIVARIATE
 
 
-class WorldSpaceDensityEvaluator(NetworkEvaluator):
+def _test():
+    import pyrenderer
+    from volnet.modules.datasets import VolumeDataStorage
+    device = torch.device('cuda:0')
+    vds = VolumeDataStorage(
+        '/home/hoehlein/data/1000_member_ensemble/cvol/single_variable/level-min-max_scaling/tk/member{member:04d}/t04.cvol',
+        timestep_index='0:1', ensemble_index='1:9',
+    )
+    interpolator = pyrenderer.VolumeInterpolationGrid()
+    interpolator.grid_resolution_new_behavior = True
+    interpolator.setInterpolation(interpolator.Trilinear)
+    volume_evaluator = VolumeEvaluator(interpolator, device)
+    position_sampler = PositionSampler()
+    dataset = OrderedWorldSpaceDensityData(
+        vds, 256**3, 64**3, sub_batching=8,
+        volume_evaluator=volume_evaluator, position_sampler=position_sampler,
+    )
+    sample = dataset[0]
+    data_loader = dataset.get_dataloader()
+    batch = next(iter(data_loader))
+    print('Finished')
 
-    def __init__(self, network, tf_index, timestep_index, ensemble_index):
-        super(WorldSpaceDensityEvaluator, self).__init__(network)
-        self.tf_index = tf_index
-        self.timestep_idx = timestep_index
-        self.ensemble_idx = ensemble_index
 
-    def forward(self, positions: Tensor) -> Tensor:
-        num_samples = positions.shape[0]
-        tf_index, timestep_index, ensemble_index = self._build_index_data(num_samples)
-        positions = positions.to(dtype=torch.float32)
-        if positions.device != self.device:
-            positions = positions.to(device=self.device)
-        predictions = self.network(positions, tf_index, timestep_index, ensemble_index,'world')
-        return predictions
-
-    def _build_index_data(self, num_samples):
-        tf_index_data = torch.full((num_samples,), self.tf_index, dtype=torch.int32, device=self.device)
-        timestep_index_data = torch.full((num_samples,), self.timestep_idx, dtype=torch.float32, device=self.device)
-        ensemble_index_data = torch.full((num_samples,), self.ensemble_idx, dtype=torch.float32, device=self.device)
-        return tf_index_data, timestep_index_data, ensemble_index_data
+if __name__ == '__main__':
+    _test()

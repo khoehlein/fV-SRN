@@ -114,6 +114,37 @@ class EvaluateWorld:
         return self._loss.loss_names()
 
 
+class EvaluateOrderedWorld(EvaluateWorld):
+
+    def __call__(self, dataloader_batch):
+        predictions = []
+        total_loss = None
+        partial_losses = None
+        num_sub_batches = len(dataloader_batch)
+
+        for i, sub_batch in enumerate(dataloader_batch):
+            sub_batch_predictions, sub_batch_loss, sub_batch_partial_losses = super(EvaluateOrderedWorld, self).__call__(sub_batch)
+            predictions.append(sub_batch_predictions)
+            if total_loss is None:
+                total_loss = sub_batch_loss
+            else:
+                total_loss = total_loss + sub_batch_loss
+            if partial_losses is None:
+                partial_losses = sub_batch_partial_losses
+            else:
+                partial_losses = {
+                    key: partial_losses[key] + sub_batch_partial_losses[key]
+                    for key in sub_batch_partial_losses
+                }
+
+        partial_losses = {
+            key: partial_losses[key] / num_sub_batches
+            for key in partial_losses
+        }
+        total_loss = total_loss / num_sub_batches
+        return predictions, total_loss, partial_losses
+
+
 class EvaluateWorldAndRegularization(EvaluateWorld):
 
     def __call__(self, dataloader_batch):
