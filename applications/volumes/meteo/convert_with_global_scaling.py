@@ -1,5 +1,6 @@
 import argparse
 import os
+import struct
 
 import numpy as np
 import pyrenderer
@@ -15,7 +16,7 @@ MEMBER_DIM_NAME = 'member'
 TIME_DIM_NAME = 'time'
 DIMENSION_ORDER = [Axis.LONGITUDE.value, Axis.LATITUDE.value, Axis.LEVEL.value]
 VARIABLE_NAMES = ['tk', 'rh', 'qv', 'z', 'dbz', 'qhydro', 'u', 'v', 'w']
-OUTPUT_PATH = '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/cvol/single_variable'
+OUTPUT_PATH = '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/{format}/single_variable'
 
 
 def int_or_none(value: str):
@@ -81,7 +82,7 @@ def get_local_min_max_normalization(all_data: xr.DataArray):
     return local_min, (local_max - local_min)
 
 
-def convert_variable(variable_name: str, min_member: int, max_member: int, norm='global'):
+def convert_variable(variable_name: str, min_member: int, max_member: int, norm='global', format='cvol'):
     data = load_data(variable_name, min_member, max_member)
     if norm == 'global':
         mu, sigma = get_global_normalization(data)
@@ -98,7 +99,7 @@ def convert_variable(variable_name: str, min_member: int, max_member: int, norm=
     sigma = sigma.clip(min=1.e-9)
     normalized_data = (data - mu) / sigma
 
-    variable_dir = os.path.join(OUTPUT_PATH, f'{norm}_scaling', variable_name)
+    variable_dir = os.path.join(OUTPUT_PATH.format(format=format), f'{norm}_scaling', variable_name)
 
     if not os.path.isdir(variable_dir):
         os.makedirs(variable_dir)
@@ -132,23 +133,33 @@ def convert_variable(variable_name: str, min_member: int, max_member: int, norm=
             snapshot = normalized_data.sel({MEMBER_DIM_NAME: member_id.values, Axis.TIME.value: timestep.values})
             snapshot = snapshot.transpose(*DIMENSION_ORDER).values.astype(np.float32)
 
-            print(snapshot.dtype)
-            file_name = 't{:02d}.cvol'.format(timestep_idx)
+            if format == 'cvol':
+                file_name = 't{:02d}.cvol'.format(timestep_idx)
+                vol = pyrenderer.Volume()
+                vol.worldX = 10.
+                vol.worldY = 10.
+                vol.worldZ = 1.
+                vol.add_feature_from_tensor(variable_name, torch.from_numpy(snapshot)[None, ...])
+                vol.save(os.path.join(output_path, file_name), compression=0)
+            elif format == 'dat':
+                file_name = 't{:02d}.dat'.format(timestep_idx)
+                file_name = os.path.join(output_path, file_name)
+                print(f'[INFO] Writing file {file_name}')
+                flattened = snapshot.astype(np.float32).ravel().tolist()
+                s = struct.pack('d'*len(flattened), *flattened)
+                with open(file_name, 'wb') as f:
+                    f.write(s)
+            else:
+                raise NotImplementedError(f'[ERROR] Encountered unknown file format {format}')
 
-            vol = pyrenderer.Volume()
-            vol.worldX = 10.
-            vol.worldY = 10.
-            vol.worldZ = 1.
-            vol.add_feature_from_tensor(variable_name, torch.from_numpy(snapshot)[None, ...])
-            vol.save(os.path.join(output_path, file_name), compression=0)
 
     print('Finished')
 
 
-def convert_ensemble(min_member: int, max_member: int, norm='global'):
+def convert_ensemble(min_member: int, max_member: int, norm='global', format='cvol'):
     for variable_name in VARIABLE_NAMES:
         print(f'[INFO] Converting variable {variable_name}')
-        convert_variable(variable_name, min_member, max_member, norm=norm)
+        convert_variable(variable_name, min_member, max_member, norm=norm, format=format)
 
 
 def convert_all():
@@ -161,9 +172,11 @@ def main():
     parser.add_argument('--min-member', type=int, default=1)
     parser.add_argument('--max-member', type=int, default=128)
     parser.add_argument('--norm', type=str, default='level-min-max',choices=['level', 'global', 'local-min-max', 'level-min-max', 'global-min-max'])
+    parser.add_argument('--format', type=str, default='cvol',choices=['cvol', 'dat'])
     args = vars(parser.parse_args())
-    convert_ensemble(args['min_member'], args['max_member'], norm=args['norm'])
+    print('Format:', args['format'])
+    convert_ensemble(args['min_member'], args['max_member'], norm=args['norm'], format=args['format'])
 
 
 if __name__ == '__main__':
-    convert_all()
+    main()
