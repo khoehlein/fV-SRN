@@ -57,6 +57,7 @@ Volume::MipmapLevel::MipmapLevel(Feature* parent, uint64_t sizeX, uint64_t sizeY
     , sizeY_(sizeY)
 	, sizeZ_(sizeZ), dataCpu_(new char[parent->numChannels() * sizeX * sizeY * sizeZ * BytesPerType[parent->type()]]), dataGpu_(nullptr)
 	, dataTexLinear_(0), dataTexNearest_(0)
+	, dataSurface_(0)
 	, cpuDataCounter_(0)
 	, gpuDataCounter_(0)
 	, parent_(parent)
@@ -99,6 +100,12 @@ cudaTextureObject_t Volume::MipmapLevel::dataTexGpuNearest() const
     return dataTexNearest_;
 }
 
+cudaSurfaceObject_t Volume::MipmapLevel::gpuSurface() const
+{
+	if (!checkHasGpu()) return 0;
+	return dataSurface_;
+}
+
 void Volume::MipmapLevel::copyCpuToGpu()
 {
 	if (channels_ != 1 && channels_ != 2 && channels_ != 4)
@@ -130,11 +137,15 @@ void Volume::MipmapLevel::copyCpuToGpu()
 	params.kind = cudaMemcpyHostToDevice;
 	CUMAT_SAFE_CALL(cudaMemcpy3D(&params));
 
-	//create texture object
 	cudaResourceDesc resDesc;
 	memset(&resDesc, 0, sizeof(cudaResourceDesc));
 	resDesc.resType = cudaResourceTypeArray;
 	resDesc.res.array.array = dataGpu_;
+
+	//create surface
+	CUMAT_SAFE_CALL(cudaCreateSurfaceObject(&dataSurface_, &resDesc));
+
+	//create texture object
 	cudaTextureDesc texDesc;
 	memset(&texDesc, 0, sizeof(cudaTextureDesc));
 	texDesc.addressMode[0] = cudaAddressModeClamp;
@@ -157,7 +168,6 @@ void Volume::MipmapLevel::copyCpuToGpu()
 
 void Volume::MipmapLevel::clearGpuResources()
 {
-
 	if (dataTexLinear_ != 0) {
 		CUMAT_SAFE_CALL_NO_THROW(cudaDestroyTextureObject(dataTexLinear_));
 		dataTexLinear_ = 0;
@@ -165,6 +175,11 @@ void Volume::MipmapLevel::clearGpuResources()
 	if (dataTexNearest_ != 0) {
 		CUMAT_SAFE_CALL_NO_THROW(cudaDestroyTextureObject(dataTexNearest_));
 		dataTexNearest_ = 0;
+	}
+	if (dataSurface_ != 0)
+	{
+		CUMAT_SAFE_CALL_NO_THROW(cudaDestroySurfaceObject(dataSurface_));
+		dataSurface_ = 0;
 	}
 	if (dataGpu_ != nullptr) {
 		CUMAT_SAFE_CALL_NO_THROW(cudaFreeArray(dataGpu_));
@@ -183,8 +198,11 @@ torch::Tensor ToTensor(const Volume::MipmapLevel* l, float scale)
 	torch::Tensor t = torch::zeros({ C, X, Y, Z }, 
 		at::TensorOptions().dtype(c10::kFloat));
 	auto acc = t.accessor<float, 4>();
-	for (int z = 0; z < Z; ++z) for (int y = 0; y < Y; ++y) for (int x = 0; x < X; ++x) for (int c = 0; c < C; ++c)
-		acc[c][x][y][z] = static_cast<float>(data[l->idx(x, y, z, c)]) * scale;
+#pragma omp parallel for
+	for (int z = 0; z < Z; ++z) {
+		for (int y = 0; y < Y; ++y) for (int x = 0; x < X; ++x) for (int c = 0; c < C; ++c)
+			acc[c][x][y][z] = static_cast<float>(data[l->idx(x, y, z, c)]) * scale;
+	}
 	return t;
 }
 
@@ -212,9 +230,15 @@ void FromTensor(Volume::MipmapLevel* l, const torch::Tensor& t, float scale)
 	const int X = l->sizeX();
 	const int Y = l->sizeY();
 	const int Z = l->sizeZ();
+	const float low = std::numeric_limits<T>::lowest();
+	const float high = std::numeric_limits<T>::max();
 	const auto acc = t.packed_accessor64<float, 4>();
-	for (int z = 0; z < Z; ++z) for (int y = 0; y < Y; ++y) for (int x = 0; x < X; ++x) for (int c = 0; c < C; ++c)
-		data[l->idx(x, y, z, c)] = static_cast<T>(acc[c][x][y][z] * scale);
+#pragma omp parallel for
+	for (int z = 0; z < Z; ++z) {
+		for (int y = 0; y < Y; ++y) for (int x = 0; x < X; ++x) for (int c = 0; c < C; ++c)
+			data[l->idx(x, y, z, c)] = static_cast<T>(
+				std::max(low, std::min(high, acc[c][x][y][z] * scale)));
+	}
 }
 
 void Volume::MipmapLevel::fromTensor(const torch::Tensor& t)
@@ -241,6 +265,7 @@ void Volume::MipmapLevel::fromTensor(const torch::Tensor& t)
 	default:
 		throw std::runtime_error("Unknown enum constant");
 	}
+	cpuDataCounter_++;
 }
 
 Volume::Feature::Feature(Volume* parent, const std::string& name, DataType type, int numChannels, uint64_t sizeX,
@@ -582,108 +607,6 @@ size_t Volume::Feature::estimateMemory() const
 	int3 r = baseResolution();
 	return static_cast<size_t>(BytesPerType[type()]) * r.x * r.y * r.z;
 }
-
-namespace {
-	template<typename T>
-	float density_cast(const T& value);
-
-	template<>
-	float density_cast<float>(const float& value) { return value; }
-
-	template<>
-	float density_cast<unsigned char>(const unsigned char& value) { return value / 255.0f; }
-
-	template<>
-	float density_cast<unsigned short>(const unsigned short& value) { return value / 65535.0f; }
-
-	template<typename T>
-	void fillHistogram(const Volume::MipmapLevel* level, Volume::Histogram* histogram)
-	{
-		// 1. extract min and max density
-		float minDensity = histogram->minDensity;
-		float maxDensity = histogram->maxDensity;
-		int numNonZeroVoxels = 0;
-		size_t sliceSize = level->channels() * level->sizeX() * level->sizeY();
-#pragma omp parallel for
-		for (int z = 0; z < static_cast<int>(level->sizeZ()); ++z)
-		{
-			float myMinDensity = FLT_MAX;
-			float myMaxDensity = -FLT_MAX;
-			int myNumNonZeroVoxels = 0;
-			size_t sliceStart = z * sliceSize;
-			for (size_t i = sliceStart; i < sliceStart + sliceSize; ++i)
-			{
-				auto raw = level->dataCpu<T>()[i];
-				float density = density_cast<T>(raw);
-				if (density != 0) { //ignore exact zeros (created when fitting the object in a cube for example)
-					myMinDensity = std::min(myMinDensity, density);
-					myMaxDensity = std::max(myMaxDensity, density);
-					myNumNonZeroVoxels++;
-				}
-			}
-#pragma omp critical
-			{
-				minDensity = std::min(myMinDensity, minDensity);
-				maxDensity = std::max(myMaxDensity, maxDensity);
-				numNonZeroVoxels += myNumNonZeroVoxels;
-			}
-		}
-		histogram->maxDensity = maxDensity;
-		histogram->minDensity = minDensity;
-		histogram->numOfNonzeroVoxels = numNonZeroVoxels;
-
-		// 2. fill histogram
-		const int numBinsMinus1 = histogram->getNumOfBins() - 1;
-		const float increment = 1.0f / numNonZeroVoxels;
-#pragma omp parallel for
-		for (int z = 0; z < static_cast<int>(level->sizeZ()); ++z)
-		{
-			Volume::Histogram myHistogram;
-			size_t sliceStart = z * sliceSize;
-			for (size_t i = sliceStart; i < sliceStart + sliceSize; ++i)
-			{
-				auto raw = level->dataCpu<T>()[i];
-				float density = density_cast<T>(raw);
-				if (density <= 0) continue;
-				int binIdx = static_cast<int>(numBinsMinus1 * (density - minDensity) / (maxDensity - minDensity));
-				binIdx = std::max(0, std::min(numBinsMinus1, binIdx));
-				myHistogram.bins[binIdx] += increment;
-			}
-#pragma omp critical
-			{
-				for (int i = 0; i <= numBinsMinus1; ++i)
-					histogram->bins[i] += myHistogram.bins[i];
-			}
-		}
-
-		// 3. normalize
-		histogram->maxFractionVal = *std::max_element(std::begin(histogram->bins), std::end(histogram->bins));
-	}
-}
-
-Volume::Histogram_ptr Volume::Feature::extractHistogram() const
-{
-	Volume::Histogram_ptr histogram = std::make_shared<Histogram>();
-	const auto level = getLevel(0);
-
-	switch (type())
-	{
-	case TypeUChar:
-		fillHistogram<unsigned char>(level.get(), histogram.get());
-		break;
-	case TypeUShort:
-		fillHistogram<unsigned short>(level.get(), histogram.get());
-		break;
-	case TypeFloat:
-		fillHistogram<float>(level.get(), histogram.get());
-		break;
-	default:
-		throw std::runtime_error("Unknown data type");
-	}
-
-	return histogram;
-}
-
 
 
 
@@ -1320,16 +1243,16 @@ void Volume::registerPybindModules(pybind11::module& m)
 	namespace py = pybind11;
 	py::class_<Volume, Volume_ptr> v(m, "Volume", py::buffer_protocol());
 
-	py::class_<Histogram, Histogram_ptr>(v, "Histogram")
-		.def_property_readonly("num_bins", &Histogram::getNumOfBins)
-		.def_readonly("min_density", &Histogram::minDensity)
-		.def_readonly("max_density", &Histogram::maxDensity)
-		.def_readonly("max_fractional_value", &Histogram::maxFractionVal)
-		.def_readonly("num_nonzero_voxels", &Histogram::numOfNonzeroVoxels)
-		.def("bins", [](Histogram* self)
-			{
-				return py::memoryview(py::buffer_info(self->bins, self->getNumOfBins()));
-			});
+	//py::class_<Histogram, Histogram_ptr>(v, "Histogram")
+	//	.def_property_readonly("num_bins", &Histogram::getNumOfBins)
+	//	.def_readonly("min_density", &Histogram::minDensity)
+	//	.def_readonly("max_density", &Histogram::maxDensity)
+	//	.def_readonly("max_fractional_value", &Histogram::maxFractionVal)
+	//	.def_readonly("num_nonzero_voxels", &Histogram::numOfNonzeroVoxels)
+	//	.def("bins", [](Histogram* self)
+	//		{
+	//			return py::memoryview(py::buffer_info(self->bins, self->getNumOfBins()));
+	//		});
 
 	py::enum_<DataType>(v, "DataType")
 		.value("TypeUChar", DataType::TypeUChar)
@@ -1397,7 +1320,6 @@ void Volume::registerPybindModules(pybind11::module& m)
 	    .def("clear_gpu_resources", &Feature::clearGpuResources,
 	        py::doc("Clears all GPU resources of all mipmaps"))
 	    .def("get_level", static_cast<MipmapLevel_ptr(Feature::*)(int level)>(&Feature::getLevel), py::doc("Returns the mipmap level"))
-	    .def("extract_histogram", &Feature::extractHistogram)
 	    ;
 
 	//main volume
