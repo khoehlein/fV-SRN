@@ -44,7 +44,7 @@ class HashedFeatureGrid(IFeatureModule):
     def uses_time(self) -> bool:
         return False
 
-    def __init__(self, data: Tensor, grid: VirtualGrid, hash_primes: Tuple[int] = None, debug=False):
+    def __init__(self, data: Tensor, grid: VirtualGrid, hash_primes: Tuple[int, ...] = None, debug=False):
         num_channels, num_nodes = data.shape
         super(HashedFeatureGrid, self).__init__(grid.dimension, num_channels, debug)
         self.grid = grid
