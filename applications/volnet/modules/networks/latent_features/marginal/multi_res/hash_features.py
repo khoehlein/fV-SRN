@@ -30,7 +30,7 @@ class HashedFeatureGrid(IFeatureModule):
 
     def _compute_hashes(self, corners: Tensor):
         corners = corners * self.hash_primes[None, :, None]
-        hashes = corners[:, 0,:]
+        hashes = corners[:, 0, :]
         for i in range(1, self.grid.dimension):
             hashes = torch.bitwise_xor(hashes, corners[:, i, :])
         return hashes % self.num_nodes
@@ -76,7 +76,7 @@ def _test():
     )
     positions = torch.ones(20, 3) * 0.5
     positions[:, 0] = torch.linspace(0, 1, 20)
-    features = feature_grid.evaluate(positions)
+    features = feature_grid.evaluate(positions, None, None)
     features = features[:, 0].data.cpu().numpy()
     plt.scatter(np.arange(20), features)
     plt.show()

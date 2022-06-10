@@ -16,6 +16,11 @@ from torch.utils.tensorboard import SummaryWriter
 
 class StorageManager(object):
 
+    class CheckpointKey(object):
+        EPOCH = 'epoch'
+        PARAMETERS = 'parameters'
+        MODEL = 'model'
+
     @staticmethod
     def init_parser(parser: argparse.ArgumentParser, base_directory):
         parser_group = parser.add_argument_group("Output")
@@ -135,7 +140,10 @@ class StorageManager(object):
     def store_torch_checkpoint(self, epoch, network):
         self._check_for_attribute('checkpoint_dir')
         model_out_path = os.path.join(self.checkpoint_dir, "model_epoch_{}.pth".format(epoch if epoch >= 0 else "init"))
-        state = {'epoch': epoch + 1, 'model': network, 'parameters': self.opt}
+        state = {
+            StorageManager.CheckpointKey.EPOCH: epoch + 1,
+            StorageManager.CheckpointKey.MODEL: network,
+            StorageManager.CheckpointKey.PARAMETERS: self.opt}
         torch.save(state, model_out_path)
         print("Checkpoint saved to {}".format(model_out_path))
 
