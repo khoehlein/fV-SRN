@@ -36,7 +36,7 @@ PARAMETERS = {
     '--network:input:fourier:method': 'nerf',
     '--network:latent-features:ensemble:mode': 'grid',
     '--network:latent-features:ensemble:num-channels': [12, 8, 6, 4, 2],
-    '--network:latent-features:volume:grid:resolution': resolution,
+    '--network:latent-features:ensemble:grid:resolution': resolution,
     '--network:output:parameterization-method': 'mixed',
     '-l1': 1.,
     '--optimizer:lr': 0.01,
