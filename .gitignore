@@ -29,6 +29,7 @@ cmake-build-debug/
 *mc-cache.hdf5
 /applications/test-*.png
 *.png
+*.csv
 
 # Git
 .idea/
