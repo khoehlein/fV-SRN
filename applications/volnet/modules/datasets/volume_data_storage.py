@@ -107,7 +107,8 @@ class VolumeDataStorage(object):
     def _load_volume_file(file_name):
         if not os.path.exists(file_name):
             raise ValueError(f'[ERROR] Volume file {file_name} does not exist.')
-        return pyrenderer.Volume(file_name)
+        vol = pyrenderer.Volume(file_name)
+        return vol
 
     def load_volume(self, timestep=None, ensemble=None, index_access=False):
         if self.num_timesteps() > 1:

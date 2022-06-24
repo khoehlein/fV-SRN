@@ -22,7 +22,7 @@ PARAMETERS = {
     '--world-density-data:validation-share': 0.2,
     '--world-density-data:sub-batching': 8,
     '--lossmode': 'density',
-    '--network:core:layer-sizes': '32:32:32',
+    '--network:core:layer-sizes': '128:128:128',
     '--network:core:activation': 'SnakeAlt:1',
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',

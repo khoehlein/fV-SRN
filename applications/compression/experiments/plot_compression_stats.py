@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-mode = 'rescaled'
+mode = 'reverted'
 
 fig, ax = plt.subplots(2, 3, figsize=(10, 5), sharex='all', sharey='row', dpi=300)
 

@@ -23,6 +23,27 @@ def get_data_base_path():
     return DATA_BASE_PATH[host_name]
 
 
+def split_file_name_pattern(pattern):
+    try:
+        normpath = os.path.normpath(pattern)
+        segments = normpath.split(os.sep)[-5:]
+        assert segments[0] == 'single_variable'
+        norm_code, variable_name, member_code, time_code = segments[1:]
+        norm_name = norm_code.split('_')[0]
+    except Exception:
+        norm_name = None
+        variable_name = None
+    return norm_name, variable_name
+
+
+def update_file_pattern_base_path(old_pattern):
+    normpath = os.path.normpath(old_pattern)
+    segments = normpath.split(os.sep)[-5:]
+    assert segments[0] == 'single_variable'
+    new_base_path = get_data_base_path()
+    return os.path.join(new_base_path, *segments[1:])
+
+
 def get_file_name_pattern(norm=None, variable=None, time=None, member=None, base_bath=True):
     file_path = []
     file_path.append(NORM_PATTERN.format(norm_name=norm) if norm is not None else NORM_PATTERN)
