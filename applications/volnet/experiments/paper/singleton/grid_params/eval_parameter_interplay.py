@@ -7,7 +7,7 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = f'paper/single_member/grid_params/parameter_interplay'
+EXPERIMENT_NAME = f'paper/single_member/grid_params/parameter_interplay_large'
 
 DATA_FILENAME_PATTERN = []
 for normalization in ['level']:
