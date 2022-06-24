@@ -194,7 +194,20 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str, required=True)
     args = vars(parser.parse_args())
-    compute_experiment_stats(args['path'])
+    path = args['path']
+    try:
+        print(f'[INFO] Evaluating experiment directory {path}')
+        compute_experiment_stats(path)
+    except Exception:
+        print('[INFO] An error occurred. Trying to evaluate sub-folders.')
+        subdirs = sorted(os.listdir(path))
+        for d in subdirs:
+            new_path = os.path.join(path, d)
+            try:
+                print(f'[INFO] Processing {new_path}')
+                compute_experiment_stats(new_path)
+            except Exception:
+                print(f'[INFO] Failed with processing {new_path}')
 
 
 if __name__ == '__main__':

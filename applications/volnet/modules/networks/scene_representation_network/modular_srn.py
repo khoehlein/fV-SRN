@@ -27,7 +27,7 @@ class ModularSRN(ISceneRepresentationNetwork):
 
     @property
     def _device(self):
-        return self.core_network.last_layer().weight.data.device
+        return next(self.parameters()).data.device
 
     def forward(
             self,
