@@ -12,10 +12,17 @@ DATA_BASE_PATH = {
     'gpusrv01': '/home/hoehlein/data/1000_member_ensemble/cvol/single_variable'
 }
 
-NORM_PATTERN = '{norm_name}_scaling'
-VARIABLE_PATTERN = '{variable_name}'
-MEMBER_PATTERN = 'member{member:04d}'
-TIME_PATTERN = 't{time:02d}.cvol'
+FILE_NAME_NORM_KEY = 'norm_name'
+FILE_NAME_VARIABLE_KEY = 'variable_name'
+FILE_NAME_MEMBER_KEY = 'member'
+FILE_NAME_TIME_KEY = 'time'
+
+NORM_PATTERN = '{' + f'{FILE_NAME_NORM_KEY}' + '}_scaling'
+VARIABLE_PATTERN = '{' + f'{FILE_NAME_VARIABLE_KEY}' + '}'
+MEMBER_PATTERN = 'member{' + f'{FILE_NAME_MEMBER_KEY}' + ':04d}'
+TIME_PATTERN = 't{' + f'{FILE_NAME_TIME_KEY}' + ':02d}.cvol'
+
+VARIABLE_NAMES = ['tk', 'u', 'v', 'w', 'rh', 'qv', 'qhydro', 'z', 'dbz']
 
 
 def get_data_base_path():

@@ -5,7 +5,7 @@ import pyrenderer
 from torch import Tensor
 
 from volnet.modules.networks.scene_representation_network import ModularSRN
-from volnet.modules.datasets.output_mode import OutputMode
+from volnet.modules.datasets.output_mode import OutputMode, MultivariateOutputMode
 from .input_parameterization import PyrendererInputParameterization
 from .latent_features import PyrendererLatentFeatures
 from .core_network import PyrendererCoreNetwork
@@ -26,7 +26,7 @@ class PyrendererSRN(ModularSRN):
     def from_dict(
             cls, args: Dict[str, Any],
             member_keys: Optional[List[int]] = None, dataset_key_times: Optional[List[float]] = None,
-            output_mode: Optional[OutputMode] = None
+            output_mode: Optional[Union[OutputMode, MultivariateOutputMode]] = None
     ):
         input_parameterization = PyrendererInputParameterization.from_dict(args)
         latent_features = PyrendererLatentFeatures.from_dict(args, member_keys=member_keys, dataset_key_times=dataset_key_times)

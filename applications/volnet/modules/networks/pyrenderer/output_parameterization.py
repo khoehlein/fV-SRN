@@ -1,15 +1,15 @@
 import argparse
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 from torch import Tensor
 
 from volnet.modules.networks.output_parameterization.density_output import CHOICES as DENSITY_OUTPUTS_BY_NAME
+from volnet.modules.networks.output_parameterization.multivariate_output import MultivariateClampedOutput
 from volnet.modules.networks.output_parameterization.rgbo_output import CHOICES as RGBO_OUTPUTS_BY_NAME
 from volnet.modules.networks.scene_representation_network.evaluation_mode import EvaluationMode
 from volnet.modules.networks.output_parameterization import IOutputParameterization
 from volnet.modules.networks.output_parameterization import BackendOutputMode
-from volnet.modules.datasets.output_mode import OutputMode
-
+from volnet.modules.datasets.output_mode import OutputMode, MultivariateOutputMode
 
 _choices_by_output_mode = {
     OutputMode.DENSITY: DENSITY_OUTPUTS_BY_NAME,
@@ -24,7 +24,7 @@ class PyrendererOutputParameterization(IOutputParameterization):
 
     @classmethod
     def set_output_mode(cls, output_mode: OutputMode):
-        assert output_mode != OutputMode.MULTIVARIATE, '[ERROR] Multivariate output is currently not supported in OutputParameterization'
+        # assert output_mode != OutputMode.MULTIVARIATE, '[ERROR] Multivariate output is currently not supported in OutputParameterization'
         cls.OUTPUT_MODE = output_mode
 
     @classmethod
@@ -36,7 +36,7 @@ class PyrendererOutputParameterization(IOutputParameterization):
         if output_mode is None:
             output_mode = cls.OUTPUT_MODE
         assert output_mode is not None, '[ERROR] Output mode must be given either through class argument or keyword argument'
-        choices = list(_choices_by_output_mode[cls.OUTPUT_MODE].keys())
+        choices = list(_choices_by_output_mode[output_mode].keys())
         group.add_argument(
             prefix + 'parameterization-method', choices=choices, type=str, default='',
             help="""
@@ -54,13 +54,18 @@ class PyrendererOutputParameterization(IOutputParameterization):
         )
 
     @classmethod
-    def from_dict(cls, args: Dict[str, Any], output_mode: Optional[OutputMode]=None):
+    def from_dict(cls, args: Dict[str, Any], output_mode: Optional[Union[OutputMode, MultivariateOutputMode]]=None):
         if output_mode is None:
             assert cls.OUTPUT_MODE is not None, '[ERROR] OutputParameterization output mode must be set before instance can be created from arguments.'
             output_mode = cls.OUTPUT_MODE
-        parameterization_mode = args['network:output:parameterization_method']
-        parameterization_class = _choices_by_output_mode[output_mode][parameterization_mode]
-        return cls(parameterization_class())
+        if isinstance(output_mode, OutputMode):
+            parameterization_mode = args['network:output:parameterization_method']
+            parameterization_class = _choices_by_output_mode[output_mode][parameterization_mode]
+            return cls(parameterization_class())
+        elif isinstance(output_mode, MultivariateOutputMode):
+            return cls(MultivariateClampedOutput(output_mode.num_channels))
+        else:
+            raise NotImplementedError()
 
     def __init__(self, parameterization: IOutputParameterization):
         super(PyrendererOutputParameterization, self).__init__()

@@ -524,6 +524,7 @@ class Raytracing:
                                        tf, is_half, toCHW, network_args)
         return out
 
+
 class _CheckpointedTrace(torch.autograd.Function):
     @staticmethod
     def forward(ctx, self: Raytracing,
