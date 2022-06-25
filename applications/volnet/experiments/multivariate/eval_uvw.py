@@ -7,7 +7,7 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = f'multi-variate/single-member/parameter_interplay'
+EXPERIMENT_NAME = f'multi-variate/single-member/parameter_interplay_univariate'
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 PARAMETERS = {
@@ -17,7 +17,7 @@ PARAMETERS = {
     '--world-density-data:validation-share': 0.2,
     '--world-density-data:sub-batching': 8,
     '--lossmode': 'density',
-    '--network:core:layer-sizes': '128:128:128',
+    '--network:core:layer-sizes': ['32:32:32', '128:128:128'],
     '--network:core:activation': 'SnakeAlt:1',
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',
@@ -33,7 +33,7 @@ PARAMETERS = {
     '--optimizer:gradient-clipping:max-norm': 1000.,
     '--epochs': 250,
     '--output:save-frequency': 40,
-    '--data-storage:variables': ['u:v:w'],
+    '--data-storage:variables': ['u', 'v', 'w'],
     '--data-storage:ensemble:index-range': '1:2',
     '--data-storage:timestep:index-range': '4:5',
     '--dataset-resampling:method': 'random',
@@ -58,6 +58,6 @@ if __name__ == '__main__':
         **PARAMETERS,
         **{'--output:base-dir': output_directory},
     }
-    experiment.process_parameters(parameters_grid_features)
+    experiment.process_parameters(parameters_grid_features, randomize=False)
 
     print('[INFO] Finished')
