@@ -4,6 +4,7 @@ from volnet.experiments.multi_run_experiment import MultiRunExperiment
 from volnet.experiments.rescaled_ensemble import directories as io
 
 parser = io.build_parser()
+parser.add_argument('--variables', type=str, required=True)
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
@@ -33,7 +34,7 @@ PARAMETERS = {
     '--optimizer:gradient-clipping:max-norm': 1000.,
     '--epochs': 250,
     '--output:save-frequency': 40,
-    '--data-storage:variables': ['u', 'v', 'w', 'u:v', 'u:v:w'],
+    '--data-storage:variables': args['variable'],
     '--data-storage:ensemble:index-range': ['1:2', '2:3', '3:4', '4:5'],
     '--data-storage:timestep:index-range': '4:5',
     '--dataset-resampling:method': 'random',
