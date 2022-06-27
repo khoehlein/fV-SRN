@@ -33,7 +33,7 @@ PARAMETERS = {
     '--optimizer:gradient-clipping:max-norm': 1000.,
     '--epochs': 250,
     '--output:save-frequency': 40,
-    '--data-storage:variables': ['u', 'v', 'w', 'uv', 'uvw'],
+    '--data-storage:variables': ['u', 'v', 'w', 'u:v', 'u:v:w'],
     '--data-storage:ensemble:index-range': ['1:2', '2:3', '3:4', '4:5'],
     '--data-storage:timestep:index-range': '4:5',
     '--dataset-resampling:method': 'random',

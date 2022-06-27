@@ -196,8 +196,9 @@ def compute_experiment_stats(path):
 
 
 def test():
-    path = '/home/hoehlein/PycharmProjects/results/fvsrn/multi-variate/single-member/parameter_interplay_univariate'
+    path = '/home/hoehlein/PycharmProjects/results/fvsrn/multi-variate/single-member/parameter_interplay_qv_qhydro'
     compute_experiment_stats(path)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -220,4 +221,4 @@ def main():
 
 
 if __name__ == '__main__':
-    test()
+    main()
