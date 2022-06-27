@@ -7,14 +7,13 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = f'paper/single_member/grid_params/parameter_interplay_large'
+EXPERIMENT_NAME = f'paper/single_member/grid_params/parameter_interplay'
 
 DATA_FILENAME_PATTERN = []
 for normalization in ['level']:
-    DATA_FILENAME_PATTERN += ['../{}-min-max_scaling/tk/member{:04d}/t04.cvol'.format(normalization, l) for l in range(1, 2)]
+    DATA_FILENAME_PATTERN += ['../{}-min-max_scaling/tk/member{:04d}/t04.cvol'.format(normalization, l) for l in range(2, 5)]
 
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
-
 PARAMETERS = {
     '--renderer:settings-file': os.path.join(io.get_project_base_path(), SETTINGS_FILE),
     '--world-density-data:num-samples-per-volume': '16*12*352*250',
@@ -22,7 +21,7 @@ PARAMETERS = {
     '--world-density-data:validation-share': 0.2,
     '--world-density-data:sub-batching': 8,
     '--lossmode': 'density',
-    '--network:core:layer-sizes': '128:128:128',
+    '--network:core:layer-sizes': '32:32:32',
     '--network:core:activation': 'SnakeAlt:1',
     '--network:input:fourier:positions:num-features': 14,
     '--network:input:fourier:method': 'nerf',

@@ -133,7 +133,7 @@ class _CLICompressor(ICompressor):
 
 class SZ3(_CLICompressor):
 
-    EXE_PATH = '/home/hoehlein/software/SZ3/bin/sz3'
+    EXE_PATH = 'sz3' #'/home/hoehlein/software/SZ3/bin/sz3'
 
     class CompressionMode(Enum):
         ABS = 'ABS'
@@ -176,7 +176,7 @@ class SZ3(_CLICompressor):
 
 class TTHRESH(_CLICompressor):
 
-    EXE_PATH = '/home/hoehlein/software/TTHRESH/bin/tthresh'
+    EXE_PATH = '/home/hoehlein/PycharmProjects/third-party/tthresh/build/tthresh' #'/home/hoehlein/software/TTHRESH/bin/tthresh'
 
     class CompressionMode(Enum):
         RMSE = '-r'

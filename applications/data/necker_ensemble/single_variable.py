@@ -64,8 +64,6 @@ def get_file_name_pattern(norm=None, variable=None, time=None, member=None, base
 
 
 def load_ensemble(norm, variable, time=4, min_member=1, max_member=65):
-    import torch # torch needed to make pyrenderer work properly
-    import pyrenderer
     file_name_pattern = get_file_name_pattern(norm=norm, variable=variable, time=time)
     data = []
     for member in range(min_member, max_member):
@@ -91,7 +89,10 @@ def load_scales(norm, variable):
 def revert_scaling(data, scales):
     offset, scale = scales
     assert len(data.shape) == 4
-    return data * scale[None, ...] + offset[None, ...]
+    if len(offset.shape) < 4:
+        offset = offset[None, ...]
+        scale = scale[None, ...]
+    return data * scale + offset
 
 
 def get_sampling_positions(resolution):

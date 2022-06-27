@@ -8,7 +8,6 @@ import torch
 from data.necker_ensemble.single_variable import split_file_name_pattern, load_scales, update_file_pattern_base_path
 from volnet.analysis.deviation_statistics import DeviationStatistics
 from volnet.modules.datasets import VolumeDataStorage
-from volnet.modules.datasets.evaluation import VolumeEvaluator
 from volnet.modules.datasets.world_dataset import WorldSpaceDensityEvaluator
 from volnet.modules.render_tool import RenderTool
 
@@ -175,7 +174,7 @@ class EvaluateCheckpoint(object):
         all_data = []
         for member_key in self.member_keys:
             network_evaluator = WorldSpaceDensityEvaluator(self.network, 0, 0, member_key)
-            samples = network_evaluator.evaluate(self.positions)
+            samples = torch.clip(network_evaluator.evaluate(self.positions), min=0., max=1.)
             all_data.append(_samples_to_volume_grid(samples, self.resolution))
         return np.stack(all_data, axis=0)
 
