@@ -8,7 +8,7 @@ parser.add_argument('--variables', type=str, required=True)
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = f'multi-variate/single-member/uvw/' + args['variable'].replace(':', '-')
+EXPERIMENT_NAME = f'multi-variate/single-member/uvw/' + args['variables'].replace(':', '-')
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 PARAMETERS = {
@@ -34,7 +34,7 @@ PARAMETERS = {
     '--optimizer:gradient-clipping:max-norm': 1000.,
     '--epochs': 250,
     '--output:save-frequency': 40,
-    '--data-storage:variables': args['variable'],
+    '--data-storage:variables': args['variables'],
     '--data-storage:ensemble:index-range': ['1:2', '2:3', '3:4', '4:5'],
     '--data-storage:timestep:index-range': '4:5',
     '--dataset-resampling:method': 'random',
