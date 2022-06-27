@@ -8,7 +8,7 @@ parser.add_argument('--variables', type=str, required=True)
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = f'multi-variate/single-member/uvw'
+EXPERIMENT_NAME = f'multi-variate/single-member/uvw/' + args['variable'].replace(':', '-')
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 PARAMETERS = {
