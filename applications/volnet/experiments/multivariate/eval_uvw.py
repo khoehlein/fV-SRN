@@ -7,7 +7,7 @@ parser = io.build_parser()
 args = vars(parser.parse_args())
 io.set_debug_mode(args)
 
-EXPERIMENT_NAME = f'multi-variate/single-member/parameter_interplay_univariate'
+EXPERIMENT_NAME = f'multi-variate/single-member/uvw'
 SETTINGS_FILE = 'config-files/meteo-ensemble_tk_local-min-max.json'
 
 PARAMETERS = {
@@ -23,18 +23,18 @@ PARAMETERS = {
     '--network:input:fourier:method': 'nerf',
     '--network:latent-features:volume:mode': 'grid',
     '--network:latent-features:volume:num-channels': [2, 4, 8, 12, 16],
-    '--network:latent-features:volume:grid:resolution': ['12:176:125', '6:88:63', '6:44:31','3:22:16'],
+    '--network:latent-features:volume:grid:resolution': ['12:176:125', '6:88:63', '6:44:31', '3:22:16'],
     '-l1': 1.,
     '--optimizer:lr': 0.01,
-    '--optimizer:hyper-params': '{}',
+    '--optimizer:hyper-params': '{"weight_decay": 0.000001}',
     '--optimizer:scheduler:mode': 'step-lr',
     '--optimizer:scheduler:gamma': 0.2,
     '--optimizer:scheduler:step-lr:step-size': 100,
     '--optimizer:gradient-clipping:max-norm': 1000.,
     '--epochs': 250,
     '--output:save-frequency': 40,
-    '--data-storage:variables': ['u', 'v', 'w'],
-    '--data-storage:ensemble:index-range': '1:2',
+    '--data-storage:variables': ['u', 'v', 'w', 'uv', 'uvw'],
+    '--data-storage:ensemble:index-range': ['1:2', '2:3', '3:4', '4:5'],
     '--data-storage:timestep:index-range': '4:5',
     '--dataset-resampling:method': 'random',
     '--dataset-resampling:frequency': 50,
