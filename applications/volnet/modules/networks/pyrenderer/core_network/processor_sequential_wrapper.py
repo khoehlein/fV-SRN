@@ -10,16 +10,16 @@ from volnet.modules.networks.core_network import ICoreNetwork
 
 class ProcessorSequentialWrapper(ICoreNetwork):
 
-    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None) -> pyrenderer.SceneNetwork:
+    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None, time=None) -> pyrenderer.SceneNetwork:
         if network is None:
             network = pyrenderer.SceneNetwork()
         activation_param = float(self._activation_params[0]) if len(self._activation_params) >= 1 else 1
         activation = pyrenderer.SceneNetwork.Layer.ActivationFromString(self._activation)
         for i, s in enumerate(self._layer_sizes):
-            layer = getattr(self._hidden_layers, f'linear{i}')
+            layer = getattr(self.layers, f'linear{i}')
             assert isinstance(layer, nn.Linear)
             network.add_layer(layer.weight, layer.bias, activation, activation_param)
-        last_layer = getattr(self._hidden_layers, f'linear{len(self._layer_sizes)}' )
+        last_layer = getattr(self.layers, f'linear{len(self._layer_sizes)}' )
         network.add_layer(last_layer.weight, last_layer.bias, pyrenderer.SceneNetwork.Layer.Activation.NONE)
         return network
 

@@ -313,7 +313,8 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
             self,
             grid_encoding,
             network: Optional[pyrenderer.SceneNetwork] = None,
-            return_grid_encoding_error=False
+            return_grid_encoding_error=False,
+            time=None, ensemble=None
     ) -> Union[pyrenderer.SceneNetwork, Tuple[pyrenderer.SceneNetwork, float]]:
         if self.uses_linear_features():
             raise RuntimeError('[ERROR] Use of linear features is not supported in pyrenderer export!')
@@ -358,7 +359,7 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
                 grid_info = pyrenderer.SceneNetwork.LatentGridTimeAndEnsemble(
                     time_min=0, time_num=1, time_step=1,
                     ensemble_min=0, ensemble_num=0)
-                e = grid_info.set_time_grid_from_torch(0, grid, grid_encoding)
+                e = grid_info.set_time_grid_from_torch(0, grid.unsqueeze(0), grid_encoding)
                 encoding_error += e
                 encoding_error_count += 1
                 network.latent_grid = grid_info

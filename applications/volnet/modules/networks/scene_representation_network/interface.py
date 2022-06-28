@@ -23,6 +23,9 @@ class ISceneRepresentationNetwork(nn.Module):
     def uses_member(self):
         raise NotImplementedError()
 
+    def num_members(self):
+        raise NotImplementedError()
+
     def uses_transfer_functions(self):
         raise NotImplementedError()
 

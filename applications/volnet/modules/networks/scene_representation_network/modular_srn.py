@@ -53,7 +53,16 @@ class ModularSRN(ISceneRepresentationNetwork):
         return self.input_parameterization.uses_time() or self.latent_features.uses_time()
 
     def uses_member(self):
-        return self.input_parameterization.uses_member() or self.latent_features.uses_member()
+        return self.input_parameterization.uses_member() or \
+               self.latent_features.uses_member() or \
+               self.core_network.uses_member()
+
+    def num_members(self):
+        if self.latent_features.uses_member():
+            return self.latent_features.num_members()
+        if self.core_network.uses_member():
+            return self.core_network.num_members()
+        return 1
 
     def uses_transfer_functions(self):
         return False

@@ -24,3 +24,12 @@ class ICoreNetwork(nn.Module):
 
     def last_layer(self):
         raise NotImplementedError()
+
+    def num_members(self) -> int:
+        return 1
+
+    def uses_member(self) -> bool:
+        return False
+
+    def uses_time(self) -> bool:
+        return False
