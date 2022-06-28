@@ -33,7 +33,8 @@ def export(checkpoint_file: str, compiled_file_prefix: str):
 
 
 if __name__ == '__main__':
-    TEST_PATH = "D:/SceneNetworks/Kevin/ensemble/multi_core/num_channels/12-176-125_32_1-65_fast/results/model/run00001"
+    #TEST_PATH = "D:/SceneNetworks/Kevin/ensemble/multi_core/num_channels/12-176-125_32_1-65_fast/results/model/run00001"
+    TEST_PATH = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
     input_file = "model_epoch_50.pth"
     output_file = "compiled"
     export(os.path.join(TEST_PATH, input_file), os.path.join(TEST_PATH, output_file))
