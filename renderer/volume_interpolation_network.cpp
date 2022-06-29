@@ -1431,8 +1431,21 @@ void renderer::VolumeInterpolationNetwork::addNetwork(
 {
 	int numWarpsSharedOnly = network->computeMaxWarps(true, false);
 	int numWarpsMixed = network->computeMaxWarps(false, false);
-	if (numWarpsSharedOnly < 0 && numWarpsMixed < 0)
-		throw std::runtime_error("The network is too large!");
+	if (numWarpsSharedOnly < 0 && numWarpsMixed < 0) {
+		std::cerr << "The network is too large!" << std::endl;
+
+		std::stringstream layers;
+		for (int i = 0; i < network->numLayers(); ++i)
+		{
+			if (i == 0) layers << network->getHidden(i)->channelsIn;
+			layers << ":" << network->getHidden(i)->channelsOut;
+		}
+		std::string layerStr = layers.str();
+		std::cerr << "Layers: " << layerStr << std::endl;
+
+		return;
+		//throw std::runtime_error("The network is too large!");
+	}
 	networks_.push_back({
 		network,
 		numWarpsSharedOnly,
