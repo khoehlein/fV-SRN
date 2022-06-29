@@ -6,6 +6,7 @@ import pandas as pd
 
 RESOLUTION_KEY = 'network:latent_features:volume:grid:resolution'
 CHECKPOINT_KEY = 'checkpoint'
+MARKER = None
 
 
 def load_single_member_data():
@@ -28,10 +29,12 @@ def plot_single_member_data(ax):
     resolutions = np.unique(data[RESOLUTION_KEY])
     for r in resolutions:
         sel = data.loc[data[RESOLUTION_KEY] == r, :]
-        compression_ratio = (352*250*12) / sel['num_parameters']
+        sel = sel.groupby(by='num_parameters').mean()
+        compression_ratio = (352*250*12) / sel.index.values
         order = np.argsort(compression_ratio)
-        ax[0].plot(compression_ratio.values[order], sel['rmse_reverted'].values[order], label=r, marker='.', linestyle='--')
-        ax[1].plot(compression_ratio.values[order], sel['dssim_reverted'].values[order], marker='.', linestyle='--')
+        ax[0].plot(compression_ratio[order], sel['rmse_reverted'].values[order], label=r, marker=MARKER, linestyle='--')
+        ax[1].plot(compression_ratio[order], sel['dssim_reverted'].values[order], marker=MARKER, linestyle='--')
+
 
 def add_formatting(axs):
     axs[0].set(xscale='log', yscale='log')
