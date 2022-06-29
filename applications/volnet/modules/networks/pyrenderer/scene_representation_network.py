@@ -47,14 +47,14 @@ class PyrendererSRN(ModularSRN):
                 "[ERROR] Time input for pyrenderer.SceneNetwork() works only for time-dependent latent grids (for now).")
         network = self.input_parameterization.export_to_pyrenderer(network=network)
         network = self.output_parameterization.export_to_pyrenderer(network=network)
+        padding = 0
         if self.latent_features is not None:
-            network, error = self.latent_features.export_to_pyrenderer(
-                grid_encoding, network, return_grid_encoding_error=True,
-                time=time, ensemble=ensemble)
+            network, error, padding = self.latent_features.export_to_pyrenderer(
+                grid_encoding, network, time=time, ensemble=ensemble)
         else:
             error = 0.
         network = self.core_network.export_to_pyrenderer(
-            network=network, time=time, ensemble=ensemble)
+            network=network, time=time, ensemble=ensemble, pad_first_layer=padding)
         if not network.valid():
             raise RuntimeError('[ERROR] Failed to convert scene representation network to tensor cores.')
         if return_grid_encoding_error:

@@ -10,7 +10,9 @@ from volnet.modules.networks.core_network import ICoreNetwork
 
 class ProcessorSequentialWrapper(ICoreNetwork):
 
-    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None, time=None) -> pyrenderer.SceneNetwork:
+    def export_to_pyrenderer(
+            self, network: Optional[pyrenderer.SceneNetwork] = None,
+            time=None, pad_first_layer=0) -> pyrenderer.SceneNetwork:
         if network is None:
             network = pyrenderer.SceneNetwork()
         activation_param = float(self._activation_params[0]) if len(self._activation_params) >= 1 else 1
@@ -18,7 +20,12 @@ class ProcessorSequentialWrapper(ICoreNetwork):
         for i, s in enumerate(self._layer_sizes):
             layer = getattr(self.layers, f'linear{i}')
             assert isinstance(layer, nn.Linear)
-            network.add_layer(layer.weight, layer.bias, activation, activation_param)
+            weight = layer.weight
+            if i==0 and pad_first_layer>0:
+                Cout, Cin = weight.shape
+                pad = torch.zeros((Cout, pad_first_layer), dtype=weight.dtype, device=weight.device)
+                weight = torch.cat((weight, pad), dim=1)
+            network.add_layer(weight, layer.bias, activation, activation_param)
         last_layer = getattr(self.layers, f'linear{len(self._layer_sizes)}' )
         network.add_layer(last_layer.weight, last_layer.bias, pyrenderer.SceneNetwork.Layer.Activation.NONE)
         return network
@@ -61,3 +68,4 @@ class ProcessorSequentialWrapper(ICoreNetwork):
 
     def output_channels(self) -> int:
         return self._output_channels
+

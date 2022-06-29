@@ -312,16 +312,33 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
     def export_to_pyrenderer(
             self,
             grid_encoding,
-            network: Optional[pyrenderer.SceneNetwork] = None,
-            return_grid_encoding_error=False,
+            network: pyrenderer.SceneNetwork,
             time=None, ensemble=None
-    ) -> Union[pyrenderer.SceneNetwork, Tuple[pyrenderer.SceneNetwork, float]]:
+    ) -> Tuple[pyrenderer.SceneNetwork, float, int]:
+        """
+        Fills the latent grid of the given network.
+        If the latent grid has a channel count that is not a multiple of 16, the channels are padded
+         to the next multiple of 16. This pad count is returned, and has to be applied as well to the network.
+        Returns: the modified network, the encoding error, extra padding.
+        """
         if self.uses_linear_features():
             raise RuntimeError('[ERROR] Use of linear features is not supported in pyrenderer export!')
-        if network is None:
-            network = pyrenderer.SceneNetwork()
         encoding_error = 0
         encoding_error_count = 0
+        padding = 0
+
+        def pad_grid(grid: torch.Tensor, axis=1):
+            C = grid.shape[axis]
+            C16 = (C + 15) // 16 * 16
+            if C16 != C:
+                # we need to pad
+                new_shape = list(grid.shape)
+                new_shape[axis] = C16-C
+                p = torch.zeros(new_shape, dtype=grid.dtype, device=grid.device)
+                return torch.cat((grid, p), dim=axis), C16-C
+            else:
+                return grid, 0
+
         if self.uses_positions():
             if self.uses_time() or self.uses_member():
                 time_key_frames = self.temporal_features.get_time_key_frames().tolist() if self.uses_time() else [0]
@@ -353,36 +370,39 @@ class PyrendererLatentFeatures(MarginalLatentFeatures):
                     ensemble_num=ensemble_num)
 
                 if self.uses_time():
-                    grid = self.temporal_features.get_grid()
+                    grid = self.temporal_features.get_grid().unsqueeze(0)
+                    grid, padding = pad_grid(grid)
                     for i in range(self.temporal_features.num_key_times()):
                         e = grid_info.set_time_grid_from_torch(i, grid[i:i + 1], grid_encoding)
                         encoding_error += e
                         encoding_error_count += 1
                 if self.uses_member():
                     if ensemble is not None:
-                        grid = self.ensemble_features.get_grid(ensemble)
-                        e = grid_info.set_ensemble_grid_from_torch(0, grid.unsqueeze(0), grid_encoding)
+                        grid = self.ensemble_features.get_grid(ensemble).unsqueeze(0)
+                        grid, padding = pad_grid(grid)
+                        e = grid_info.set_ensemble_grid_from_torch(0, grid, grid_encoding)
                         encoding_error += e
                         encoding_error_count += 1
                     else:
                         for i in range(self.ensemble_features.num_members()):
-                            grid = self.ensemble_features.get_grid(i)
-                            e = grid_info.set_ensemble_grid_from_torch(i, grid.unsqueeze(0), grid_encoding)
+                            grid = self.ensemble_features.get_grid(i).unsqueeze(0)
+                            grid, padding = pad_grid(grid)
+                            e = grid_info.set_ensemble_grid_from_torch(i, grid, grid_encoding)
                             encoding_error += e
                             encoding_error_count += 1
                 network.latent_grid = grid_info
             else:
-                grid = self.volumetric_features.get_grid()
+                grid = self.volumetric_features.get_grid().unsqueeze(0)
+                grid, padding = pad_grid(grid)
                 grid_info = pyrenderer.SceneNetwork.LatentGridTimeAndEnsemble(
                     time_min=0, time_num=1, time_step=1,
                     ensemble_min=0, ensemble_num=0)
-                e = grid_info.set_time_grid_from_torch(0, grid.unsqueeze(0), grid_encoding)
+                e = grid_info.set_time_grid_from_torch(0, grid, grid_encoding)
                 encoding_error += e
                 encoding_error_count += 1
                 network.latent_grid = grid_info
             if not network.latent_grid.is_valid():
                 raise RuntimeError('[ERROR] Exported latent grid is invalid')
-        if return_grid_encoding_error:
-            out = encoding_error / encoding_error_count if encoding_error_count > 0 else 0
-            return network, out
-        return network
+
+        out = encoding_error / encoding_error_count if encoding_error_count > 0 else 0
+        return network, out, padding
