@@ -1,15 +1,13 @@
+import argparse
+
 import torch
 import os
 
 import common.utils as utils
 import pyrenderer
 
-from volnet.modules.networks.scene_representation_network.interface import ISceneRepresentationNetwork
-from volnet.modules.networks.input_parameterization import IInputParameterization
-from volnet.modules.networks.latent_features import ILatentFeatures
-from volnet.modules.networks.core_network import ICoreNetwork
-from volnet.modules.networks.output_parameterization import IOutputParameterization
 from volnet.modules.networks.pyrenderer import PyrendererSRN
+
 
 def export(checkpoint_file: str, compiled_file_prefix: str):
     state = torch.load(checkpoint_file)
@@ -30,6 +28,14 @@ def export(checkpoint_file: str, compiled_file_prefix: str):
         filename = compiled_file_prefix + "-ensemble%03d.volnet"%m
         net.save(filename)
         print(f"Saved ensemble {m} to {filename}")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--in-path', type=str, required=True)
+    parser.add_argument('--out-path', type=str, required=True)
+    args = vars(parser.parse_args())
+    export(args['in_path'], args['out_path'])
 
 
 if __name__ == '__main__':

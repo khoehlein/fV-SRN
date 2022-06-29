@@ -54,7 +54,8 @@ class PyrendererSRN(ModularSRN):
         else:
             error = 0.
         network = self.core_network.export_to_pyrenderer(
-            network=network, time=time, ensemble=ensemble)
+            network=network, time=time, ensemble=ensemble
+        )
         if not network.valid():
             raise RuntimeError('[ERROR] Failed to convert scene representation network to tensor cores.')
         if return_grid_encoding_error:
