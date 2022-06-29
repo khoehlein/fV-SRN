@@ -11,7 +11,8 @@ from volnet.modules.networks.core_network import ICoreNetwork
 from volnet.modules.networks.output_parameterization import IOutputParameterization
 from volnet.modules.networks.pyrenderer import PyrendererSRN
 
-def export(checkpoint_file: str, compiled_file_prefix: str):
+def export(checkpoint_file: str, compiled_file_prefix: str,
+           world_size_x:float=10, world_size_y:float=10, world_size_z:float=1):
     state = torch.load(checkpoint_file)
     print("state keys:", state.keys())
     model = state['model']
@@ -28,6 +29,8 @@ def export(checkpoint_file: str, compiled_file_prefix: str):
     for m in range(num_members):
         net = model.export_to_pyrenderer(grid_encoding, ensemble=m)
         filename = compiled_file_prefix + "-ensemble%03d.volnet"%m
+        net.box_min = pyrenderer.float3(-world_size_x/2, -world_size_y/2, -world_size_z/2)
+        net.box_size = pyrenderer.float3(world_size_x, world_size_y, world_size_z)
         net.save(filename)
         print(f"Saved ensemble {m} to {filename}")
 
