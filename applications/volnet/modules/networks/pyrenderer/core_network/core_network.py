@@ -115,8 +115,10 @@ class PyrendererSingleCoreNetwork(PyrendererCoreNetwork):
     def last_layer(self):
         return self.processor.last_layer()
 
-    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None) -> pyrenderer.SceneNetwork:
-        return self.processor.export_to_pyrenderer(network=network)
+    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None,
+                             time=None, ensemble=None) -> pyrenderer.SceneNetwork:
+        # ensemble not encoded in the network -> ignore
+        return self.processor.export_to_pyrenderer(network=network, time=time)
 
 
 class PyrendererMultiCoreNetwork(PyrendererCoreNetwork):
@@ -171,6 +173,15 @@ class PyrendererMultiCoreNetwork(PyrendererCoreNetwork):
     def last_layer(self):
         raise NotImplementedError()
 
-    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None) -> pyrenderer.SceneNetwork:
-        raise NotImplementedError()
-        # return self.processor.export_to_pyrenderer(network=network)
+    def export_to_pyrenderer(self, network: Optional[pyrenderer.SceneNetwork] = None,
+                             time=None, ensemble=None) -> pyrenderer.SceneNetwork:
+        if ensemble is None and len(self.processors)>1:
+            raise ValueError("no ensemble specified, but multiple processors are defined")
+        processor = self.processors[ensemble or 0]
+        return processor.export_to_pyrenderer(network=network, time=time)
+
+    def num_members(self) -> int:
+        return len(self.processors)
+
+    def uses_member(self) -> bool:
+        return len(self.processors)>1

@@ -97,6 +97,9 @@ class EnsembleFeatureGrid(IEnsembleFeatures):
     def grid_size(self):
         return self._grid_size
 
+    def get_grid(self, index:int):
+        return self.feature_mapping[index].get_grid()
+
     def reset_member_features(self, *member_keys: Any):
         self.key_mapping = {key: i for i, key in enumerate(member_keys)}
         self.feature_mapping = nn.ModuleList([

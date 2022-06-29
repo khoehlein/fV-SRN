@@ -37,7 +37,9 @@ class PyrendererSRN(ModularSRN):
     def export_to_pyrenderer(
             self,
             grid_encoding, return_grid_encoding_error=False,
-            network: Optional[pyrenderer.SceneNetwork] = None
+            network: Optional[pyrenderer.SceneNetwork] = None,
+            time = None,
+            ensemble = None
     ) -> Union[pyrenderer.SceneNetwork, Tuple[pyrenderer.SceneNetwork, float]]:
         if self.input_parameterization.uses_time() and (
                 self.latent_features is None or not self.latent_features.uses_time()):
@@ -46,11 +48,13 @@ class PyrendererSRN(ModularSRN):
         network = self.input_parameterization.export_to_pyrenderer(network=network)
         network = self.output_parameterization.export_to_pyrenderer(network=network)
         if self.latent_features is not None:
-            network, error = self.latent_features.export_to_pyrenderer(grid_encoding, network,
-                                                                       return_grid_encoding_error=True)
+            network, error = self.latent_features.export_to_pyrenderer(
+                grid_encoding, network, return_grid_encoding_error=True,
+                time=time, ensemble=ensemble)
         else:
             error = 0.
-        network = self.core_network.export_to_pyrenderer(network=network)
+        network = self.core_network.export_to_pyrenderer(
+            network=network, time=time, ensemble=ensemble)
         if not network.valid():
             raise RuntimeError('[ERROR] Failed to convert scene representation network to tensor cores.')
         if return_grid_encoding_error:
