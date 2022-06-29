@@ -31,6 +31,7 @@ def get_member_count(run_name):
     min_m, max_m = [int(m) for m in code.split('-')]
     return max_m - min_m
 
+
 def get_label(run_name):
     r_code, c_code, *_ = run_name.split('_')
     r = r_code.replace('-', ':')
@@ -62,7 +63,7 @@ def get_linestyle(run_name):
 
 
 def main():
-    fig, axs = plt.subplots(1, 2, dpi=300, figsize=(8, 3))
+    fig, axs = plt.subplots(1, 2, dpi=300, figsize=(6, 3))
 
     run_names = get_run_names()
     colors = [p['color'] for p in plt.rcParams['axes.prop_cycle']]

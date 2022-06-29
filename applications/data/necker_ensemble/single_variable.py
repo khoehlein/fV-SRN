@@ -9,7 +9,8 @@ import pyrenderer
 
 DATA_BASE_PATH = {
     'tuini15-cg05-cg-in-tum-de': '/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/cvol/single_variable', #'/mnt/hdd10tb/Datasets/1k_member_ensemble_201606110000/converted_normal_anomaly',
-    'gpusrv01': '/home/hoehlein/data/1000_member_ensemble/cvol/single_variable'
+    'gpusrv01': '/home/hoehlein/data/1000_member_ensemble/cvol/single_variable',
+    'tuini15-cg16-cg-in-tum-de': '/mnt/data2/'
 }
 
 FILE_NAME_NORM_KEY = 'norm_name'
