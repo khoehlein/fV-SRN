@@ -7,9 +7,17 @@ from typing import Tuple
 import common.utils as utils
 import pyrenderer
 
+BLEND_TO_WHITE_BACKGROUND = True
 
 def convert_image(img):
-    out_img = img[0,:3].cpu().detach().numpy()
+    out_img = img[0].cpu().detach().numpy()
+    if BLEND_TO_WHITE_BACKGROUND:
+        rgb = out_img[:3]
+        alpha = out_img[3:4]
+        white = np.ones_like(rgb)
+        out_img = rgb + (1-alpha) * white
+    else:
+        out_img = out_img[:3]
     out_img *= 255.0
     out_img = out_img.clip(0, 255)
     out_img = np.uint8(out_img)
