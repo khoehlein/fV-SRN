@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 RESOLUTION_KEY = 'network:latent_features:volume:grid:resolution'
 CORE_KEY = 'network:core:layer_sizes'
 
-pth = 'model_epoch_240.pth'
+pth = 'model_epoch_250.pth'
 
 def plot_multivariate_data(ax):
     path = '/home/hoehlein/PycharmProjects/results/fvsrn/multi-variate/single-member/parameter_interplay/stats/run_statistics.csv'
