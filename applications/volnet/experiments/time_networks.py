@@ -1,3 +1,5 @@
+import argparse
+
 import torch
 import numpy as np
 import os
@@ -14,6 +16,7 @@ def convert_image(img):
     out_img = np.uint8(out_img)
     out_img = np.moveaxis(out_img, (1, 2, 0), (0, 1, 2))
     return out_img
+
 
 def evaluate(settings_file: str, volnet_folder: str, output_folder: str,
              width:int, height:int, stepsize_world: float=None):
@@ -73,12 +76,38 @@ def evaluate(settings_file: str, volnet_folder: str, output_folder: str,
     print("Done")
 
 
-if __name__ == '__main__':
-    SETTINGS_FILE = "C:/Users/ga38cat/Documents/fV-SRN-Kevin/applications/config-files/meteo-ensemble_tk_local-min-max-Sebastian.json"
-    VOLNET_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
-    OUTPUT_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001/img"
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--experiment-directory', type=str, required=True)
+    parser.add_argument('--renderer:settings-file', type=str, required=True)
+    args = vars(parser.parse_args())
+
     WIDTH = 1024
     HEIGHT = 1024
-    STEPSIZE_WORLD = 1/256
+    STEPSIZE_WORLD = 1 / 256
 
-    evaluate(SETTINGS_FILE, VOLNET_DIR, OUTPUT_DIR, WIDTH, HEIGHT, STEPSIZE_WORLD)
+    output_base_dir = os.path.join(args['experiment_directory'], 'stats', 'rendering')
+    volnet_base_dir = os.path.join(args['experiment_directory'], 'results', 'volnet')
+    runs = sorted(os.listdir(volnet_base_dir))
+    for run in runs:
+        volnet_dir = os.path.join(volnet_base_dir, run)
+        output_dir = os.path.join(output_base_dir, run)
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+        evaluate(
+            args['renderer:settings_file'], volnet_dir, output_dir,
+            WIDTH, HEIGHT, STEPSIZE_WORLD
+        )
+
+
+
+if __name__ == '__main__':
+    # SETTINGS_FILE = "C:/Users/ga38cat/Documents/fV-SRN-Kevin/applications/config-files/meteo-ensemble_tk_local-min-max-Sebastian.json"
+    # VOLNET_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
+    # OUTPUT_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001/img"
+    # WIDTH = 1024
+    # HEIGHT = 1024
+    # STEPSIZE_WORLD = 1/256
+    #
+    # evaluate(SETTINGS_FILE, VOLNET_DIR, OUTPUT_DIR, WIDTH, HEIGHT, STEPSIZE_WORLD)
+    main()

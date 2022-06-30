@@ -73,7 +73,7 @@ def evaluate_tthresh():
 
 
 def evaluate_sz3():
-    compressor = SZ3(SZ3.CompressionMode.ABS, 2.e-2)
+    compressor = SZ3(SZ3.CompressionMode.ABS, 7.e-2)
     evaluate_compressor(compressor, 'sz3')
 
 
@@ -83,4 +83,4 @@ def evaluate_zfp():
 
 
 if __name__ =='__main__':
-    evaluate_tthresh()
+    evaluate_sz3()

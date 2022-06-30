@@ -16,7 +16,7 @@ variable_name = 'tk'
 device = torch.device('cuda:0')
 
 
-for variable_name in ['tk', 'rh', 'qv']:
+for variable_name in ['tk', 'rh']:
     data = []
     for normalization in ['global', 'level', 'local']:
 
@@ -62,6 +62,7 @@ for variable_name in ['tk', 'rh', 'qv']:
                     'run_name': run_name,
                     'normalization': normalization,
                     'member': volume_data_storage.file_pattern,
+                    **args,
                     **stats.to_dict(),
                     'num_parameters': sum([p.numel() for p in network.parameters()])
                 })
