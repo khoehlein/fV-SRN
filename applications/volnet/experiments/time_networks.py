@@ -89,7 +89,8 @@ def evaluate(settings_file: str, volnet_folder: Optional[str], volume_folder:Opt
             v = pyrenderer.Volume(vpath)
             volume.setSource(v, 0)
             base_name = os.path.splitext(vname)[0]
-            os.makedirs(os.path.join(output_folder, os.path.split(base_name)[0]), exist_ok=True)
+            base_name = base_name.replace("/", "-").replace("\\", "-")
+            #os.makedirs(os.path.join(output_folder, os.path.split(base_name)[0]), exist_ok=True)
 
             img = image_evaluator.render(width, height)
             timer.start()
@@ -123,7 +124,8 @@ def evaluate(settings_file: str, volnet_folder: Optional[str], volume_folder:Opt
             base_name = os.path.split(nname)[-1]
             print("Render", base_name)
             base_name = os.path.splitext(nname)[0]
-            os.makedirs(os.path.join(output_folder, os.path.split(base_name)[0]), exist_ok=True)
+            base_name = base_name.replace("/", "-").replace("\\", "-")
+            #os.makedirs(os.path.join(output_folder, os.path.split(base_name)[0]), exist_ok=True)
 
             srn = pyrenderer.SceneNetwork.load(npath)
             volume_network.set_network(srn)

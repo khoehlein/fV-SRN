@@ -26,7 +26,8 @@ def export(checkpoint_file: str, compiled_file_prefix: str,
     num_members = model.num_members()
     print("Num members:", num_members)
 
-    grid_encoding = pyrenderer.SceneNetwork.LatentGrid.Float
+    #grid_encoding = pyrenderer.SceneNetwork.LatentGrid.Float
+    grid_encoding = pyrenderer.SceneNetwork.LatentGrid.ByteLinear
     for m in range(num_members):
         net = model.export_to_pyrenderer(grid_encoding, ensemble=m)
         filename = compiled_file_prefix + "-ensemble%03d.volnet"%m
