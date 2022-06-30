@@ -2,7 +2,8 @@ import torch
 import numpy as np
 import os
 import imageio
-from typing import Tuple
+from typing import Tuple, Optional
+import glob
 
 import common.utils as utils
 import pyrenderer
@@ -24,8 +25,9 @@ def convert_image(img):
     out_img = np.moveaxis(out_img, (1, 2, 0), (0, 1, 2))
     return out_img
 
-def evaluate(settings_file: str, volnet_folder: str, output_folder: str,
-             width:int, height:int, grid_size: Tuple[int,int,int], stepsize_world: float=None):
+def evaluate(settings_file: str, volnet_folder: Optional[str], volume_folder:Optional[str], output_folder: str,
+             width:int, height:int, grid_size: Tuple[int,int,int], stepsize_world: float=None,
+             recursive=True):
     # Load settings file
     print("Load settings from", settings_file)
     image_evaluator = pyrenderer.load_from_json(settings_file)
@@ -74,19 +76,56 @@ def evaluate(settings_file: str, volnet_folder: str, output_folder: str,
 
         stats.write("Reference,%.5f,%.5f\n"%(time_img/1000.0, time_grid/1000.0))
 
+        # VOLUMES
+        volumes = []
+        if volume_folder is not None:
+            for n in glob.glob(os.path.join(volume_folder, "**/*.cvol"), recursive=recursive):
+                volumes.append((n, os.path.relpath(n, volume_folder)))
+        print("Now render", len(volumes), "volumes")
+
+        volume = image_evaluator.volume
+        assert isinstance(volume, pyrenderer.VolumeInterpolationGrid)
+        for vpath, vname in volumes:
+            v = pyrenderer.Volume(vpath)
+            volume.setSource(v, 0)
+            base_name = os.path.splitext(vname)[0]
+            os.makedirs(os.path.join(output_folder, os.path.split(base_name)[0]), exist_ok=True)
+
+            img = image_evaluator.render(width, height)
+            timer.start()
+            img = image_evaluator.render(width, height)
+            timer.stop()
+            imageio.imwrite(
+                os.path.join(output_folder, base_name + '.png'),
+                convert_image(img))
+            time_img = timer.elapsed_milliseconds()
+
+            print("Evaluate points")
+            volume.evaluate(grid_coords)
+            timer.start()
+            volume.evaluate(grid_coords)
+            timer.stop()
+            time_grid = timer.elapsed_milliseconds()
+
+            stats.write("%s,%.5f,%.5f\n" % (vname, time_img / 1000.0, time_grid / 1000.0))
+            stats.flush()
+
+        # NETWORKS
         networks = []
-        for n in os.listdir(volnet_folder):
-            if n.endswith('.volnet'):
-                networks.append(os.path.join(volnet_folder, n))
-        print("Now render", len(networks), " networks")
+        if volnet_folder is not None:
+            for n in glob.glob(os.path.join(volnet_folder, "**/*.volnet"), recursive=recursive):
+                networks.append((n, os.path.relpath(n, volnet_folder)))
+        print("Now render", len(networks), "networks")
 
         volume_network = pyrenderer.VolumeInterpolationNetwork()
         image_evaluator.volume = volume_network
-        for n in networks:
-            base_name = os.path.split(n)[-1]
+        for npath, nname in networks:
+            base_name = os.path.split(nname)[-1]
             print("Render", base_name)
-            base_name = os.path.splitext(base_name)[0]
-            srn = pyrenderer.SceneNetwork.load(n)
+            base_name = os.path.splitext(nname)[0]
+            os.makedirs(os.path.join(output_folder, os.path.split(base_name)[0]), exist_ok=True)
+
+            srn = pyrenderer.SceneNetwork.load(npath)
             volume_network.set_network(srn)
 
             img = image_evaluator.render(width, height)
@@ -105,7 +144,7 @@ def evaluate(settings_file: str, volnet_folder: str, output_folder: str,
             timer.stop()
             time_grid = timer.elapsed_milliseconds()
 
-            stats.write("%s,%.5f,%.5f\n" % (base_name, time_img / 1000.0, time_grid / 1000.0))
+            stats.write("%s,%.5f,%.5f\n" % (nname, time_img / 1000.0, time_grid / 1000.0))
             stats.flush()
 
     print("Done")
@@ -113,11 +152,14 @@ def evaluate(settings_file: str, volnet_folder: str, output_folder: str,
 
 if __name__ == '__main__':
     SETTINGS_FILE = "C:/Users/ga38cat/Documents/fV-SRN-Kevin/applications/config-files/meteo-ensemble_tk_local-min-max-Sebastian.json"
-    VOLNET_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
-    OUTPUT_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001/img"
-    WIDTH = 1024
+    #VOLNET_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
+    VOLNET_DIR = None
+    VOLUME_DIR = "D:/SceneNetworks/Kevin/rendering_data"
+    #OUTPUT_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001/img"
+    OUTPUT_DIR = "D:/SceneNetworks/Kevin/rendering_images"
+    WIDTH = 1024+512
     HEIGHT = 1024
     GRIDSIZE = (352, 250, 12)
     STEPSIZE_WORLD = 1/256
 
-    evaluate(SETTINGS_FILE, VOLNET_DIR, OUTPUT_DIR, WIDTH, HEIGHT, GRIDSIZE, STEPSIZE_WORLD)
+    evaluate(SETTINGS_FILE, VOLNET_DIR, VOLUME_DIR, OUTPUT_DIR, WIDTH, HEIGHT, GRIDSIZE, STEPSIZE_WORLD)
