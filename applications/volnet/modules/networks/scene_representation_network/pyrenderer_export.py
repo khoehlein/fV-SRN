@@ -1,6 +1,7 @@
 import argparse
 import torch
 import os
+import numpy as np
 
 import common.utils as utils
 import pyrenderer
@@ -28,7 +29,15 @@ def export(checkpoint_file: str, compiled_file_prefix: str,
     num_members = model.num_members()
     print("Num members:", num_members)
 
-    grid_encoding = pyrenderer.SceneNetwork.LatentGrid.Float
+    resolution = (250, 352, 12)
+    device = torch.device("cuda")
+    positions = np.meshgrid(*[(np.arange(r) + 0.5) / r for r in resolution], indexing='ij')
+    positions = np.stack([p.astype(np.float32).ravel() for p in positions], axis=-1)
+    positions = torch.from_numpy(positions).to(device=device)
+    volume_network = pyrenderer.VolumeInterpolationNetwork()
+
+    #grid_encoding = pyrenderer.SceneNetwork.LatentGrid.Float
+    grid_encoding = pyrenderer.SceneNetwork.LatentGrid.ByteLinear
     for m in range(num_members):
         net = model.export_to_pyrenderer(grid_encoding, ensemble=m)
         filename = compiled_file_prefix + "-ensemble%03d.volnet"%m
@@ -36,6 +45,17 @@ def export(checkpoint_file: str, compiled_file_prefix: str,
         net.box_size = pyrenderer.float3(world_size_x, world_size_y, world_size_z)
         net.save(filename)
         print(f"Saved ensemble {m} to {filename}")
+
+        filename = compiled_file_prefix + "-ensemble%03d.cvol" % m
+        volume_network.set_network(net)
+        predictions = volume_network.evaluate(positions)
+        out = predictions.view(1, *resolution)
+        vol = pyrenderer.Volume()
+        vol.worldX = 10.
+        vol.worldY = 10.
+        vol.worldZ = 1.
+        vol.add_feature_from_tensor('tk', out.cpu())
+        vol.save(filename)
 
 
 def main():
@@ -59,9 +79,8 @@ def main():
 
 
 if __name__ == '__main__':
-    # #TEST_PATH = "D:/SceneNetworks/Kevin/ensemble/multi_core/num_channels/12-176-125_32_1-65_fast/results/model/run00001"
-    # TEST_PATH = "/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
-    # input_file = "model_epoch_50.pth"
-    # output_file = "compiled"
-    # export(os.path.join(TEST_PATH, input_file), os.path.join(TEST_PATH, output_file))
-    main()
+    TEST_PATH = "D:/SceneNetworks/Kevin/ensemble/multi_core/num_channels/12-176-125_32_1-65_fast/results/model/run00001"
+    #TEST_PATH = "/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
+    input_file = "model_epoch_50.pth"
+    output_file = "compiled"
+    export(os.path.join(TEST_PATH, input_file), os.path.join(TEST_PATH, output_file))
