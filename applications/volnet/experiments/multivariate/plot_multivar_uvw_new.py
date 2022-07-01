@@ -34,7 +34,7 @@ def draw_plots(ax, layers):
                         if c == layers: #'32:32:32':
                             sel3 = sel2.loc[sel2['network:core:layer_sizes'] == c, :]
                             sel3 = sel3.groupby(by='num_parameters').mean()
-                            compression_ratio = (352 * 250 * 12 * num_variables) / sel3.index.values
+                            compression_ratio = sel3['compression_ratio'].values * num_variables #(352 * 250 * 12 * num_variables) / sel3.index.values
                             order = np.argsort(compression_ratio)
                             loss = sel3['rmse_reverted'].values
                             loss = loss[order]
@@ -45,13 +45,15 @@ def draw_plots(ax, layers):
                             loss = loss[order]
                             ax[1, i].plot(compression_ratio[order], loss, label=f'R: {r}', linestyle=ls)
             ax[0, i].set(xscale='log', yscale='log', title=variable, ylim=(3.e-2, 8.e-1))
-            ax[1, i].set(xscale='log', xlabel='compression ratio', ylim=(-0.01, 1.01))
+            ax[1, i].set(xscale='log', xlabel='compression ratio', ylim=(-0.1, 1.1))
 
 def main():
-    fig, ax = plt.subplots(2, len(variables), sharex='all', sharey='row', figsize=(6, 4))
-    draw_plots(ax[:, :3], '32:32:32')
-    ax[0, 0].set(ylabel='RMSE (original)')
-    ax[1, 0].set(ylabel='DSSIM (original)')
+    fig, axs = plt.subplots(2, len(variables), sharex='all', sharey='row', figsize=(8, 4))
+    draw_plots(axs[:, :3], '32:32:32')
+    axs[0, 0].set(ylabel='RMSE (original)')
+    axs[1, 0].set(ylabel='DSSIM (original)')
+    for ax in axs.ravel():
+        ax.grid()
     plt.tight_layout()
     # ax[1, 0].legend()
     plt.savefig('multi-parameter_models.pdf')

@@ -30,7 +30,7 @@ def plot_single_member_data(ax):
     for r in resolutions:
         sel = data.loc[data[RESOLUTION_KEY] == r, :]
         sel = sel.groupby(by='num_parameters').mean()
-        compression_ratio = (352*250*12) / sel.index.values
+        compression_ratio = sel['compression_ratio'].values #(352*250*12) / sel.index.values
         order = np.argsort(compression_ratio)
         ax[0].plot(compression_ratio[order], sel['rmse_reverted'].values[order], label=r, marker=MARKER, linestyle='--')
         ax[1].plot(compression_ratio[order], sel['dssim_reverted'].values[order], marker=MARKER, linestyle='--')

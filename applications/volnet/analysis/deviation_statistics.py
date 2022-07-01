@@ -1,9 +1,30 @@
 from enum import Enum
 
 import numpy as np
+from torch import nn
 
 from data.necker_ensemble.single_variable import revert_scaling
 from ldcpy.my_dssim import DSSIM2d
+from volnet.modules.networks.pyrenderer import PyrendererSRN
+
+
+class CompressionStatistics(object):
+
+    def __init__(self, network: PyrendererSRN):
+        self.core_parameters = self._get_parameter_count(network.core_network)
+        self.grid_parameters = self._get_parameter_count(network.latent_features)
+        self.num_members = network.num_members()
+
+    def _get_parameter_count(self, m: nn.Module):
+        return sum([p.numel() for p in m.parameters()])
+
+    def byte_size(self):
+        return self.core_parameters * 2 + self.grid_parameters
+
+    def compression_rate(self, resolution=None):
+        if resolution is None:
+            resolution = (352, 250, 12)
+        return int(np.prod(resolution) * self.num_members) * 4 / self.byte_size()
 
 
 class DeviationStatistics(object):

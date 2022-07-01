@@ -5,18 +5,17 @@ import pandas as pd
 import torch
 
 from data.necker_ensemble.single_variable import load_scales, update_file_pattern_base_path
-from volnet.analysis.deviation_statistics import DeviationStatistics
+from volnet.analysis.deviation_statistics import DeviationStatistics, CompressionStatistics
 from volnet.modules.datasets import VolumeDataStorage
 from volnet.modules.datasets.world_dataset import WorldSpaceDensityEvaluator
 from volnet.modules.render_tool import RenderTool
 
 
 results_root_path = '/home/hoehlein/PycharmProjects/results/fvsrn'
-variable_name = 'tk'
 device = torch.device('cuda:0')
 
 
-for variable_name in ['tk', 'rh']:
+for variable_name in ['qv']: #['tk', 'rh']:
     data = []
     for normalization in ['global', 'level', 'local']:
 
@@ -64,7 +63,8 @@ for variable_name in ['tk', 'rh']:
                     'member': volume_data_storage.file_pattern,
                     **args,
                     **stats.to_dict(),
-                    'num_parameters': sum([p.numel() for p in network.parameters()])
+                    'num_parameters': sum([p.numel() for p in network.parameters()]),
+                    'compression_ratio': CompressionStatistics(network).compression_rate()
                 })
 
     data = pd.DataFrame(data)

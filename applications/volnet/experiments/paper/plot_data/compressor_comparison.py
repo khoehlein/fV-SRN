@@ -1,0 +1,56 @@
+import matplotlib.pyplot as plt
+
+from compression.experiments.plot_compression_stats import load_compressor_data, display_names
+from volnet.experiments.paper.plot_data.plot_singleton_vs_ensemble import get_checkpoint_data, load_multi_core_data, load_multi_grid_data
+
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+
+def draw_classical_compressors(ax):
+    data = {
+        'sz3': load_compressor_data('sz3', 'level', 'singleton'),
+        'zfp': load_compressor_data('zfp', 'level', 'singleton'),
+        'tthresh': load_compressor_data('tthresh', 'level', 'ensemble'),
+    }
+    for i, compressor in enumerate(data.keys()):
+        cdata = data[compressor]
+        ax[0].plot(cdata['compression_ratio'], cdata[f'rmse_reverted'], label=display_names[compressor], color=colors[i], marker='.')
+        ax[1].plot(cdata['compression_ratio'], cdata[f'dssim_reverted'], label=display_names[compressor], color=colors[i], marker='.')
+
+
+def draw_multi_grid_data(ax):
+    _draw_model_data(ax, load_multi_grid_data(num_channels=64), colors[3], 'multi-grid')
+
+
+def draw_multi_core_data(ax):
+    _draw_model_data(ax, load_multi_core_data(num_channels=64), colors[4], 'multi-decoder')
+
+
+def _draw_model_data(ax, data, color, label):
+    for i, configuration in enumerate(data.keys()):
+        data_reduced = get_checkpoint_data(data[configuration])
+        compression_rate = data_reduced['compression_ratio'] #(352 * 250 * 12) * data_reduced['num_members'] / data_reduced['num_parameters']
+        label_dict = {'label': label} if i == 0 else {}
+        loss = data_reduced['rmse_reverted']
+        ax[0].plot(compression_rate.loc[compression_rate > 1.], loss.loc[compression_rate > 1.], **label_dict, color=color, marker='.')
+        loss = data_reduced['dssim_reverted']
+        ax[1].plot(compression_rate[compression_rate > 1.], loss[compression_rate > 1.], **label_dict, color=color, marker='.')
+
+
+def main():
+    fig, axs = plt.subplots(1, 2, sharex='all', figsize=(8,4))
+    draw_classical_compressors(axs)
+    draw_multi_core_data(axs)
+    draw_multi_grid_data(axs)
+    axs[0].set(xscale='log', yscale='log', xlabel='compression ratio', ylabel='RMSE (original)')
+    axs[1].set(xscale='log', xlabel='compression ratio', ylabel='DSSIM (original)')
+    axs[0].legend()
+    axs[0].grid()
+    axs[1].grid()
+    plt.tight_layout()
+    plt.savefig('all_compres')
+    plt.show()
+
+
+if __name__ == '__main__':
+    main()

@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from volnet.analysis.plot_retraining_data import plot_diagonal
+
+
 def plot_old_figure():
     results_root_path = '/home/hoehlein/PycharmProjects/results/fvsrn'
     variable_names = ['tk', 'rh']
@@ -64,5 +67,33 @@ def plot_new_figure():
     plt.show()
 
 
+def plot_new_figure_2():
+    results_root_path = '/home/hoehlein/PycharmProjects/results/fvsrn'
+    variable_names = ['tk', 'qv','rh']
+    fig, ax = plt.subplots(1, len(variable_names), figsize=(8, 3), sharex='col')
+
+    for i, variable_name in enumerate(variable_names):
+        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        data = pd.read_csv(
+            os.path.join(results_root_path, 'normalization', 'single_member', variable_name, 'accuracies.csv'))
+        data = data.groupby(by=['normalization', 'network:latent_features:volume:num_channels', 'network:latent_features:volume:grid:resolution'])
+        data = data.mean()
+        loss = data['rmse_reverted'].unstack(level='normalization')
+        compression = data['compression_ratio'].unstack(level='normalization')
+        ax[i].plot([loss['global'].values, loss['global'].values], [loss['global'].values, loss['level'].values], c=colors[0], linestyle='dotted')
+        ax[i].scatter(loss['global'], loss['level'], label='level norm', s=(200. / compression['global']))
+        ax[i].plot([loss['global'].values, loss['global'].values], [loss['global'].values, loss['local'].values], c=colors[1], linestyle='dotted')
+        ax[i].scatter(loss['global'], loss['local'], label='local norm', s=(200. / compression['global']))
+        plot_diagonal(ax[i])
+        ax[i].set(xscale='log', yscale='log', xlabel='RMSE (original, global norm)', title=variable_name)
+        ax[i].grid()
+        print('Done')
+    ax[0].set(ylabel='RMSE (original)')
+    ax[-1].legend()
+    plt.tight_layout()
+    plt.savefig('normalization-comparison.pdf')
+    plt.show()
+
+
 if __name__ == '__main__':
-    plot_new_figure()
+    plot_new_figure_2()

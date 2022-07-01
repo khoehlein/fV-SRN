@@ -29,10 +29,10 @@ def get_checkpoint_data(data_reduced):
 
 
 def plot_multi_core_data(ax):
-    data = load_multi_core_data()
+    data = load_multi_core_data(num_channels=64)
     for configuration in data:
         data_reduced = get_checkpoint_data(data[configuration])
-        compression_rate = (352 * 250 * 12) * data_reduced['num_members'] / data_reduced['num_parameters']
+        compression_rate = data_reduced['compression_ratio'] #(352 * 250 * 12) * data_reduced['num_members'] / data_reduced['num_parameters']
         loss = data_reduced['rmse_reverted']
         ax[0].plot(compression_rate.loc[compression_rate > 1.], loss.loc[compression_rate > 1.])
         loss = data_reduced['dssim_reverted']
@@ -55,10 +55,10 @@ def load_multi_grid_data(num_channels=None):
 
 
 def plot_multi_grid_data(ax):
-    data = load_multi_grid_data()
+    data = load_multi_grid_data(num_channels=64)
     for configuration in data:
         data_reduced = get_checkpoint_data(data[configuration])
-        compression_rate = (352 * 250 * 12) * data_reduced['num_members'] / data_reduced['num_parameters']
+        compression_rate = data_reduced['compression_ratio'] #(352 * 250 * 12) * data_reduced['num_members'] / data_reduced['num_parameters']
         loss = data_reduced['rmse_reverted']
         ax[0].plot(compression_rate.loc[compression_rate > 1.], loss.loc[compression_rate > 1.])
         loss = data_reduced['dssim_reverted']
@@ -76,6 +76,19 @@ def test():
     plt.show()
 
 
+def add_layout(axs):
+    for i, ax in enumerate(axs[0]):
+        ax.set(ylim=(4.e-7, 2.e0))
+        # if i > 0:
+        #     ax.set(yticklabels=[])
+    for i, ax in enumerate(axs[1]):
+        ax.set(ylim=(-0.1, 1.1), xlabel='compression ratio')
+        # if i > 0:
+        #     ax.set(yticklabels=[])
+    axs[0, 0].set(ylabel='RMSE (originalt)')
+    axs[1, 0].set(ylabel='DSSIM (original)')
+
+
 def main():
     fig, axs = plt.subplots(2, 5, sharex='all', figsize=(10,4))
     plot_multi_core_data(axs[:, 3])
@@ -83,16 +96,7 @@ def main():
     plot_single_member_data(axs[:, 3])
     plot_single_member_data(axs[:, 4])
     draw_compressor_stats(axs[:, :3], ['level'], 'reverted')
-    for i, ax in enumerate(axs[0]):
-        ax.set(ylim=(4.e-7, 2.e0))
-        if i > 0:
-            ax.set(yticklabels=[])
-    for i, ax in enumerate(axs[1]):
-        ax.set(ylim=(0.49, 1.1), xlabel='compression ratio')
-        if i > 0:
-            ax.set(yticklabels=[])
-    axs[0, 0].set(ylabel='RMSE (original)')
-    axs[1, 0].set(ylabel='DSSIM (original)')
+    add_layout(axs)
     plt.tight_layout()
     plt.savefig('compression_accuracy.pdf')
     plt.show()
