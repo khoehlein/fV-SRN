@@ -5,6 +5,11 @@ from volnet.experiments.paper.plot_data.plot_singleton_vs_ensemble import get_ch
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
+display_names = {
+    'sz3': 'SZ3 (single-member)',
+    'zfp': 'ZFP (single-member)',
+    'tthresh': 'TThresh (ensemble)'
+}
 
 def draw_classical_compressors(ax):
     data = {
@@ -42,13 +47,13 @@ def main():
     draw_classical_compressors(axs)
     draw_multi_core_data(axs)
     draw_multi_grid_data(axs)
-    axs[0].set(xscale='log', yscale='log', xlabel='compression ratio', ylabel='RMSE (original)')
-    axs[1].set(xscale='log', xlabel='compression ratio', ylabel='DSSIM (original)')
+    axs[0].set(xscale='log', yscale='log', xlabel='compression ratio', title='RMSE (original) $\\downarrow$')
+    axs[1].set(xscale='log', xlabel='compression ratio', title='DSSIM (original) $\\uparrow$')
     axs[0].legend()
     axs[0].grid()
     axs[1].grid()
     plt.tight_layout()
-    plt.savefig('all_compres')
+    plt.savefig('all_compressors.pdf')
     plt.show()
 
 

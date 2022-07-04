@@ -69,6 +69,7 @@ def main():
     volnet_base_dir = os.path.join(args['experiment_directory'], 'results', 'volnet')
 
     for run in runs:
+        print(run)
         output_dir = os.path.join(volnet_base_dir, run)
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
@@ -79,8 +80,9 @@ def main():
 
 
 if __name__ == '__main__':
-    TEST_PATH = "D:/SceneNetworks/Kevin/ensemble/multi_core/num_channels/12-176-125_32_1-65_fast/results/model/run00001"
-    #TEST_PATH = "/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
-    input_file = "model_epoch_50.pth"
-    output_file = "compiled"
-    export(os.path.join(TEST_PATH, input_file), os.path.join(TEST_PATH, output_file))
+    main()
+    # TEST_PATH = "D:/SceneNetworks/Kevin/ensemble/multi_core/num_channels/12-176-125_32_1-65_fast/results/model/run00001"
+    # #TEST_PATH = "/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
+    # input_file = "model_epoch_50.pth"
+    # output_file = "compiled"
+    # export(os.path.join(TEST_PATH, input_file), os.path.join(TEST_PATH, output_file))

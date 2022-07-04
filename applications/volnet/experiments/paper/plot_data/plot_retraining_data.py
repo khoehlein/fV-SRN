@@ -63,7 +63,7 @@ def _plot_loss_data(data, ax, linestyle=None):
         ax.scatter(sel1_orig['rmse_reverted'], sel1_ret['rmse_reverted'], s=100*s)
         ax.plot(sel1_orig['rmse_reverted'], sel1_ret['rmse_reverted'], label=get_label(configuration), linestyle=linestyle)
     ax.set(xscale='log', yscale='log')
-    ax.legend(loc='lower right')
+
 
 
 def plot_multi_core_data(ax):
@@ -81,13 +81,24 @@ def plot_multi_grid_data(ax):
     # ax.set_prop_cycle(None)
     # _plot_loss_data(load_multi_grid_data(num_channels=128), ax, linestyle=':')
 
+display_resolution = {
+    '12:176:125': '2x subs.',
+    '6:44:31': '8x subs.',
+    '6:88:63': '4x subs.',
+    '3:22:16': '16x subs.',
+}
+
+display_channels = {
+    64: 'large dec.',
+    32: 'small dec.'
+}
 
 def get_label(run_name):
     r_code, c_code, *_ = run_name.split('_')
     r = r_code.replace('-', ':')
     c = int(c_code)
     # m = get_member_count(run_name)
-    return f'R: {r}, C: {c}'
+    return f'{display_resolution[r]}, {display_channels[c]}'
 
 
 def plot_diagonal(ax):
@@ -99,7 +110,7 @@ def plot_diagonal(ax):
 
 
 def add_axis_labels(ax):
-    ax.set(xlim=(9.e-3, .2), ylim=(8.e-3, .25))
+    ax.set(xlim=(7.e-3, .2), ylim=(8.e-3, .3))
     ax.set(xlabel='RMSE (original)', ylabel='RMSE (retrained)')
     plot_diagonal(ax)
 
@@ -111,6 +122,10 @@ def main():
     plot_multi_grid_data(axs[1])
     add_axis_labels(axs[1])
     axs[1].set(ylabel=None)
+    axs[0].grid()
+    axs[1].grid()
+    axs[0].legend(loc='lower right')
+    axs[1].legend(loc='upper left')
     plt.tight_layout()
     plt.savefig('retraining.pdf')
     plt.show()

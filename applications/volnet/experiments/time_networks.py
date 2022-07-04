@@ -180,16 +180,35 @@ def main2():
         )
 
 
-if __name__ == '__main__':
-    SETTINGS_FILE = "C:/Users/ga38cat/Documents/fV-SRN-Kevin/applications/config-files/meteo-ensemble_tk_local-min-max-Sebastian.json"
-    #VOLNET_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
-    VOLNET_DIR = None
-    VOLUME_DIR = "D:/SceneNetworks/Kevin/rendering_data"
+def compute():
+    SETTINGS_FILE = "/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/applications/config-files/meteo-ensemble_tk_local-min-max.json"
+    # VOLNET_DIR = "/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/volnet"
+    VOLNET_DIR = "/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/num_channels/6-88-63_64_1-65_fast/results/volnet"
+    VOLUME_DIR = None #"/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/stats/rendering"
     #OUTPUT_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001/img"
-    OUTPUT_DIR = "D:/SceneNetworks/Kevin/rendering_images"
+    OUTPUT_DIR = "/home/hoehlein/rendering_timings/multi_core"
     WIDTH = 1024+512
     HEIGHT = 1024
     GRIDSIZE = (352, 250, 12)
     STEPSIZE_WORLD = 1/256
-
     evaluate(SETTINGS_FILE, VOLNET_DIR, VOLUME_DIR, OUTPUT_DIR, WIDTH, HEIGHT, GRIDSIZE, STEPSIZE_WORLD)
+
+
+if __name__ == '__main__':
+    compute()
+
+
+
+# if __name__ == '__main__':
+#     SETTINGS_FILE = "C:/Users/ga38cat/Documents/fV-SRN-Kevin/applications/config-files/meteo-ensemble_tk_local-min-max-Sebastian.json"
+#     #VOLNET_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001"
+#     VOLNET_DIR = None
+#     VOLUME_DIR = "D:/SceneNetworks/Kevin/rendering_data"
+#     #OUTPUT_DIR = "D:/SceneNetworks/Kevin/ensemble/multi_grid/num_channels/6-88-63_32_1-65_fast/results/model/run00001/img"
+#     OUTPUT_DIR = "D:/SceneNetworks/Kevin/rendering_images"
+#     WIDTH = 1024+512
+#     HEIGHT = 1024
+#     GRIDSIZE = (352, 250, 12)
+#     STEPSIZE_WORLD = 1/256
+#
+#     evaluate(SETTINGS_FILE, VOLNET_DIR, VOLUME_DIR, OUTPUT_DIR, WIDTH, HEIGHT, GRIDSIZE, STEPSIZE_WORLD)

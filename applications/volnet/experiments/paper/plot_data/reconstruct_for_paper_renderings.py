@@ -5,6 +5,7 @@ import torch
 import pyrenderer
 
 from compression import TTHRESH, CompressedArray, SZ3, ZFP
+from volnet.analysis.deviation_statistics import CompressionStatistics
 from volnet.modules.datasets.world_dataset import WorldSpaceDensityEvaluator
 
 
@@ -25,7 +26,7 @@ def _evaluate_network(model_path, target_folder):
     positions = np.meshgrid(*[(np.arange(r) + 0.5) / r for r in resolution], indexing='ij')
     positions = np.stack([p.astype(np.float32).ravel() for p in positions], axis=-1)
     positions = torch.from_numpy(positions)
-    print(f'[INFO] Compression rate: {np.prod(resolution) * 64 / sum([p.numel() for p in network.parameters()])}')
+    print(f'[INFO] Compression rate: {CompressionStatistics(network).compression_rate()}')
 
     with torch.no_grad():
         for i in range(3):
@@ -38,13 +39,13 @@ def _evaluate_network(model_path, target_folder):
 
 
 def evaluate_multi_grid_model():
-    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/3-22-16_64_1-65_fast/results/model/run00001/model_epoch_50.pth'
+    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-44-31_64_1-65_fast/results/model/run00004/model_epoch_50.pth'
     target_folder = '/home/hoehlein/Desktop/rendering_data/quality/tk/multi_grid'
     _evaluate_network(model_path, target_folder)
 
 
 def evaluate_multi_core_model():
-    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/num_channels/6-44-31_64_1-65_fast/results/model/run00012/model_epoch_50.pth'
+    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/num_channels/12-176-125_64_1-65_fast/results/model/run00012/model_epoch_50.pth'
     target_folder = '/home/hoehlein/Desktop/rendering_data/quality/tk/multi_core'
     _evaluate_network(model_path, target_folder)
 
@@ -64,16 +65,36 @@ def evaluate_compressor(compressor, name):
         restored = torch.from_numpy(compressed.restore_numpy())[None, ...].to(torch.float32)
         path = os.path.join(target_folder, f)
         _export_volume_data(restored, path)
-    print(out)
+    print(1. / np.mean(1. / np.array(out)))
+
+
+def evaluate_compressor_new(compressor, name):
+    source_folder = '/home/hoehlein/Desktop/rendering_data/quality/tk/ground_truth'
+    target_folder = f'/home/hoehlein/Desktop/rendering_data/quality/tk/{name}'
+    if not os.path.isdir(target_folder):
+        os.makedirs(target_folder)
+    out = []
+    data = []
+    for f in os.listdir(source_folder):
+        vol = pyrenderer.Volume(os.path.join(source_folder, f))
+        data.append(vol.get_feature(0).get_level(0).to_tensor()[0].data.cpu().numpy())
+    data = torch.stack(data, )
+    compressed = CompressedArray.from_numpy(data, compressor)
+    print(f'[INFO] Compression ratio: {compressed.compression_ratio()}')
+    out.append(compressed.compression_ratio())
+    restored = torch.from_numpy(compressed.restore_numpy())[None, ...].to(torch.float32)
+    path = os.path.join(target_folder, f)
+    _export_volume_data(restored, path)
+    print(1. / np.mean(1. / np.array(out)))
 
 
 def evaluate_tthresh():
-    compressor = TTHRESH(TTHRESH.CompressionMode.RMSE, 8.e-3)
+    compressor = TTHRESH(TTHRESH.CompressionMode.RMSE, 4.45e-3, verbose=True)
     evaluate_compressor(compressor, 'tthresh')
 
 
 def evaluate_sz3():
-    compressor = SZ3(SZ3.CompressionMode.ABS, 7.e-2)
+    compressor = SZ3(SZ3.CompressionMode.ABS, 2.8e-2, verbose=True)
     evaluate_compressor(compressor, 'sz3')
 
 
@@ -84,3 +105,7 @@ def evaluate_zfp():
 
 if __name__ =='__main__':
     evaluate_sz3()
+    # evaluate_zfp()
+    evaluate_tthresh()
+    # evaluate_multi_core_model()
+    # evaluate_multi_grid_model()
