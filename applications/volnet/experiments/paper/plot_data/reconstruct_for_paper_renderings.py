@@ -39,13 +39,13 @@ def _evaluate_network(model_path, target_folder):
 
 
 def evaluate_multi_grid_model():
-    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-44-31_64_1-65_fast/results/model/run00004/model_epoch_50.pth'
+    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-44-31_64_1-65_fast/results/model/run00005/model_epoch_50.pth'
     target_folder = '/home/hoehlein/Desktop/rendering_data/quality/tk/multi_grid'
     _evaluate_network(model_path, target_folder)
 
 
 def evaluate_multi_core_model():
-    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/num_channels/12-176-125_64_1-65_fast/results/model/run00012/model_epoch_50.pth'
+    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/num_channels/6-44-31_64_1-65_fast/results/model/run00012/model_epoch_50.pth'
     target_folder = '/home/hoehlein/Desktop/rendering_data/quality/tk/multi_core'
     _evaluate_network(model_path, target_folder)
 
@@ -89,12 +89,13 @@ def evaluate_compressor_new(compressor, name):
 
 
 def evaluate_tthresh():
-    compressor = TTHRESH(TTHRESH.CompressionMode.RMSE, 4.45e-3, verbose=True)
+    compressor = TTHRESH(TTHRESH.CompressionMode.RMSE, 6.5e-3, verbose=True)
     evaluate_compressor(compressor, 'tthresh')
 
 
 def evaluate_sz3():
-    compressor = SZ3(SZ3.CompressionMode.ABS, 2.8e-2, verbose=True)
+    # compressor = SZ3(SZ3.CompressionMode.ABS, 8.e-2, verbose=True)
+    compressor = SZ3(SZ3.CompressionMode.ABS, 6.e-2, verbose=True)
     evaluate_compressor(compressor, 'sz3')
 
 
@@ -106,6 +107,6 @@ def evaluate_zfp():
 if __name__ =='__main__':
     evaluate_sz3()
     # evaluate_zfp()
-    evaluate_tthresh()
+    # evaluate_tthresh()
     # evaluate_multi_core_model()
-    # evaluate_multi_grid_model()
+    evaluate_multi_grid_model()

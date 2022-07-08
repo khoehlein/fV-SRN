@@ -286,7 +286,6 @@ class UI(ABC):
             print("Loss", self.LossNames[i], "-> min:", np.min(data), ", max:", np.max(data))
         self.colorbar = plt.get_cmap("Reds").reversed()
 
-
     def visualize_reference(self):
         # render reference
         img_reference_data = self.render_reference(self.current_entry)
@@ -294,7 +293,6 @@ class UI(ABC):
         self.reference_label.setPixmap(self.img_reference_pixmap)
         if self.has_tf:
             self.tf_reference_pixmap = self.visualize_tf(self.tf_reference, QPixmap(self.ImgRes, self.TFHeight))
-
 
     def visualize_tf(self, tf: np.ndarray, pixmap: QPixmap):
         _, R, _ = tf.shape
