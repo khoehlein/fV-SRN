@@ -52,8 +52,8 @@ class FixedGridImportanceSampler(IImportanceSampler):
             assert len(gs) in {1, 3}
             if len(gs) == 1:
                 gs = [gs[0]] * 3
-            out = (int(gs[0]), int(gs[1]), int(gs[2]))
-            out['grid_size'] = out
+            gs = (int(gs[0]), int(gs[1]), int(gs[2]))
+            out['grid_size'] = gs
         return out
 
     def __init__(
