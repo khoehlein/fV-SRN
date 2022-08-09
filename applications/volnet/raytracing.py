@@ -60,19 +60,26 @@ class Raytracing:
 
     def stepsize(self) -> float:
         return self._stepsize
+
     def set_stepsize(self, s):
         self._stepsize = s
+
     def set_resolution(self, width, height):
         self._image_width = width
         self._image_height = height
+
     def camera(self) -> pyrenderer.ICamera:
         return self._camera
+
     def volume(self) -> pyrenderer.IVolumeInterpolation:
         return self._volume_interpolation
+
     def tf(self) -> pyrenderer.ITransferFunction:
         return self._tf
+
     def box_min(self) -> torch.Tensor:
         return self._box_min
+
     def box_size(self) -> torch.Tensor:
         return self._box_size
 
