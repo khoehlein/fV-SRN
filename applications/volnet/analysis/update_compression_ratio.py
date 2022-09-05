@@ -1,3 +1,4 @@
+import argparse
 import os
 from functools import lru_cache
 
@@ -25,7 +26,11 @@ def update_run_statistics(path):
 
 
 def main():
-    base_path = '/home/hoehlein/PycharmProjects/results/fvsrn/multi-variate/single-member/uvw'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--path', type=str, required=True)
+    args = vars(parser.parse_args())
+
+    base_path = args['path']  # '/home/hoehlein/PycharmProjects/results/fvsrn/multi-variate/single-member/uvw'
     sub_folders = os.listdir(base_path)
 
     for folder in sub_folders:

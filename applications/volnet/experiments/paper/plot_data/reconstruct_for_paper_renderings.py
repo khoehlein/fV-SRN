@@ -20,6 +20,7 @@ def _export_volume_data(data, path):
 
 
 def _evaluate_network(model_path, target_folder):
+    os.makedirs(target_folder, exist_ok=True)
     checkpoint = torch.load(model_path, map_location='cpu')
     network = checkpoint['model']
     resolution = (250, 352, 12)
@@ -39,20 +40,22 @@ def _evaluate_network(model_path, target_folder):
 
 
 def evaluate_multi_grid_model():
-    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-44-31_64_1-65_fast/results/model/run00005/model_epoch_50.pth'
-    target_folder = '/home/hoehlein/Desktop/rendering_data/quality/tk/multi_grid'
+    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/resampling/12-22-16_32-32-32-32_1-65/results/model/run00004/model_epoch_50.pth'
+    # old path: '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels/6-44-31_64_1-65_fast/results/model/run00005/model_epoch_50.pth'
+    target_folder = '/home/hoehlein/Desktop/rendering_data/quality_250/tk/multi_grid'
     _evaluate_network(model_path, target_folder)
 
 
 def evaluate_multi_core_model():
-    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/num_channels/6-44-31_64_1-65_fast/results/model/run00012/model_epoch_50.pth'
-    target_folder = '/home/hoehlein/Desktop/rendering_data/quality/tk/multi_core'
+    model_path = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/resampling/12-22-16_32-32-32-32_1-65/results/model/run00004/model_epoch_50.pth'
+    # old path: '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/num_channels/6-44-31_64_1-65_fast/results/model/run00012/model_epoch_50.pth'
+    target_folder = '/home/hoehlein/Desktop/rendering_data/quality_250/tk/multi_core'
     _evaluate_network(model_path, target_folder)
 
 
 def evaluate_compressor(compressor, name):
     source_folder = '/home/hoehlein/Desktop/rendering_data/quality/tk/ground_truth'
-    target_folder = f'/home/hoehlein/Desktop/rendering_data/quality/tk/{name}'
+    target_folder = f'/home/hoehlein/Desktop/rendering_data/quality_250/tk/{name}'
     if not os.path.isdir(target_folder):
         os.makedirs(target_folder)
     out = []
@@ -65,12 +68,12 @@ def evaluate_compressor(compressor, name):
         restored = torch.from_numpy(compressed.restore_numpy())[None, ...].to(torch.float32)
         path = os.path.join(target_folder, f)
         _export_volume_data(restored, path)
-    print(1. / np.mean(1. / np.array(out)))
+    print('[INFO] Compression ratio (average):', 1. / np.mean(1. / np.array(out)))
 
 
 def evaluate_compressor_new(compressor, name):
     source_folder = '/home/hoehlein/Desktop/rendering_data/quality/tk/ground_truth'
-    target_folder = f'/home/hoehlein/Desktop/rendering_data/quality/tk/{name}'
+    target_folder = f'/home/hoehlein/Desktop/rendering_data/quality_250/tk/{name}'
     if not os.path.isdir(target_folder):
         os.makedirs(target_folder)
     out = []
@@ -89,13 +92,14 @@ def evaluate_compressor_new(compressor, name):
 
 
 def evaluate_tthresh():
-    compressor = TTHRESH(TTHRESH.CompressionMode.RMSE, 6.5e-3, verbose=True)
+    # first submission: compressor = TTHRESH(TTHRESH.CompressionMode.RMSE, 6.5e-3, verbose=True)
+    compressor = TTHRESH(TTHRESH.CompressionMode.RMSE, 6.91e-3, verbose=True)
     evaluate_compressor(compressor, 'tthresh')
 
 
 def evaluate_sz3():
-    # compressor = SZ3(SZ3.CompressionMode.ABS, 8.e-2, verbose=True)
-    compressor = SZ3(SZ3.CompressionMode.ABS, 6.e-2, verbose=True)
+    # first submission: compressor = SZ3(SZ3.CompressionMode.ABS, 6.e-2, verbose=True)
+    compressor = SZ3(SZ3.CompressionMode.ABS, 6.2e-2, verbose=True)
     evaluate_compressor(compressor, 'sz3')
 
 
@@ -105,8 +109,8 @@ def evaluate_zfp():
 
 
 if __name__ =='__main__':
-    evaluate_sz3()
+    evaluate_sz3() # 248.81x
     # evaluate_zfp()
-    # evaluate_tthresh()
-    # evaluate_multi_core_model()
-    evaluate_multi_grid_model()
+    evaluate_tthresh() # 253.25x
+    evaluate_multi_core_model() # 251.88x
+    evaluate_multi_grid_model() # 248.00x

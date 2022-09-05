@@ -17,6 +17,7 @@ from tests.volnet.network import InputParametrization, OutputParametrization, Sc
 from diffdvr.utils import renderer_dtype_torch
 import pyrenderer
 
+
 class NetworkLoader:
 
     def __init__(self, file: h5py.File, device: torch.device):
@@ -107,6 +108,7 @@ class NetworkLoader:
 
         return net
 
+
 def result_to_network(file: Union[str, h5py.File], epoch: int) -> pyrenderer.SceneNetwork:
     if isinstance(file, str):
         with h5py.File(file, "r") as f:
@@ -116,6 +118,7 @@ def result_to_network(file: Union[str, h5py.File], epoch: int) -> pyrenderer.Sce
     loader = NetworkLoader(file, torch.device('cpu'))
     loader.fill_weights(file['weights'], epoch)
     return loader.create_scene_network()
+
 
 def __main():
     parser = argparse.ArgumentParser(

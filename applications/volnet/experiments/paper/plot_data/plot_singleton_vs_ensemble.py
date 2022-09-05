@@ -9,10 +9,13 @@ from volnet.analysis.plot_retraining_data import get_member_count, get_channel_c
 from volnet.experiments.paper.singleton.grid_params.plot_parameter_interplay import plot_single_member_data
 
 
+TRAINING_TYPE = 'resampling'
+
+
 def load_multi_core_data(num_channels=None):
     if num_channels is None:
         num_channels = 64
-    base_folder = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/num_channels'
+    base_folder = f'/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/{TRAINING_TYPE}'
     configurations = sorted(os.listdir(base_folder))
     return {
         c: pd.read_csv(os.path.join(base_folder, c, 'stats', 'run_statistics.csv'))
@@ -46,7 +49,7 @@ def plot_multi_core_data(ax):
 def load_multi_grid_data(num_channels=None):
     if num_channels is None:
         num_channels = 64
-    base_folder = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels'
+    base_folder = f'/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/{TRAINING_TYPE}'
     configurations = sorted(os.listdir(base_folder))
     return {
         c: pd.read_csv(os.path.join(base_folder, c, 'stats', 'run_statistics.csv'))
@@ -90,7 +93,7 @@ def add_layout(axs):
 
 
 def main():
-    fig, axs = plt.subplots(2, 5, sharex='all', figsize=(10,4))
+    fig, axs = plt.subplots(2, 5, sharex='all', figsize=(10,4), dpi=600)
     plot_multi_core_data(axs[:, 3])
     plot_multi_grid_data(axs[:, 4])
     plot_single_member_data(axs[:, 3])
@@ -98,7 +101,7 @@ def main():
     draw_compressor_stats(axs[:, :3], ['level'], 'reverted')
     add_layout(axs)
     plt.tight_layout()
-    plt.savefig('compression_accuracy.pdf')
+    # plt.savefig('compression_accuracy.pdf')
     plt.show()
 
 

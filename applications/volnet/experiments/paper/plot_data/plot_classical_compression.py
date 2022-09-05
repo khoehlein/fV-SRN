@@ -10,7 +10,7 @@ def main():
     add_layout(axs)
     axs[1, 1].legend()
     plt.tight_layout()
-    plt.savefig('classical_compression_performance.pdf')
+    # plt.savefig('classical_compression_performance.pdf')
     plt.show()
 
 

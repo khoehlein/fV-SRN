@@ -35,7 +35,7 @@ def get_member_count(run_name):
 def get_label(run_name):
     r_code, c_code, *_ = run_name.split('_')
     r = r_code.replace('-', ':')
-    c = int(c_code)
+    c = int(c_code.split('-')[0])
     m = get_member_count(run_name)
     return f'R: {r}, C: {c}'
 
@@ -50,7 +50,7 @@ def plot_diagonal(ax):
 
 def get_channel_count(run_name):
     c_code = run_name.split('_')[1]
-    return int(c_code)
+    return int(c_code.split('-')[0])
 
 
 def get_linestyle(run_name):

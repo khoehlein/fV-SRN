@@ -15,7 +15,7 @@ def load_compressor_data(compressor, norm, se):
     data = pd.read_csv(file_name)
     if se == 'ensemble':
         data = data.loc[data['stacking'] == 0, :]
-    data = data.loc[np.logical_and(data['compression_ratio'] <= 2000, data['compression_ratio'] > 1.), :]
+    data = data.loc[np.logical_and(data['compression_ratio'] <= 2000, data['compression_ratio'] > 0.), :]
     return data
 
 

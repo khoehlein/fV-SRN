@@ -9,7 +9,7 @@ from volnet.modules.misc.experiment_loading import load_experiment_data
 
 def main():
     loss_keys = ['l2']
-    base_folder = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/num_channels'
+    base_folder = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/deep'
     run_names = sorted(os.listdir(base_folder))
     fig, ax = plt.subplots(1, 1)
     for run_name in run_names:

@@ -6,11 +6,6 @@ import numpy as np
 import common.utils as utils
 import pyrenderer
 
-from volnet.modules.networks.scene_representation_network.interface import ISceneRepresentationNetwork
-from volnet.modules.networks.input_parameterization import IInputParameterization
-from volnet.modules.networks.latent_features import ILatentFeatures
-from volnet.modules.networks.core_network import ICoreNetwork
-from volnet.modules.networks.output_parameterization import IOutputParameterization
 from volnet.modules.networks.pyrenderer import PyrendererSRN
 
 
@@ -70,12 +65,11 @@ def main():
 
     for run in runs:
         print(run)
-        output_dir = os.path.join(volnet_base_dir, run)
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
+        volnet_dir = os.path.join(volnet_base_dir, run)
+        if not os.path.isdir(volnet_dir):
+            os.makedirs(volnet_dir)
         checkpoint_path = os.path.join(checkpoint_base_dir, run, args['checkpoint_file_name'])
-        output_file_prefix = os.path.join(output_dir, os.path.splitext(args['checkpoint_file_name'])[0])
-
+        output_file_prefix = os.path.join(volnet_dir, os.path.splitext(args['checkpoint_file_name'])[0])
         export(checkpoint_path, output_file_prefix)
 
 

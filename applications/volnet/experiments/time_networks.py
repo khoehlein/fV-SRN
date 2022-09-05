@@ -10,7 +10,9 @@ import glob
 import common.utils as utils
 import pyrenderer
 
+
 BLEND_TO_WHITE_BACKGROUND = True
+
 
 def convert_image(img):
     out_img = img[0].cpu().detach().numpy()
@@ -59,7 +61,6 @@ def evaluate(settings_file: str, volnet_folder: Optional[str], volume_folder:Opt
     os.makedirs(output_folder, exist_ok=True)
     with open(os.path.join(output_folder, "timings.csv"), "w") as stats:
         stats.write("File,Rendering (sec),Grid Evaluation (sec)\n")
-
         print("Render reference")
         img = image_evaluator.render(width, height)
         timer.start()
@@ -82,17 +83,17 @@ def evaluate(settings_file: str, volnet_folder: Optional[str], volume_folder:Opt
         # VOLUMES
         volumes = []
         if volume_folder is not None:
-            for n in glob.glob(os.path.join(volume_folder, "**/*.cvol"), recursive=recursive):
-                volumes.append((n, os.path.relpath(n, volume_folder)))
+            files = [f for f in os.listdir(volume_folder) if f.endswith('.cvol')]
+            for n in sorted(files):
+                volumes.append((os.path.join(volume_folder, n), n))
         print("Now render", len(volumes), "volumes")
 
         volume = image_evaluator.volume
         assert isinstance(volume, pyrenderer.VolumeInterpolationGrid)
         for vpath, vname in volumes:
             v = pyrenderer.Volume(vpath)
-            volume.setSource(v, 0)
+            volume.setSource(v, 'tk')
             base_name = os.path.splitext(vname)[0]
-            base_name = base_name.replace("/", "-").replace("\\", "-")
             #os.makedirs(os.path.join(output_folder, os.path.split(base_name)[0]), exist_ok=True)
 
             img = image_evaluator.render(width, height)
@@ -117,8 +118,9 @@ def evaluate(settings_file: str, volnet_folder: Optional[str], volume_folder:Opt
         # NETWORKS
         networks = []
         if volnet_folder is not None:
-            for n in glob.glob(os.path.join(volnet_folder, "**/*.volnet"), recursive=recursive):
-                networks.append((n, os.path.relpath(n, volnet_folder)))
+            files = [f for f in os.listdir(volnet_folder) if f.endswith('.volnet')]
+            for n in sorted(files):
+                networks.append((os.path.join(volnet_folder, n), n))
         print("Now render", len(networks), "networks")
 
         volume_network = pyrenderer.VolumeInterpolationNetwork()
@@ -127,7 +129,7 @@ def evaluate(settings_file: str, volnet_folder: Optional[str], volume_folder:Opt
             base_name = os.path.split(nname)[-1]
             print("Render", base_name)
             base_name = os.path.splitext(nname)[0]
-            base_name = base_name.replace("/", "-").replace("\\", "-")
+            # base_name = base_name.replace("/", "-").replace("\\", "-")
             #os.makedirs(os.path.join(output_folder, os.path.split(base_name)[0]), exist_ok=True)
 
             srn = pyrenderer.SceneNetwork.load(npath)
@@ -153,7 +155,6 @@ def evaluate(settings_file: str, volnet_folder: Optional[str], volume_folder:Opt
             stats.flush()
 
     print("Done")
-
 
 
 def main2():
@@ -194,8 +195,31 @@ def compute():
     evaluate(SETTINGS_FILE, VOLNET_DIR, VOLUME_DIR, OUTPUT_DIR, WIDTH, HEIGHT, GRIDSIZE, STEPSIZE_WORLD)
 
 
+def get_renderings_for_compressor_comparison():
+    output_base_dir = '/home/hoehlein/Desktop/rendering_data/quality_250/tk'
+    settings_file = "/home/hoehlein/PycharmProjects/deployment/delllat94/fvsrn/applications/config-files/meteo-ensemble_tk_local-min-max.json"
+    multi_grid_dir = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_grid/resampling/12-22-16_32-32-32-32_1-65/results/volnet/run00004'
+    multi_core_dir = '/home/hoehlein/PycharmProjects/results/fvsrn/paper/ensemble/multi_core/resampling/12-22-16_32-32-32-32_1-65/results/volnet/run00004'
+
+    def _evaluate(net_dir, vol_dir, target_dir):
+        WIDTH = 1024 + 512
+        HEIGHT = 1024
+        GRIDSIZE = (352, 250, 12)
+        STEPSIZE_WORLD = 1 / 256
+        evaluate(settings_file, net_dir, vol_dir, target_dir, WIDTH, HEIGHT, GRIDSIZE, STEPSIZE_WORLD)
+
+    _evaluate(None, '/home/hoehlein/Desktop/rendering_data/quality/tk/ground_truth', '/home/hoehlein/Desktop/rendering_data/quality/tk/ground_truth')
+
+    # _evaluate(None, multi_core_dir, os.path.join(output_base_dir, 'multi_core'))
+    # _evaluate(None, multi_grid_dir, os.path.join(output_base_dir, 'multi_grid'))
+    # _evaluate(None, os.path.join(output_base_dir, 'multi_core'), os.path.join(output_base_dir, 'multi_core'))
+    # _evaluate(None, os.path.join(output_base_dir, 'multi_grid'), os.path.join(output_base_dir, 'multi_grid'))
+    # _evaluate(None, os.path.join(output_base_dir, 'sz3'), os.path.join(output_base_dir, 'sz3'))
+    # _evaluate(None, os.path.join(output_base_dir, 'tthresh'), os.path.join(output_base_dir, 'tthresh'))
+
+
 if __name__ == '__main__':
-    compute()
+    get_renderings_for_compressor_comparison()
 
 
 

@@ -5,11 +5,13 @@ from volnet.experiments.paper.plot_data.plot_singleton_vs_ensemble import get_ch
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
+
 display_names = {
     'sz3': 'SZ3 (single-member)',
     'zfp': 'ZFP (single-member)',
     'tthresh': 'TThresh (ensemble)'
 }
+
 
 def draw_classical_compressors(ax):
     data = {
@@ -17,6 +19,7 @@ def draw_classical_compressors(ax):
         'zfp': load_compressor_data('zfp', 'level', 'singleton'),
         'tthresh': load_compressor_data('tthresh', 'level', 'ensemble'),
     }
+
     for i, compressor in enumerate(data.keys()):
         cdata = data[compressor]
         ax[0].plot(cdata['compression_ratio'], cdata[f'rmse_reverted'], label=display_names[compressor], color=colors[i], marker='.')
@@ -24,11 +27,11 @@ def draw_classical_compressors(ax):
 
 
 def draw_multi_grid_data(ax):
-    _draw_model_data(ax, load_multi_grid_data(num_channels=64), colors[3], 'multi-grid')
+    _draw_model_data(ax, load_multi_grid_data(num_channels=32), colors[3], 'multi-grid')
 
 
 def draw_multi_core_data(ax):
-    _draw_model_data(ax, load_multi_core_data(num_channels=64), colors[4], 'multi-decoder')
+    _draw_model_data(ax, load_multi_core_data(num_channels=32), colors[4], 'multi-decoder')
 
 
 def _draw_model_data(ax, data, color, label):
@@ -37,9 +40,10 @@ def _draw_model_data(ax, data, color, label):
         compression_rate = data_reduced['compression_ratio'] #(352 * 250 * 12) * data_reduced['num_members'] / data_reduced['num_parameters']
         label_dict = {'label': label} if i == 0 else {}
         loss = data_reduced['rmse_reverted']
-        ax[0].plot(compression_rate.loc[compression_rate > 1.], loss.loc[compression_rate > 1.], **label_dict, color=color, marker='.')
+        valid = compression_rate > 0.8
+        ax[0].plot(compression_rate.loc[valid], loss.loc[valid], **label_dict, color=color, marker='.')
         loss = data_reduced['dssim_reverted']
-        ax[1].plot(compression_rate[compression_rate > 1.], loss[compression_rate > 1.], **label_dict, color=color, marker='.')
+        ax[1].plot(compression_rate[valid], loss[valid], **label_dict, color=color, marker='.')
 
 
 def main():
@@ -53,8 +57,9 @@ def main():
     axs[0].grid()
     axs[1].grid()
     plt.tight_layout()
-    plt.savefig('all_compressors.pdf')
+    # plt.savefig('all_compressors.pdf')
     plt.show()
+    plt.close()
 
 
 if __name__ == '__main__':
